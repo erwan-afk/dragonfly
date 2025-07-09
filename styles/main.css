@@ -8,24 +8,37 @@
   box-sizing: inherit;
 }
 
-*:focus:not(ol) {
-  @apply outline-none ring-2 ring-pink-500 ring-opacity-50;
-}
+
 
 html {
   height: 100%;
   box-sizing: border-box;
   touch-action: manipulation;
+  scroll-behavior: smooth;
   font-feature-settings:
     'case' 1,
     'rlig' 1,
     'calt' 0;
 }
 
+/* styles/main.css */
+
+/* Déclarez la police avec @font-face */
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Variable.ttf') format('truetype');
+  font-weight: 100 900; /* Vous pouvez ajuster les poids si nécessaire */
+  font-style: normal;
+}
+
+/* Vous pouvez maintenant utiliser la police dans le body ou ailleurs */
+body {
+  
+}
+
 html,
 body {
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Helvetica Neue',
-    'Helvetica', sans-serif;
+  font-family: 'General Sans', sans-serif;
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
   @apply text-white bg-zinc-800 antialiased;
@@ -57,3 +70,4 @@ p a {
 .height-screen-helper {
   min-height: calc(100vh - 80px);
 }
+

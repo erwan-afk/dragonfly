@@ -1,59 +1,55 @@
-import CustomerPortalForm from '@/components/ui/AccountForms/CustomerPortalForm';
-import EmailForm from '@/components/ui/AccountForms/EmailForm';
-import NameForm from '@/components/ui/AccountForms/NameForm';
-import { createClient } from '@/utils/supabase/server';
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { AccountClient } from '@/components/ui/Account/AccountClient';
+import prisma from '@/utils/prisma/client';
 
+// Composant côté serveur pour récupérer les données
 export default async function Account() {
-  const supabase = createClient();
+  // Récupérer l'utilisateur connecté avec Better Auth
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session?.user) {
     return redirect('/signin');
   }
 
-  const { data: userDetails, error: userDetailsError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const user = session.user;
 
-  if (userDetailsError) {
-    console.log(userDetailsError);
-    return redirect('/error'); // Rediriger vers une page d'erreur appropriée
+  try {
+    // Utilisons une requête SQL brute pour éviter les problèmes de schéma
+    const userDetails = (await prisma.$queryRaw`
+      SELECT id, email, name, full_name, avatar_url, billing_address, payment_method, created_at
+      FROM "user" 
+      WHERE id = ${user.id}
+    `) as any[];
+
+    const boats = (await prisma.$queryRaw`
+      SELECT * FROM "boats" 
+      WHERE user_id = ${user.id}
+      ORDER BY created_at DESC
+    `) as any[];
+
+    if (!userDetails || userDetails.length === 0) {
+      return redirect('/signin');
+    }
+
+    // Convertir les objets Decimal en nombres pour éviter les problèmes de sérialisation
+    const serializedBoats = boats.map((boat) => ({
+      ...boat,
+      price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
+      createdAt: boat.created_at // Convertir created_at en camelCase
+    }));
+
+    return (
+      <AccountClient
+        userDetails={userDetails[0]}
+        boats={serializedBoats || []}
+      />
+    );
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return redirect('/error');
   }
-
-  const { data: subscription, error: subscriptionError } = await supabase
-    .from('subscriptions')
-    .select('*, prices(*, products(*))')
-    .in('status', ['trialing', 'active'])
-    .maybeSingle();
-
-  if (subscriptionError) {
-    console.log(subscriptionError);
-    // Gérer l'erreur ou afficher un message utilisateur
-  }
-
-  return (
-    <section className="mb-32 bg-black">
-      <div className="max-w-6xl px-4 py-8 mx-auto sm:px-6 sm:pt-24 lg:px-8">
-        <div className="sm:align-center sm:flex sm:flex-col">
-          <h1 className="text-4xl font-extrabold text-white sm:text-center sm:text-6xl">
-            Account
-          </h1>
-          <p className="max-w-2xl m-auto mt-5 text-xl text-zinc-200 sm:text-center sm:text-2xl">
-            We partnered with Stripe for a simplified billing.
-          </p>
-        </div>
-      </div>
-      <div className="p-4">
-        <CustomerPortalForm subscription={subscription} />
-        <NameForm userName={userDetails?.full_name ?? ''} />
-        <EmailForm userEmail={user.email} />
-      </div>
-    </section>
-  );
 }

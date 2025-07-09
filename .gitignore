@@ -30,12 +30,49 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# Keep a copy of local env for reference
+.env*.local
 
 # vercel
 .vercel
 
 # editors
 .vscode
+.idea
 
 # certificates
 certificates
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Prisma
+prisma/migrations/migration_lock.toml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# OS generated files
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.sqlite
+
+# Backup files
+*.backup
+*.bak
+
+# Documentation non-critique
+README-*.md
+MIGRATION.md

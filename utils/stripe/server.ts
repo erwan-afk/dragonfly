@@ -2,16 +2,15 @@
 
 import Stripe from 'stripe';
 import { stripe } from '@/utils/stripe/config';
-import { createClient } from '@/utils/supabase/server';
-import { createOrRetrieveCustomer } from '@/utils/supabase/admin';
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
+import { createOrRetrieveCustomer } from '@/utils/prisma/admin';
 import {
   getURL,
   getErrorRedirect,
   calculateTrialEndUnixTimestamp
 } from '@/utils/helpers';
-import { Tables } from '@/types_db';
-
-type Price = Tables<'prices'>;
+import { StripePrice as Price } from '@/types/database';
 
 type CheckoutResponse = {
   errorRedirect?: string;
@@ -20,34 +19,26 @@ type CheckoutResponse = {
 
 export async function checkoutWithStripe(
   price: Price,
-  redirectPath: string = '/account'
+  redirectPath: string = '/account',
+  metadata: Record<string, string> = {}
 ): Promise<CheckoutResponse> {
   try {
-    // Get the user from Supabase auth
-    const supabase = createClient();
-    const {
-      error,
-      data: { user }
-    } = await supabase.auth.getUser();
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
 
-    if (error || !user) {
-      console.error(error);
+    if (!session?.user) {
       throw new Error('Could not get user session.');
     }
 
-    // Retrieve or create the customer in Stripe
-    let customer: string;
-    try {
-      customer = await createOrRetrieveCustomer({
-        uuid: user?.id || '',
-        email: user?.email || ''
-      });
-    } catch (err) {
-      console.error(err);
-      throw new Error('Unable to access customer record.');
-    }
+    const user = session.user;
 
-    let params: Stripe.Checkout.SessionCreateParams = {
+    const customer = await createOrRetrieveCustomer({
+      uuid: user.id || '',
+      email: user.email || ''
+    });
+
+    const params: Stripe.Checkout.SessionCreateParams = {
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       customer,
@@ -60,44 +51,18 @@ export async function checkoutWithStripe(
           quantity: 1
         }
       ],
+      mode: 'payment',
+      metadata: {
+        user_id: user.id,
+        ...metadata
+      },
       cancel_url: getURL(),
-      success_url: getURL(redirectPath)
+      success_url: getURL('/payment-success') // Rediriger vers notre page custom
     };
 
-    console.log(
-      'Trial end:',
-      calculateTrialEndUnixTimestamp(price.trial_period_days)
-    );
-    if (price.type === 'recurring') {
-      params = {
-        ...params,
-        mode: 'subscription',
-        subscription_data: {
-          trial_end: calculateTrialEndUnixTimestamp(price.trial_period_days)
-        }
-      };
-    } else if (price.type === 'one_time') {
-      params = {
-        ...params,
-        mode: 'payment'
-      };
-    }
+    const stripeSession = await stripe.checkout.sessions.create(params);
+    return { sessionId: stripeSession.id };
 
-    // Create a checkout session in Stripe
-    let session;
-    try {
-      session = await stripe.checkout.sessions.create(params);
-    } catch (err) {
-      console.error(err);
-      throw new Error('Unable to create checkout session.');
-    }
-
-    // Instead of returning a Response, just return the data or error.
-    if (session) {
-      return { sessionId: session.id };
-    } else {
-      throw new Error('Unable to create checkout session.');
-    }
   } catch (error) {
     if (error instanceof Error) {
       return {
@@ -107,32 +72,28 @@ export async function checkoutWithStripe(
           'Please try again later or contact a system administrator.'
         )
       };
-    } else {
-      return {
-        errorRedirect: getErrorRedirect(
-          redirectPath,
-          'An unknown error occurred.',
-          'Please try again later or contact a system administrator.'
-        )
-      };
     }
+    return {
+      errorRedirect: getErrorRedirect(
+        redirectPath,
+        'An unknown error occurred.',
+        'Please try again later or contact a system administrator.'
+      )
+    };
   }
 }
 
 export async function createStripePortal(currentPath: string) {
   try {
-    const supabase = createClient();
-    const {
-      error,
-      data: { user }
-    } = await supabase.auth.getUser();
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
 
-    if (!user) {
-      if (error) {
-        console.error(error);
-      }
+    if (!session?.user) {
       throw new Error('Could not get user session.');
     }
+
+    const user = session.user;
 
     let customer;
     try {
@@ -177,5 +138,58 @@ export async function createStripePortal(currentPath: string) {
         'Please try again later or contact a system administrator.'
       );
     }
+  }
+}
+
+// Nouvelle fonction pour récupérer les produits depuis Stripe
+export async function getActiveProductsFromStripe() {
+  try {
+    console.log('🔍 Fetching products from Stripe...');
+
+    // Récupérer tous les produits actifs depuis Stripe
+    const products = await stripe.products.list({
+      active: true,
+      expand: ['data.default_price']
+    });
+
+    // Pour chaque produit, récupérer tous ses prix
+    const productsWithPrices = await Promise.all(
+      products.data.map(async (product) => {
+        const prices = await stripe.prices.list({
+          product: product.id,
+          active: true
+        });
+
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          active: product.active,
+          image: product.images?.[0] || null,
+          metadata: product.metadata,
+          prices: prices.data.map(price => ({
+            id: price.id,
+            product_id: typeof price.product === 'string' ? price.product : price.product?.id || null,
+            active: price.active,
+            description: price.nickname,
+            unit_amount: price.unit_amount,
+            currency: price.currency,
+            type: price.type === 'one_time' ? 'one_time' : 'recurring',
+            interval: price.recurring?.interval || null,
+            interval_count: price.recurring?.interval_count || null,
+            trial_period_days: price.recurring?.trial_period_days || null,
+            metadata: price.metadata
+          }))
+        };
+      })
+    );
+
+    console.log('✅ Products fetched from Stripe successfully');
+    console.log('📊 Products found:', productsWithPrices.length);
+
+    return productsWithPrices;
+  } catch (error) {
+    console.error('❌ Error fetching products from Stripe:', error);
+    throw error;
   }
 }

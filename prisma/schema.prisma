@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                      String    @id @default(cuid())
+  accountId               String    @map("account_id")
+  providerId              String    @map("provider_id")
+  userId                  String    @map("user_id")
+  accessToken             String?   @map("access_token")
+  refreshToken            String?   @map("refresh_token")
+  idToken                 String?   @map("id_token")
+  accessTokenExpiresAt    DateTime? @map("access_token_expires_at") @db.Timestamp(6)
+  refreshTokenExpiresAt   DateTime? @map("refresh_token_expires_at") @db.Timestamp(6)
+  scope                   String?
+  password                String?
+  createdAt               DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt               DateTime  @map("updated_at") @db.Timestamp(6)
+  user                    user      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model session {
+  id             String   @id @default(cuid())
+  expiresAt      DateTime @map("expires_at") @db.Timestamp(6)
+  token          String   @unique
+  createdAt      DateTime @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @map("updated_at") @db.Timestamp(6)
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  userId         String   @map("user_id")
+  impersonatedBy String?  @map("impersonated_by")
+  user           user     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  emailVerified  Boolean   @map("email_verified")
+  image          String?
+  createdAt      DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime  @map("updated_at") @db.Timestamp(6)
+  role           Role      @default(user)
+  banned         Boolean?
+  ban_reason     String?
+  ban_expires    DateTime? @db.Timestamp(6)
+  
+  // Nouveaux champs
+  full_name        String?
+  avatar_url       String?
+  billing_address  Json?
+  payment_method   Json?
+  
+  // Relations
+  account        account[]
+  session        session[]
+  boats          boat[]
+  payments       payment[]
+  customer       customer?
+}
+
+model verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime? @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime? @map("updated_at") @db.Timestamp(6)
+}
+
+model boat {
+  id             String   @id @default(cuid())
+  model          String
+  price          Decimal  @db.Decimal
+  country        String
+  description    String
+  photos         String[]
+  userId         String   @map("user_id")
+  createdAt      DateTime @map("created_at") @default(now()) @db.Timestamp(6)
+  currency       String   @default("EUR")
+  specifications String[] @default([])
+  vatPaid        Boolean  @map("vat_paid") @default(false)
+  
+  user           user     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payments       payment[]
+
+  @@map("boats")
+}
+
+model customer {
+  id               String  @id
+  stripeCustomerId String? @map("stripe_customer_id")
+  user             user    @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("customers")
+}
+
+model payment {
+  id              String    @id @default(cuid())
+  userId          String?   @map("user_id")
+  boatId          String?   @map("boat_id")
+  amount          Decimal   @db.Decimal
+  status          String?
+  createdAt       DateTime? @map("created_at") @default(now()) @db.Timestamp(6)
+  stripeSessionId String?   @map("stripe_session_id")
+  
+  user            user?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  boat            boat?     @relation(fields: [boatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("payments")
+}
+
+model product {
+  id          String   @id
+  active      Boolean?
+  name        String?
+  description String?
+  image       String?
+  metadata    Json?
+  
+  prices      price[]
+
+  @@map("products")
+}
+
+model price {
+  id              String          @id
+  productId       String?         @map("product_id")
+  active          Boolean?
+  description     String?
+  unitAmount      BigInt?         @map("unit_amount")
+  currency        String?         @db.Char(3)
+  type            PricingType?
+  interval        PricingInterval?
+  intervalCount   Int?            @map("interval_count")
+  trialPeriodDays Int?            @map("trial_period_days")
+  metadata        Json?
+  
+  product         product?        @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("prices")
+}
+
+enum Role {
+  user
+  admin
+  superAdmin
+}
+
+enum PricingType {
+  one_time
+  recurring
+}
+
+enum PricingInterval {
+  day
+  week
+  month
+  year
+}

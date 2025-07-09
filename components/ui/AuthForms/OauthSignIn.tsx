@@ -1,33 +1,58 @@
 'use client';
 
-import Button from '@/components/ui/Button';
-import { signInWithOAuth } from '@/utils/auth-helpers/client';
-import { type Provider } from '@supabase/supabase-js';
-import { Github } from 'lucide-react';
+import Button from '@/components/ui/Button/Button';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { authClient } from '@/lib/auth-client';
 
 type OAuthProviders = {
-  name: Provider;
+  name: string;
   displayName: string;
-  icon: JSX.Element;
+  signupDisplayName: string;
 };
 
 export default function OauthSignIn() {
+  const pathname = usePathname();
+  const isSignupPage = pathname?.includes('/signup');
+
   const oAuthProviders: OAuthProviders[] = [
     {
-      name: 'github',
-      displayName: 'GitHub',
-      icon: <Github className="h-5 w-5" />
+      name: 'google',
+      displayName: 'Continue with Google',
+      signupDisplayName: 'Sign up with Google'
     }
-    /* Add desired OAuth providers here */
   ];
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); // Disable the button while the request is being handled
-    await signInWithOAuth(e);
-    setIsSubmitting(false);
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const provider = formData.get('provider') as string;
+
+    try {
+      console.log(`🚀 Starting ${provider} OAuth authentication...`);
+
+      if (provider === 'google') {
+        // Use Better Auth's Google OAuth - works for both signin and signup
+        // Better Auth automatically handles new user creation for OAuth
+        await authClient.signIn.social({
+          provider: 'google',
+          callbackURL: '/account' // Redirect after successful authentication
+        });
+      }
+    } catch (error) {
+      console.error(`❌ Error during ${provider} OAuth:`, error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  // Return null if no providers are available
+  if (oAuthProviders.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mt-8">
@@ -39,14 +64,18 @@ export default function OauthSignIn() {
         >
           <input type="hidden" name="provider" value={provider.name} />
           <Button
-            variant="slim"
             type="submit"
-            className="w-full"
+            text={
+              isSignupPage ? provider.signupDisplayName : provider.displayName
+            }
             loading={isSubmitting}
-          >
-            <span className="mr-2">{provider.icon}</span>
-            <span>{provider.displayName}</span>
-          </Button>
+            icon={'google'}
+            anim_disabled
+            bgColor="bg-fullwhite"
+            textColor="text-oceanblue"
+            fullwidth
+            lowercase
+          ></Button>
         </form>
       ))}
     </div>

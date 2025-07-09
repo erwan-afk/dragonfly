@@ -1,6 +1,4 @@
-import type { Tables } from '@/types_db';
-
-type Price = Tables<'prices'>;
+// Helpers for URL generation, redirects, and utility functions
 
 export const getURL = (path: string = '') => {
   // Check if NEXT_PUBLIC_SITE_URL is set and non-empty. Set this to your site URL in production env.
@@ -15,10 +13,21 @@ export const getURL = (path: string = '') => {
         : // If neither is set, default to localhost for local development.
           'http://localhost:3000/';
 
+  // Ensure url is a string and not undefined
+  if (!url || typeof url !== 'string') {
+    url = 'http://localhost:3000/';
+  }
+
   // Trim the URL and remove trailing slash if exists.
   url = url.replace(/\/+$/, '');
   // Make sure to include `https://` when not localhost.
   url = url.includes('http') ? url : `https://${url}`;
+  
+  // Ensure path is a string and not undefined
+  if (!path || typeof path !== 'string') {
+    path = '';
+  }
+  
   // Ensure path starts without a slash to avoid double slashes in the final URL.
   path = path.replace(/^\/+/, '');
 
@@ -31,7 +40,7 @@ export const postData = async ({
   data
 }: {
   url: string;
-  data?: { price: Price };
+  data?: { price: any };
 }) => {
   const res = await fetch(url, {
     method: 'POST',
@@ -81,6 +90,23 @@ const getToastRedirect = (
   disableButton: boolean = false,
   arbitraryParams: string = ''
 ): string => {
+  // Ensure all parameters are strings and not undefined
+  if (!path || typeof path !== 'string') {
+    path = '/';
+  }
+  if (!toastType || typeof toastType !== 'string') {
+    toastType = 'status';
+  }
+  if (!toastName || typeof toastName !== 'string') {
+    toastName = 'Unknown';
+  }
+  if (typeof toastDescription !== 'string') {
+    toastDescription = '';
+  }
+  if (typeof arbitraryParams !== 'string') {
+    arbitraryParams = '';
+  }
+
   const [nameKey, descriptionKey] = toastKeyMap[toastType];
 
   let redirectPath = `${path}?${nameKey}=${encodeURIComponent(toastName)}`;
@@ -131,3 +157,5 @@ export const getErrorRedirect = (
     disableButton,
     arbitraryParams
   );
+
+
