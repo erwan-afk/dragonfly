@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Application Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dragonfly_app
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dragonfly_network
+    volumes:
+      # Monter les migrations Prisma pour les exécuter au démarrage si nécessaire
+      - ./prisma:/app/prisma
+
+  # CLI Stripe pour le développement et les webhooks
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: dragonfly_stripe_cli
+    restart: unless-stopped
+    environment:
+      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_DEVICE_NAME=dragonfly_docker
+    networks:
+      - dragonfly_network
+    # Commande pour écouter les webhooks et les transférer vers l'app
+    command: [ "listen", "--forward-to", "http://app:3000/api/webhooks", "--print-json" ]
+    depends_on:
+      - app
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: dragonfly_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: default
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ywars.ollo6255
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - dragonfly_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d default" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  dragonfly_network:
+    driver: bridge

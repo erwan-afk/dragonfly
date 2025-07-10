@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev --turbo",
-    "dev-no-turbo": "next dev",
+    "dev": "next dev --turbo --port 3002",
+    "dev-no-turbo": "next dev --port 3002",
+    "dev:3001": "next dev --turbo --port 3001",
+    "dev:3003": "next dev --turbo --port 3003",
     "dev2": "node --trace-deprecation ./node_modules/next/dist/bin/next dev --turbo",
     "build": "next build",
     "start": "next start",
@@ -22,7 +24,18 @@
     "r2:test-images": "tsx scripts/test-r2-images-display.ts",
     "r2:test-webp": "tsx scripts/test-image-webp-conversion.ts",
     "r2:update-urls": "tsx scripts/update-r2-image-urls.ts",
-    "r2:update-urls-execute": "tsx scripts/update-r2-image-urls.ts --execute"
+    "r2:update-urls-execute": "tsx scripts/update-r2-image-urls.ts --execute",
+    "deploy": "npm run build && pm2 restart dragonfly-app",
+    "deploy:full": "npm run db:generate && npm run build && pm2 restart dragonfly-app",
+    "deploy:script": "./scripts/deploy.sh",
+    "pm2:restart": "pm2 restart dragonfly-app",
+    "pm2:stop": "pm2 stop dragonfly-app",
+    "pm2:start": "pm2 start dragonfly-app",
+    "pm2:logs": "pm2 logs dragonfly-app",
+    "dev:start": "./scripts/dev-helper.sh start-dev",
+    "dev:status": "./scripts/dev-helper.sh status",
+    "dev:urls": "./scripts/dev-helper.sh urls",
+    "dev:logs": "./scripts/dev-helper.sh logs-dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.842.0",
