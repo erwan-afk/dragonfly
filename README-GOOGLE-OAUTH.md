@@ -3,8 +3,8 @@
 ## Variables d'environnement déjà configurées ✅
 
 ```
-GOOGLE_CLIENT_ID='38090347783-pmaq8q3610r1ed5h5bk3pfaj8p9r6ido.apps.googleusercontent.com'
-GOOGLE_CLIENT_SECRET='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'
+GOOGLE_CLIENT_ID='your-google-client-id.apps.googleusercontent.com'
+GOOGLE_CLIENT_SECRET='GOCSPX-your-google-client-secret'
 ```
 
 ## Configuration Google Cloud Console
