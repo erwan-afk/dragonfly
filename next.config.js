@@ -1,5 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Désactiver complètement la génération statique pour éviter les erreurs useSearchParams
+    output: 'standalone',
+    experimental: {
+        missingSuspenseWithCSRBailout: false,
+        serverComponentsExternalPackages: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner']
+    },
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                fs: false,
+                net: false,
+                tls: false,
+            };
+        }
+
+        // Résoudre le problème AWS SDK
+        config.resolve.extensionAlias = {
+            '.js': ['.ts', '.tsx', '.js', '.jsx'],
+        };
+
+        return config;
+    },
     images: {
         domains: [
             'www.dragonfly-trimarans.org', // Ancien domaine FTP (pour compatibilité)

@@ -75,17 +75,19 @@ model verification {
 }
 
 model boat {
-  id             String   @id @default(cuid())
+  id             String     @id @default(cuid())
   model          String
-  price          Decimal  @db.Decimal
+  price          Decimal    @db.Decimal
   country        String
-  description    String
+  description    String     @db.VarChar(2000) // Limite à 2000 caractères
   photos         String[]
-  userId         String   @map("user_id")
-  createdAt      DateTime @map("created_at") @default(now()) @db.Timestamp(6)
-  currency       String   @default("EUR")
-  specifications String[] @default([])
-  vatPaid        Boolean  @map("vat_paid") @default(false)
+  userId         String     @map("user_id")
+  createdAt      DateTime   @map("created_at") @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime   @map("updated_at") @default(now()) @db.Timestamp(6)
+  currency       String     @default("EUR")
+  specifications String[]   @default([])
+  vatPaid        Boolean    @map("vat_paid") @default(false)
+  status         BoatStatus @default(pending)
   
   user           user     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   payments       payment[]
@@ -151,6 +153,13 @@ enum Role {
   user
   admin
   superAdmin
+}
+
+enum BoatStatus {
+  pending
+  active
+  inactive
+  deleted
 }
 
 enum PricingType {

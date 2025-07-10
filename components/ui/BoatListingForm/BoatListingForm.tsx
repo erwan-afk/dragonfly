@@ -13,6 +13,7 @@ import type {
 import { getStripe } from '@/utils/stripe/client';
 import { checkoutWithStripe } from '@/utils/stripe/server';
 import { getErrorRedirect } from '@/utils/helpers';
+import { emergencyCleanup } from '@/utils/boats/status';
 import { Select, SelectItem, SelectSection } from '@heroui/select';
 import { Avatar } from '@heroui/avatar';
 import { Input, Textarea } from '@heroui/input';
@@ -276,6 +277,11 @@ export default function BoatListingForm({
     return JSON.stringify(imageMetadata);
   };
 
+  // Validation pour la description (2000 caractères max)
+  const validateDescription = (desc: string): boolean => {
+    return desc.length <= 2000;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -285,7 +291,16 @@ export default function BoatListingForm({
       return router.push('/signin/signup');
     }
 
+    let boatId: string | null = null;
+
     try {
+      // Validation de la description (2000 caractères max)
+      if (!validateDescription(description)) {
+        alert('La description doit faire moins de 2000 caractères.');
+        setIsLoading(false);
+        return;
+      }
+
       // Upload des images vers un dossier temporaire AVANT le paiement
       let tempImageKeys: string[] = [];
 
@@ -337,16 +352,42 @@ export default function BoatListingForm({
         setUploadingPhotos(false);
       }
 
-      // Créer les métadonnées avec les clés d'images temporaires
+      // Créer le bateau avec statut pending AVANT le paiement
+      console.log('🚤 Creating boat with pending status...');
+      const boatResponse = await fetch('/api/boats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          price: priceBoat,
+          country,
+          description,
+          photos: tempImageKeys,
+          currency,
+          specifications,
+          vatPaid
+        })
+      });
+
+      const boatResult = await boatResponse.json();
+
+      if (!boatResult.success) {
+        console.error('❌ Failed to create boat:', boatResult.error);
+        alert(`Erreur lors de la création du bateau: ${boatResult.error || 'Erreur inconnue'}`);
+        setIsLoading(false);
+        return;
+      }
+
+      boatId = boatResult.boatId;
+      console.log('✅ Boat created with ID:', boatId);
+
+      // Métadonnées Stripe simplifiées avec l'ID du bateau
       const metadata: Record<string, string> = {
-        boat_model: model,
-        boat_description: description,
-        boat_country: country,
-        boat_price: priceBoat.toString(),
-        boat_currency: currency,
-        boat_specifications: JSON.stringify(specifications),
-        boat_vat_paid: vatPaid ? 'true' : 'false',
-        temp_image_keys: JSON.stringify(tempImageKeys) // Clés temporaires à déplacer après paiement
+        boat_id: boatId || '',
+        listing_type: 'boat',
+        user_id: user.id
       };
 
       const { errorRedirect, sessionId } = await checkoutWithStripe(
@@ -356,11 +397,19 @@ export default function BoatListingForm({
       );
 
       if (errorRedirect) {
+        // En cas d'erreur, nettoyage d'urgence
+        if (boatId) {
+          await emergencyCleanup(boatId, 'Stripe checkout error');
+        }
         router.push(errorRedirect);
         return;
       }
 
       if (!sessionId) {
+        // En cas d'erreur, nettoyage d'urgence
+        if (boatId) {
+          await emergencyCleanup(boatId, 'No session ID returned');
+        }
         router.push(
           getErrorRedirect(
             window.location.pathname,
@@ -371,10 +420,29 @@ export default function BoatListingForm({
         return;
       }
 
+      console.log('🎯 Redirecting to Stripe checkout...');
       const stripe = await getStripe();
-      await stripe?.redirectToCheckout({ sessionId });
+      const result = await stripe?.redirectToCheckout({ sessionId });
+      
+      // Si la redirection échoue, nettoyer aussi
+      if (result?.error) {
+        if (boatId) {
+          await emergencyCleanup(boatId, `Stripe redirect error: ${result.error.message}`);
+        }
+        alert(`Erreur lors de la redirection: ${result.error.message}`);
+      }
     } catch (error) {
       console.error('Error during checkout:', error);
+      
+      // Nettoyage d'urgence en cas d'exception
+      if (boatId) {
+        try {
+          await emergencyCleanup(boatId, `Checkout exception: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } catch (cleanupError) {
+          console.error('❌ Emergency cleanup failed:', cleanupError);
+        }
+      }
+      
       alert('An error occurred during checkout. Please try again.');
     } finally {
       setIsLoading(false);
