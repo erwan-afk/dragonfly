@@ -15,7 +15,7 @@ export default function PaymentSuccessPage() {
       try {
         setLoading(true);
 
-        // Attendre un peu pour laisser le webhook se terminer
+        // Attendre un peu pour laisser le webhook enregistrer le paiement
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         // Récupérer le dernier bateau créé par l'utilisateur
@@ -35,10 +35,7 @@ export default function PaymentSuccessPage() {
 
               if (retryResult.success && retryResult.boat) {
                 setBoatId(retryResult.boat.id);
-                console.log(
-                  '✅ Bateau récupéré lors du retry:',
-                  retryResult.boat.id
-                );
+                console.log('✅ Bateau récupéré lors du retry:', retryResult.boat.id);
               } else {
                 setError('Impossible de récupérer les informations du bateau');
               }
@@ -96,7 +93,7 @@ export default function PaymentSuccessPage() {
           </h1>
 
           <p className="text-gray-600 mb-6">
-            Votre annonce a été créée avec succès.
+            Votre annonce a été créée avec succès et est maintenant active.
           </p>
 
           {/* État de chargement */}
@@ -125,10 +122,10 @@ export default function PaymentSuccessPage() {
           {!loading && !error && boatId && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
               <p className="text-green-800 text-sm">
-                ✅ Votre annonce a été créée avec succès !
+                ✅ Votre annonce est maintenant active !
               </p>
               <p className="text-green-600 text-xs mt-1">
-                Toutes les images ont été traitées automatiquement.
+                Elle est visible par tous les utilisateurs.
               </p>
             </div>
           )}

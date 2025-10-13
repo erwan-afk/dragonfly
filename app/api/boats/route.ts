@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Créer le bateau avec statut pending
+        // Créer le bateau avec statut active directement
         const boat = await prisma.boat.create({
             data: {
                 model,
@@ -52,17 +52,17 @@ export async function POST(request: NextRequest) {
                 currency: currency || 'EUR',
                 specifications: specifications || [],
                 vatPaid: vatPaid || false,
-                status: 'pending', // Statut pending par défaut
+                status: 'active', // Statut active dès la création
                 userId: session.user.id
             }
         });
 
-        console.log('✅ Boat created with pending status:', boat.id);
+        console.log('✅ Boat created with active status:', boat.id);
 
         return NextResponse.json({
             success: true,
             boatId: boat.id,
-            message: 'Boat created successfully with pending status'
+            message: 'Boat created successfully with active status'
         });
 
     } catch (error) {

@@ -2,7 +2,9 @@
 const nextConfig = {
     // Désactiver complètement la génération statique pour éviter les erreurs useSearchParams
     output: 'standalone',
+    productionBrowserSourceMaps: false,
     experimental: {
+        webpackBuildWorker: true,
         missingSuspenseWithCSRBailout: false,
         serverComponentsExternalPackages: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner']
     },

@@ -1,4 +1,5 @@
 import prisma from '@/utils/prisma/client';
+import { deleteAllBoatImages } from '@/utils/cloudflare/r2';
 
 export async function activateBoat(boatId: string) {
     try {
@@ -54,6 +55,21 @@ export async function safeDeleteBoat(boatId: string, maxRetries: number = 3) {
 export async function emergencyCleanup(boatId: string, reason: string) {
     console.log(`🚨 Emergency cleanup triggered for boat ${boatId} - Reason: ${reason}`);
 
+    // Première étape : supprimer les images
+    try {
+        console.log(`🗑️ Deleting images for boat ${boatId}...`);
+        const imagesDeleted = await deleteAllBoatImages(boatId);
+        if (imagesDeleted) {
+            console.log(`✅ All images deleted for boat ${boatId}`);
+        } else {
+            console.log(`⚠️ Some images may not have been deleted for boat ${boatId}`);
+        }
+    } catch (imageError) {
+        console.error(`❌ Error deleting images for boat ${boatId}:`, imageError);
+        // Continue with boat deletion even if image deletion fails
+    }
+
+    // Deuxième étape : supprimer le bateau
     try {
         // Première tentative : suppression normale
         await deleteBoat(boatId);

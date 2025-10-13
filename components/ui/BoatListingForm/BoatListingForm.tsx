@@ -12,8 +12,8 @@ import type {
 } from '@/types/database';
 import { getStripe } from '@/utils/stripe/client';
 import { checkoutWithStripe } from '@/utils/stripe/server';
-import { getErrorRedirect } from '@/utils/helpers';
-import { emergencyCleanup } from '@/utils/boats/status';
+import { getErrorRedirect, getPaymentErrorRedirect } from '@/utils/helpers';
+import { emergencyCleanupClient } from '@/utils/boats/client';
 import { Select, SelectItem, SelectSection } from '@heroui/select';
 import { Avatar } from '@heroui/avatar';
 import { Input, Textarea } from '@heroui/input';
@@ -397,26 +397,20 @@ export default function BoatListingForm({
       );
 
       if (errorRedirect) {
-        // En cas d'erreur, nettoyage d'urgence
+        // En cas d'erreur, nettoyage d'urgence et redirection vers page d'erreur
         if (boatId) {
-          await emergencyCleanup(boatId, 'Stripe checkout error');
+          await emergencyCleanupClient(boatId, 'Stripe checkout error');
         }
-        router.push(errorRedirect);
+        router.push(getPaymentErrorRedirect('payment_failed', 'Erreur lors de la création de la session de paiement'));
         return;
       }
 
       if (!sessionId) {
-        // En cas d'erreur, nettoyage d'urgence
+        // En cas d'erreur, nettoyage d'urgence et redirection vers page d'erreur
         if (boatId) {
-          await emergencyCleanup(boatId, 'No session ID returned');
+          await emergencyCleanupClient(boatId, 'No session ID returned');
         }
-        router.push(
-          getErrorRedirect(
-            window.location.pathname,
-            'An unknown error occurred.',
-            'Please try again later or contact a system administrator.'
-          )
-        );
+        router.push(getPaymentErrorRedirect('payment_failed', 'Impossible de créer la session de paiement'));
         return;
       }
 
@@ -427,9 +421,10 @@ export default function BoatListingForm({
       // Si la redirection échoue, nettoyer aussi
       if (result?.error) {
         if (boatId) {
-          await emergencyCleanup(boatId, `Stripe redirect error: ${result.error.message}`);
+          await emergencyCleanupClient(boatId, `Stripe redirect error: ${result.error.message}`);
         }
-        alert(`Erreur lors de la redirection: ${result.error.message}`);
+        router.push(getPaymentErrorRedirect('payment_failed', `Erreur lors de la redirection: ${result.error.message}`));
+        return;
       }
     } catch (error) {
       console.error('Error during checkout:', error);
@@ -437,13 +432,14 @@ export default function BoatListingForm({
       // Nettoyage d'urgence en cas d'exception
       if (boatId) {
         try {
-          await emergencyCleanup(boatId, `Checkout exception: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          await emergencyCleanupClient(boatId, `Checkout exception: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } catch (cleanupError) {
           console.error('❌ Emergency cleanup failed:', cleanupError);
         }
       }
       
-      alert('An error occurred during checkout. Please try again.');
+      router.push(getPaymentErrorRedirect('payment_failed', 'Une erreur inattendue s\'est produite lors du paiement'));
+      return;
     } finally {
       setIsLoading(false);
       setUploadingPhotos(false);

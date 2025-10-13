@@ -4,14 +4,14 @@ export const getURL = (path: string = '') => {
   // Check if NEXT_PUBLIC_SITE_URL is set and non-empty. Set this to your site URL in production env.
   let url =
     process?.env?.NEXT_PUBLIC_SITE_URL &&
-    process.env.NEXT_PUBLIC_SITE_URL.trim() !== ''
+      process.env.NEXT_PUBLIC_SITE_URL.trim() !== ''
       ? process.env.NEXT_PUBLIC_SITE_URL
       : // If not set, check for NEXT_PUBLIC_VERCEL_URL, which is automatically set by Vercel.
-        process?.env?.NEXT_PUBLIC_VERCEL_URL &&
-          process.env.NEXT_PUBLIC_VERCEL_URL.trim() !== ''
+      process?.env?.NEXT_PUBLIC_VERCEL_URL &&
+        process.env.NEXT_PUBLIC_VERCEL_URL.trim() !== ''
         ? process.env.NEXT_PUBLIC_VERCEL_URL
         : // If neither is set, default to localhost for local development.
-          'http://localhost:3000/';
+        'http://localhost:3000/';
 
   // Ensure url is a string and not undefined
   if (!url || typeof url !== 'string') {
@@ -22,12 +22,12 @@ export const getURL = (path: string = '') => {
   url = url.replace(/\/+$/, '');
   // Make sure to include `https://` when not localhost.
   url = url.includes('http') ? url : `https://${url}`;
-  
+
   // Ensure path is a string and not undefined
   if (!path || typeof path !== 'string') {
     path = '';
   }
-  
+
   // Ensure path starts without a slash to avoid double slashes in the final URL.
   path = path.replace(/^\/+/, '');
 
@@ -157,5 +157,18 @@ export const getErrorRedirect = (
     disableButton,
     arbitraryParams
   );
+
+export const getPaymentErrorRedirect = (
+  errorType: 'payment_failed' | 'session_expired' | 'payment_cancelled' = 'payment_failed',
+  errorMessage?: string
+) => {
+  let redirectPath = `/payment-error?type=${errorType}`;
+
+  if (errorMessage) {
+    redirectPath += `&message=${encodeURIComponent(errorMessage)}`;
+  }
+
+  return redirectPath;
+};
 
 

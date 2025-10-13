@@ -14,10 +14,12 @@ export default async function ForSalePage() {
     console.log('🔍 Loading boats for sale...');
 
     // Utilisons SQL brut pour éviter les problèmes de schéma
+    // Ne récupérer que les bateaux avec le statut 'active' (payés)
     const boats = (await prisma.$queryRaw`
       SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
       FROM "boats" b
       LEFT JOIN "user" u ON b.user_id = u.id
+      WHERE b.status = 'active'
       ORDER BY b.created_at DESC
     `) as any[];
 

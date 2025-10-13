@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
 
     // Récupérer le dernier bateau créé par cet utilisateur dans les dernières 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    
+
     const latestBoat = await prisma.$queryRaw`
-      SELECT id, model, price, country, created_at 
+      SELECT id, model, price, country, created_at, status 
       FROM boats 
       WHERE user_id = ${userId} 
       AND created_at >= ${fiveMinutesAgo}
@@ -29,13 +29,15 @@ export async function GET(req: NextRequest) {
     ` as any[];
 
     if (!latestBoat || latestBoat.length === 0) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "No recent boat found" 
+      return NextResponse.json({
+        success: false,
+        error: "No recent boat found"
       }, { status: 404 });
     }
 
     const boat = latestBoat[0];
+
+    // Le bateau est créé directement active, plus besoin de vérifier
 
     return NextResponse.json({
       success: true,
@@ -44,6 +46,7 @@ export async function GET(req: NextRequest) {
         model: boat.model,
         price: boat.price,
         country: boat.country,
+        status: boat.status,
         createdAt: boat.created_at
       }
     });
