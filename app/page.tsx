@@ -28,7 +28,7 @@ export default async function HomePage() {
     console.log('📊 Products:', products.length, 'Boats:', boats.length);
 
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-red-600">
         <HeroSection />
 
         <Suspense
