@@ -24,7 +24,8 @@ RUN npm ci --legacy-peer-deps
 # Générer les clients Prisma
 RUN npx prisma generate
 
-# Construire l'application Next.js
+# Construire l'application Next.js avec DATABASE_URL (même si fictif pour le build)
+ENV DATABASE_URL=postgresql://postgres:password@postgres:5432/default
 RUN npm run build
 
 # Image de production

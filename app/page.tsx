@@ -11,6 +11,9 @@ import FeatureSection from '@/components/FeatureSection';
 import Button from '@/components/ui/Button/Button';
 import { Skeleton } from '@heroui/skeleton';
 
+// Désactiver le rendu statique - cette page doit être rendue dynamiquement
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   console.log('🏠 HomePage: Fetching data...');
 

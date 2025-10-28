@@ -9,6 +9,9 @@ import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
 import Button from '@/components/ui/Button/Button';
 import Scroll from '@/components/icons/Scroll';
 
+// Désactiver le rendu statique - cette page doit être rendue dynamiquement
+export const dynamic = 'force-dynamic';
+
 export default async function ForSalePage() {
   try {
     console.log('🔍 Loading boats for sale...');

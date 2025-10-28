@@ -17,11 +17,11 @@ module.exports = {
                 NODE_ENV: 'production',
                 PORT: 3000,
                 // Better Auth
-                BETTER_AUTH_SECRET: 'PKJo2MfDZyys4Y2JPbuxbhwX2AgQJbeF',
-                BETTER_AUTH_URL: 'http://217.65.144.71:3000',
-                NEXT_PUBLIC_BETTER_AUTH_URL: 'http://217.65.144.71:3000',
-                // Base de données - vraie configuration
-                DATABASE_URL: 'postgresql://postgres:CHANGE_ME@localhost:5432/default',
+                BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+                BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+                NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+                // Base de données
+                DATABASE_URL: process.env.DATABASE_URL,
                 // Ajoutez vos autres variables ici
             }
         }

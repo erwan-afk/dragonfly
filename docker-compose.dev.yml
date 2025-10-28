@@ -1,0 +1,71 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dragonfly_app_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dragonfly_dev_network
+    volumes:
+      # Monter le code source pour le hot-reload
+      - ./app:/app/app
+      - ./components:/app/components
+      - ./utils:/app/utils
+      - ./lib:/app/lib
+      - ./prisma:/app/prisma
+      - ./public:/app/public
+      - ./styles:/app/styles
+      # Exclure node_modules et .next pour éviter les conflits
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: dragonfly_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-default}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - dragonfly_dev_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: dragonfly_stripe_cli_dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: listen --forward-to http://app:3000/api/webhooks --skip-verify
+    networks:
+      - dragonfly_dev_network
+    depends_on:
+      - app
+
+networks:
+  dragonfly_dev_network:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+
+
