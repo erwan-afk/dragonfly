@@ -3,6 +3,10 @@ import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   try {
     // Vérifier l'authentification

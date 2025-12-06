@@ -12,6 +12,10 @@ import { createBoatPaymentRecord } from '@/utils/boats/payments';
 import { moveTempImagesToBoat, urlToKey } from '@/utils/cloudflare/r2';
 import prisma from '@/utils/prisma/client';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Type definition for webhook handlers
 type WebhookHandler = (event: Stripe.Event) => Promise<void>;
 

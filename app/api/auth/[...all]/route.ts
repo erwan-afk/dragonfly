@@ -1,6 +1,10 @@
 import { auth } from "@/utils/auth/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 
+// Force dynamic rendering - don't try to statically generate this route
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Wrapper avec gestion d'erreur et logs
 const createHandler = () => {
   try {

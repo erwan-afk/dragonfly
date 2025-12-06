@@ -6,6 +6,10 @@ import validator from 'validator';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { validateCSRFToken } from '../csrf/route';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Configuration du rate limiter
 const rateLimiter = new RateLimiterMemory({
   keyPrefix: 'contact_form',

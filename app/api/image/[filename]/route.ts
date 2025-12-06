@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getImageFromR2, validateR2Config } from "@/utils/cloudflare/r2";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest, { params }: { params: { filename: string } }) {
   const { filename } = params;
 

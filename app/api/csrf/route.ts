@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Store tokens in memory (in production, use Redis or database)
 const tokenStore = new Map<string, { token: string; timestamp: number; ip: string }>();
 

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getProductsFromDatabase } from '@/utils/database/products';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     console.log('🔍 API: Fetching products from database...');

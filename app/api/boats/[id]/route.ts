@@ -4,6 +4,10 @@ import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
 import { deleteAllBoatImages } from '@/utils/cloudflare/r2';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

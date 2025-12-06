@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadImagesForBoatWithWebP, validateR2Config } from "@/utils/cloudflare/r2";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   // Valider la configuration R2
   const configValidation = validateR2Config();
