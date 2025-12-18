@@ -56,17 +56,19 @@ export async function POST(request: NextRequest) {
                 currency: currency || 'EUR',
                 specifications: specifications || [],
                 vatPaid: vatPaid || false,
-                status: 'active', // Statut active dès la création
+                // Sécurité: une annonce payante doit rester "pending" tant que Stripe
+                // n'a pas confirmé le paiement via webhook.
+                status: 'pending',
                 userId: session.user.id
             }
         });
 
-        console.log('✅ Boat created with active status:', boat.id);
+        console.log('✅ Boat created with pending status:', boat.id);
 
         return NextResponse.json({
             success: true,
             boatId: boat.id,
-            message: 'Boat created successfully with active status'
+            message: 'Boat created successfully with pending status'
         });
 
     } catch (error) {
@@ -95,6 +97,15 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json(
                 { error: 'Missing boatId or status' },
                 { status: 400 }
+            );
+        }
+
+        // Sécurité: l'utilisateur ne doit jamais pouvoir activer ("active") une annonce via API.
+        // L'activation est réservée au webhook Stripe après paiement confirmé.
+        if (status === 'active' || status === 'pending') {
+            return NextResponse.json(
+                { error: 'Forbidden status transition' },
+                { status: 403 }
             );
         }
 

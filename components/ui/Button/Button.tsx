@@ -21,6 +21,7 @@ interface ButtonProps {
   lowercase?: boolean;
   anim_disabled?: boolean;
   fullwidth?: boolean;
+  textsize?: string;
 }
 
 const icons = {
@@ -44,7 +45,8 @@ export default function Button({
   loading,
   lowercase,
   anim_disabled,
-  fullwidth
+  fullwidth,
+  textsize = 'text-16'
 }: ButtonProps) {
   const IconComponent = icon ? icons[icon] : null;
 
@@ -59,7 +61,7 @@ export default function Button({
 
   const textContent = (
     <TextWrapper
-      className={`flex items-center gap-2 ${textColor}`}
+      className={`flex items-center gap-2 whitespace-nowrap ${textColor} ${textsize}`}
       {...(anim_disabled
         ? {}
         : {

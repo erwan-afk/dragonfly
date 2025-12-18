@@ -15,7 +15,7 @@ export default async function EditListingPage({
   });
 
   if (!session?.user) {
-    redirect('/signin');
+    redirect('/signin/password_signin');
   }
 
   try {

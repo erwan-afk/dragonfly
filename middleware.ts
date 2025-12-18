@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  console.log('🔍 Middleware appelé pour:', request.nextUrl.pathname);
-  
   // Désactivé temporairement pour éviter les erreurs Prisma
   // Laissons passer toutes les requêtes pour l'instant
   return NextResponse.next();
@@ -17,6 +15,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)',
   ],
 }

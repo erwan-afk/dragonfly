@@ -32,6 +32,8 @@ interface PricingCardProps {
 
   popular?: boolean;
   renewal?: boolean;
+  isHovered?: boolean;
+  isOtherHovered?: boolean;
 }
 
 export const PricingCard: React.FC<PricingCardProps> = ({
@@ -43,61 +45,79 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   stripeProduct,
 
   popular = false,
-  renewal = false
+  renewal = false,
+  isHovered = false,
+  isOtherHovered = false
 }) => {
   const router = useRouter();
   const [priceIdLoading, setPriceIdLoading] = useState<string>();
   const currentPath = usePathname();
 
+  // Déterminer la couleur de la bordure
+  const getBorderClass = () => {
+    if (popular) {
+      if (isHovered) return 'border-articblue';
+      if (isOtherHovered) return 'border-smokygrey';
+      return 'border-oceanblue';
+    }
+    return isHovered ? 'border-articblue' : 'border-smokygrey';
+  };
+
   return (
     <div
-      className={`flex flex-col  ${renewal ? 'bg-fullwhite' : ' bg-fullwhite'}  py-40 px-32 gap-32 w-full rounded-16 ${popular ? 'border-2 border-articblue scale-110 mx- ' : ''}`}
+      className={`flex flex-col bg-fullwhite py-40 px-32 gap-32 w-full h-full rounded-16 border-2 transition-colors ${getBorderClass()}`}
     >
       <div className="w-full flex flex-row justify-between items-center">
         <h2
-          className={`${renewal ? 'text-darkgrey' : ' text-articblue'} flex items-center font-light leading-[60%] h-[25px] text-24`}
+          className={`${renewal ? 'text-darkgrey' : ' text-oceanblue'} flex items-center  leading-[60%] h-[25px] text-24`}
         >
           {title}
         </h2>
         {popular && ( // Condition d'affichage
           <div
-            className={`border-2 border-articblue text-articblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
+            className={`border-2 border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
           >
             <motion.div
+              key={isHovered ? 'hovered' : 'not-hovered'} // Force re-render on hover
               initial={{ rotate: 0, scale: 1 }}
-              whileInView={{
-                rotate: [0, 15, -15, 0],
-                scale: [1, 1.4, 1.4, 1]
-              }}
+              animate={
+                isHovered
+                  ? {
+                      rotate: [0, 15, -15, 0],
+                      scale: [1, 1.4, 1.4, 1]
+                    }
+                  : { rotate: 0, scale: 1 }
+              }
               transition={{
                 duration: 0.8,
-                ease: 'easeInOut',
-                delay: 0.5
+                ease: 'easeInOut'
               }}
-              viewport={{ amount: 0.5 }}
             >
               <Star />
             </motion.div>
-            <div className="uppercase font-medium text-articblue leading-[80%] text-[12px]">
+            <div className="uppercase font-medium text-oceanblue leading-[80%] text-[12px]">
               Popular
             </div>
           </div>
         )}
       </div>
 
-      <h1 className="font-medium text-32 text-darkgrey">{price}</h1>
+      <h1 className="font-medium text-32 text-oceanblue">{price}</h1>
 
-      <button
+      <Button
+        text={`Start with ${title}`}
+        href="/pricing"
+        bgColor={popular ? 'bg-oceanblue' : 'bg-articblue'}
+        textColor="text-fullwhite"
+        icon="link"
+        textsize="text-12"
         onClick={() => {
           const queryString = new URLSearchParams({
             preference: title
           }).toString();
           window.location.href = `/list-boat?${queryString}`;
         }}
-        className="bg-articblue w-full rounded-full py-[5px] text-20 hover:bg-[#4A888A] duration-200 transition-all"
-      >
-        {buttonText}
-      </button>
+      />
       <div className="h-[1px] w-full bg-smokygrey"></div>
       <div className="flex flex-col gap-24">
         <div className="text-oceanblue flex flex-col font-medium">Features</div>

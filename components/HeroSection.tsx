@@ -2,12 +2,14 @@
 
 import Button from '@/components/ui/Button/Button';
 import Scroll from '@/components/icons/Scroll';
+import SearchBar from '@/components/SearchBar';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export default function HeroSection() {
   return (
-    <>
-      <section
+    <div className="flex flex-col gap-64 w-full mx-auto max-w-screen-xl">
+      {/* <section
         className="mx-auto max-w-screen-xl max-h-[730px] rounded-16 text-center bg-cover bg-bottom h-[70vh] p-[32px] flex flex-row justify-between items-end"
         style={{ backgroundImage: `url('/images/ocean.png')` }}
       >
@@ -47,9 +49,92 @@ export default function HeroSection() {
             <div className="text-24 text-oceanblue">ads</div>
           </div>
         </div>
+      </section> */}
+
+      <section className="w-full  p-40 rounded-16  flex flex-row justify-between items-center bg-[url('/images/dragonfly-boat.webp')]  text-40 font-medium bg-cover bg-center ">
+        <SearchBar />
+
+        <div className="text-fullwhite text-40 px-32">
+          Find the boat <br />
+          that suits you
+        </div>
       </section>
 
-      <section className="mx-auto max-w-screen-xl flex flex-col justify-center items-center h-[120px] text-articblue text-20">
+      <section className="flex flex-col gap-32">
+        <h1 className="text-oceanblue text-32">
+          The most <span className="text-articblue">popular</span> models
+        </h1>
+
+        <div className="flex flex-row gap-32">
+          <Link
+            href="/forsale?model=df25"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-[200px] w-full rounded-16 overflow-hidden"
+          >
+            <img
+              src="/images/boat-1.webp"
+              alt="Dragonfly 25"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            />
+            <div className="absolute bottom-0 left-0 z-10 m-2 text-oceanblue text-16 bg-fullwhite  px-2 py-1 rounded-8 text-center font-medium">
+              Dragonfly 25
+            </div>
+          </Link>
+          <Link
+            href="/forsale?model=df28"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-[200px] w-full rounded-16 overflow-hidden"
+          >
+            <img
+              src="/images/boat-2.webp"
+              alt="Dragonfly 28"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            />
+            <div className="absolute bottom-0 left-0 z-10 m-2 text-oceanblue text-16 bg-fullwhite  px-2 py-1 rounded-8 text-center font-medium">
+              Dragonfly 28
+            </div>
+          </Link>
+          <Link
+            href="/forsale?model=df32"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-[200px] w-full rounded-16 overflow-hidden"
+          >
+            <img
+              src="/images/boat-3.webp"
+              alt="Dragonfly 32"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            />
+            <div className="absolute bottom-0 left-0 z-10 m-2 text-oceanblue text-16 bg-fullwhite  px-2 py-1 rounded-8 text-center font-medium">
+              Dragonfly 32
+            </div>
+          </Link>
+          <Link
+            href="/forsale?model=df40"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-[200px] w-full rounded-16 overflow-hidden"
+          >
+            <img
+              src="/images/boat-4.webp"
+              alt="Dragonfly 40"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            />
+
+            <div
+              className="absolute bottom-0 left-0 z-10 m-2
+                  bg-fullwhite text-oceanblue text-16
+                  px-2 py-1 rounded-8 font-medium"
+            >
+              Dragonfly 40
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* <section className="mx-auto max-w-screen-xl flex flex-col justify-center items-center h-[120px] text-articblue text-20">
         <motion.a
           className="flex flex-row items-center gap-[9px] p-6 cursor-pointer"
           href="#Boats"
@@ -63,7 +148,7 @@ export default function HeroSection() {
           <Scroll />
           <div>Scroll down</div>
         </motion.a>
-      </section>
-    </>
+      </section> */}
+    </div>
   );
 }

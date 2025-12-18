@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import PricingSection from '@/components/ui/Pricing/PricingSection';
 import BoatGrid from '@/components/BoatGrid';
 import ReloadButton from '@/components/ReloadButton';
+import ForumSection from '@/components/ForumSection';
 import {
   getProductsFromDatabase,
   getBoatsFromDatabase
@@ -15,7 +16,8 @@ import { Skeleton } from '@heroui/skeleton';
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  console.log('🏠 HomePage: Fetching data...');
+  const isDev = process.env.NODE_ENV === 'development';
+  if (isDev) console.log('🏠 HomePage: Fetching data...');
 
   try {
     // Récupérer les produits et bateaux depuis la BDD
@@ -24,11 +26,8 @@ export default async function HomePage() {
       getBoatsFromDatabase(3) // Limite à 3 bateaux les plus récents pour la homepage
     ]);
 
-    console.log('✅ HomePage: Data fetched successfully');
-    console.log('📊 Products:', products.length, 'Boats:', boats.length);
-
     return (
-      <div className="min-h-screen bg-red-600">
+      <div className="min-h-screen">
         <HeroSection />
 
         <Suspense
@@ -41,48 +40,19 @@ export default async function HomePage() {
 
         <FeatureSection />
 
+        <PricingSection
+          products={products}
+          user={null}
+          userSubscription={null}
+        />
+
         <Suspense
           fallback={
-            <div className="p-8 text-center">Chargement des tarifs...</div>
+            <div className="p-8 text-center">Chargement du forum...</div>
           }
         >
-          <PricingSection
-            products={products}
-            user={null}
-            userSubscription={null}
-          />
+          <ForumSection />
         </Suspense>
-
-        <section className="w-full py-[128px] bg-gradient-to-t from-oceanblue to-articblue ">
-          <div className="mx-auto max-w-screen-xl flex flex-col gap-[80px] items-center ">
-            <div className="flex flex-col items-center gap-[40px] max-w-[860px]">
-              <h1 className="text-48">Latest forum discussions</h1>
-              <p className="text-center">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
-                consectetur quis enim ut volutpat. In massa nulla, blandit sit
-                amet semper eget, accumsan eget nisl. In facilisis felis nulla.
-                Morbi consectetur quis enim ut volutpat.
-              </p>
-              <div className="flex flex-row gap-24">
-                <Button
-                  text="Add a topic"
-                  icon="link"
-                  bgColor="bg-fullwhite"
-                  iconColor="text-oceanblue"
-                  href="/forum"
-                />
-                <Button
-                  text="Discover forum"
-                  icon="link"
-                  bgColor="bg-oceanblue"
-                  iconColor="text-fullwhite"
-                  href="/forum"
-                />
-              </div>
-            </div>
-            <div></div>
-          </div>
-        </section>
       </div>
     );
   } catch (error) {

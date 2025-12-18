@@ -41,7 +41,8 @@ export async function GET(req: NextRequest) {
 
     const boat = latestBoat[0];
 
-    // Le bateau est créé directement active, plus besoin de vérifier
+    // Important: le statut "active" doit être accordé uniquement après webhook Stripe (paiement confirmé).
+    // Cette route ne doit pas servir à "prouver" un paiement, elle retourne juste le dernier bateau.
 
     return NextResponse.json({
       success: true,

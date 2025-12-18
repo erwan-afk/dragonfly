@@ -6,10 +6,10 @@ interface BoatGridProps {
 
 export default function BoatGrid({ boats }: BoatGridProps) {
   return (
-    <section id="Boats" className="w-full py-[128px] bg-lightgrey ">
-      <div className="mx-auto max-w-screen-xl flex flex-col gap-[80px]">
+    <section id="Boats" className="w-full  pt-[60px]">
+      <div className="mx-auto max-w-screen-xl flex flex-col gap-32">
         <div className="flex flex-row items-center justify-between">
-          <h1 className="text-oceanblue text-56">
+          <h1 className="text-oceanblue text-32">
             <span className="text-articblue">Boats</span> in spotlight
           </h1>
           {/* <Button

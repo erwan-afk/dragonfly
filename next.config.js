@@ -3,6 +3,8 @@ const nextConfig = {
     // Désactiver complètement la génération statique pour éviter les erreurs useSearchParams
     output: 'standalone',
     productionBrowserSourceMaps: false,
+    // Désactiver React Strict Mode pour éviter les doubles rendus en dev
+    reactStrictMode: false,
     experimental: {
         webpackBuildWorker: true,
         missingSuspenseWithCSRBailout: false,
@@ -29,6 +31,7 @@ const nextConfig = {
         domains: [
             'www.dragonfly-trimarans.org', // Ancien domaine FTP (pour compatibilité)
             // Domaines R2 - ajoutez votre domaine personnalisé si vous en avez un
+            'flagcdn.com',
         ],
         remotePatterns: [
             // Ancien pattern FTP (pour compatibilité)
@@ -41,6 +44,11 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: '*.r2.cloudflarestorage.com',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'flagcdn.com',
                 pathname: '/**',
             },
             // Pattern pour domaine personnalisé R2 (si vous en avez un)

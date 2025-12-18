@@ -21,6 +21,15 @@ import { NumberInput } from '@heroui/number-input';
 import { Checkbox } from '@heroui/checkbox';
 import Valide from '@/components/icons/Valide';
 import Lock from '@/components/icons/lock';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import StripePaymentForm from '@/components/ui/StripePaymentForm/StripePaymentForm';
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ??
+    ''
+);
 
 export const dragonflyModels = [
   { key: 'df25', label: 'Dragonfly 25' },
@@ -153,6 +162,8 @@ export default function BoatListingForm({
 }: BoatListingFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   // Get the currently selected product and its price
   const defaultProductId =
     products.find((p) => p.name === preference)?.id || products[0]?.id || '';
@@ -175,6 +186,11 @@ export default function BoatListingForm({
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreview, setPhotoPreview] = useState<string[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  // Payment states - clientSecret créé au chargement
+  const [clientSecret, setClientSecret] = useState<string>('');
+  const [boatId, setBoatId] = useState<string | null>(null);
+  const [paymentReady, setPaymentReady] = useState(false);
 
   // Early return if no valid products are available
   if (!products.length || !selectedPrice) {
@@ -282,26 +298,38 @@ export default function BoatListingForm({
     return desc.length <= 2000;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Cette fonction sera appelée par le StripePaymentForm AVANT de confirmer le paiement
+  const handleBeforePayment = async (): Promise<{
+    success: boolean;
+    boatId?: string;
+  }> => {
     setIsLoading(true);
 
     if (!user) {
-      setIsLoading(false);
-      return router.push('/signin/signup');
+      router.push('/signin/signup');
+      return { success: false };
     }
 
-    let boatId: string | null = null;
+    // Validation de la description
+    if (!validateDescription(description)) {
+      alert('La description doit faire moins de 2000 caractères.');
+      setIsLoading(false);
+      return { success: false };
+    }
+
+    // Validation des champs requis
+    if (!model || !country || !priceBoat) {
+      alert(
+        'Veuillez remplir tous les champs obligatoires (modèle, pays, prix).'
+      );
+      setIsLoading(false);
+      return { success: false };
+    }
+
+    let tempBoatId: string | null = null;
 
     try {
-      // Validation de la description (2000 caractères max)
-      if (!validateDescription(description)) {
-        alert('La description doit faire moins de 2000 caractères.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Upload des images vers un dossier temporaire AVANT le paiement
+      // Upload des images
       let tempImageKeys: string[] = [];
 
       if (photoFiles.length > 0) {
@@ -311,7 +339,6 @@ export default function BoatListingForm({
         );
 
         const uploadFormData = new FormData();
-        // Créer un sessionId unique pour cet upload
         const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         uploadFormData.append('sessionId', sessionId);
 
@@ -327,38 +354,28 @@ export default function BoatListingForm({
         const uploadResult = await uploadResponse.json();
 
         if (uploadResult.success) {
-          // Gérer les deux formats de réponse de l'API
           if (uploadResult.keys) {
-            // Plusieurs fichiers
             tempImageKeys = uploadResult.keys;
           } else if (uploadResult.key) {
-            // Un seul fichier
             tempImageKeys = [uploadResult.key];
-          } else {
-            tempImageKeys = [];
           }
-          console.log(
-            `✅ ${tempImageKeys.length} image(s) uploaded to temporary storage:`,
-            tempImageKeys
-          );
+          console.log(`✅ ${tempImageKeys.length} image(s) uploaded`);
         } else {
           console.error('❌ Image upload failed:', uploadResult.error);
-          alert("Erreur lors de l'upload des images. Veuillez réessayer.");
+          alert("Erreur lors de l'upload des images.");
           setIsLoading(false);
           setUploadingPhotos(false);
-          return;
+          return { success: false };
         }
 
         setUploadingPhotos(false);
       }
 
-      // Créer le bateau avec statut pending AVANT le paiement
+      // Créer le bateau
       console.log('🚤 Creating boat with pending status...');
       const boatResponse = await fetch('/api/boats', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
           price: priceBoat,
@@ -375,75 +392,54 @@ export default function BoatListingForm({
 
       if (!boatResult.success) {
         console.error('❌ Failed to create boat:', boatResult.error);
-        alert(`Erreur lors de la création du bateau: ${boatResult.error || 'Erreur inconnue'}`);
+        alert(
+          `Erreur lors de la création du bateau: ${boatResult.error || 'Erreur inconnue'}`
+        );
         setIsLoading(false);
-        return;
+        return { success: false };
       }
 
-      boatId = boatResult.boatId;
-      console.log('✅ Boat created with ID:', boatId);
+      tempBoatId = boatResult.boatId;
+      setBoatId(tempBoatId);
+      console.log('✅ Boat created with ID:', tempBoatId);
+      setIsLoading(false);
 
-      // Métadonnées Stripe simplifiées avec l'ID du bateau
-      const metadata: Record<string, string> = {
-        boat_id: boatId || '',
-        listing_type: 'boat',
-        user_id: user.id
-      };
-
-      const { errorRedirect, sessionId } = await checkoutWithStripe(
-        selectedPrice,
-        '/account?section=ads',
-        metadata
-      );
-
-      if (errorRedirect) {
-        // En cas d'erreur, nettoyage d'urgence et redirection vers page d'erreur
-        if (boatId) {
-          await emergencyCleanupClient(boatId, 'Stripe checkout error');
-        }
-        router.push(getPaymentErrorRedirect('payment_failed', 'Erreur lors de la création de la session de paiement'));
-        return;
-      }
-
-      if (!sessionId) {
-        // En cas d'erreur, nettoyage d'urgence et redirection vers page d'erreur
-        if (boatId) {
-          await emergencyCleanupClient(boatId, 'No session ID returned');
-        }
-        router.push(getPaymentErrorRedirect('payment_failed', 'Impossible de créer la session de paiement'));
-        return;
-      }
-
-      console.log('🎯 Redirecting to Stripe checkout...');
-      const stripe = await getStripe();
-      const result = await stripe?.redirectToCheckout({ sessionId });
-      
-      // Si la redirection échoue, nettoyer aussi
-      if (result?.error) {
-        if (boatId) {
-          await emergencyCleanupClient(boatId, `Stripe redirect error: ${result.error.message}`);
-        }
-        router.push(getPaymentErrorRedirect('payment_failed', `Erreur lors de la redirection: ${result.error.message}`));
-        return;
-      }
+      return { success: true, boatId: tempBoatId };
     } catch (error) {
-      console.error('Error during checkout:', error);
-      
-      // Nettoyage d'urgence en cas d'exception
-      if (boatId) {
+      console.error('Error during form submission:', error);
+
+      if (tempBoatId) {
         try {
-          await emergencyCleanupClient(boatId, `Checkout exception: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          await emergencyCleanupClient(
+            tempBoatId,
+            `Form submission exception: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         } catch (cleanupError) {
           console.error('❌ Emergency cleanup failed:', cleanupError);
         }
       }
-      
-      router.push(getPaymentErrorRedirect('payment_failed', 'Une erreur inattendue s\'est produite lors du paiement'));
-      return;
-    } finally {
+
+      alert("Une erreur inattendue s'est produite.");
       setIsLoading(false);
       setUploadingPhotos(false);
+      return { success: false };
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Le formulaire ne fait plus rien, tout est géré par handleBeforePayment
+  };
+
+  const handlePaymentSuccess = () => {
+    console.log('✅ Payment successful!');
+    router.push('/account?section=ads&payment=success');
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('❌ Payment failed:', error);
+    // Le bateau reste en statut pending, il sera nettoyé par le cron job
+    alert(`Erreur de paiement: ${error}`);
   };
 
   // Safe access to price properties with fallback
@@ -479,6 +475,7 @@ export default function BoatListingForm({
             scrollShadowProps={{
               isEnabled: false
             }}
+            isDisabled={showPayment}
           >
             {products.map((product) => (
               <SelectItem className="text-oceanblue" key={product.id}>
@@ -502,6 +499,7 @@ export default function BoatListingForm({
             scrollShadowProps={{
               isEnabled: false
             }}
+            isDisabled={showPayment}
           >
             {dragonflyModels.map((modele) => (
               <SelectItem className="text-oceanblue" key={modele.key}>
@@ -523,6 +521,7 @@ export default function BoatListingForm({
             placeholder="Select a country"
             selectedKeys={country ? [country] : []}
             onChange={handleCountryChange}
+            isDisabled={showPayment}
           >
             {countries.map(({ key, label, flag }) => (
               <SelectItem
@@ -538,7 +537,6 @@ export default function BoatListingForm({
           </Select>
 
           <div className="flex flex-row gap-24 justify-center">
-            {/* Custom price input as NextUI NumberInput has incompatible props */}
             <NumberInput
               className="text-oceanblue placeholder:text-oceanblue h-[40px]"
               label="Price"
@@ -553,6 +551,7 @@ export default function BoatListingForm({
               placeholder="From 0$ to 25 000 $"
               value={priceBoat}
               onValueChange={setPriceBoat}
+              isDisabled={showPayment}
             />
 
             <Select
@@ -572,6 +571,7 @@ export default function BoatListingForm({
               defaultSelectedKeys={['USD']}
               selectedKeys={currency ? [currency] : ['USD']}
               onChange={handleCurrencyChange}
+              isDisabled={showPayment}
             >
               {currencies.map((curr) => (
                 <SelectItem className="text-oceanblue" key={curr.key}>
@@ -595,6 +595,7 @@ export default function BoatListingForm({
             placeholder="Select features"
             selectedKeys={new Set(specifications)}
             onSelectionChange={handleSpecificationsChange}
+            isDisabled={showPayment}
           >
             {specificationsData.map((section, index) => (
               <SelectSection
@@ -617,6 +618,7 @@ export default function BoatListingForm({
             classNames={{ icon: 'text-fullwhite' }}
             isSelected={vatPaid}
             onValueChange={handleVatPaidChange}
+            isDisabled={showPayment}
           >
             VAT paid
           </Checkbox>
@@ -635,6 +637,7 @@ export default function BoatListingForm({
             placeholder="Enter your description"
             value={description}
             onValueChange={setDescription}
+            isDisabled={showPayment}
           />
 
           {/* Photo Upload Section */}
@@ -646,6 +649,7 @@ export default function BoatListingForm({
               multiple
               onChange={handlePhotoChange}
               className="w-full text-oceanblue"
+              disabled={showPayment}
             />
 
             {photoPreview.length > 0 && (
@@ -657,13 +661,15 @@ export default function BoatListingForm({
                       alt={`Preview ${index + 1}`}
                       className="w-32 h-32 object-cover rounded"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                    >
-                      ×
-                    </button>
+                    {!showPayment && (
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -675,7 +681,9 @@ export default function BoatListingForm({
       <div className="w-full p-[50px] gap-[48px] flex flex-col ">
         <h1 className="text-40 text-oceanblue">Checkout</h1>
         <div className="flex flex-col gap-[32px] ">
-          <div className=" text-oceanblue text-24">Start line</div>
+          <div className=" text-oceanblue text-24">
+            {selectedProduct?.name || 'Start line'}
+          </div>
           <div className="flex flex-col gap-[12px] px-[20px] text-oceanblue">
             <div className="flex flex-row gap-[10px] items-center">
               <Valide /> <p>Boats up to €30,000</p>
@@ -692,15 +700,55 @@ export default function BoatListingForm({
             <p>Total</p>
             <p>{priceString}</p>
           </div>
-          <button
-            type="submit"
-            className="w-full bg-articblue text-white font-medium px-[53px] py-[20px] rounded-[7px]"
-            disabled={isLoading || uploadingPhotos}
-          >
-            {isLoading || uploadingPhotos
-              ? 'Processing...'
-              : 'Proceed to Payment'}
-          </button>
+
+          {!showPayment ? (
+            <button
+              type="submit"
+              className="w-full bg-articblue text-white font-medium px-[53px] py-[20px] rounded-[7px] disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || uploadingPhotos}
+            >
+              {isLoading || uploadingPhotos
+                ? 'Processing...'
+                : 'Continue to Payment'}
+            </button>
+          ) : (
+            <div className="mt-4 border-2 border-green-500 p-4">
+              <p className="text-green-600 mb-4">
+                Payment section is visible! (Debug)
+              </p>
+              <p className="text-sm mb-2">
+                Client Secret: {clientSecret ? 'Present' : 'Missing'}
+              </p>
+              <p className="text-sm mb-2">
+                Stripe Promise: {stripePromise ? 'Present' : 'Missing'}
+              </p>
+              {clientSecret && stripePromise ? (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#0066cc'
+                      }
+                    }
+                  }}
+                >
+                  <StripePaymentForm
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                    returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account?section=ads&payment=success`}
+                  />
+                </Elements>
+              ) : (
+                <p className="text-red-600">
+                  Missing clientSecret or stripePromise
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col justify-center">
             <div className="flex flex-row justify-center items-center  text-articblue">
               <Lock />

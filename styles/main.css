@@ -71,3 +71,6 @@ p a {
   min-height: calc(100vh - 80px);
 }
 
+#link-branded-root div {
+  border-radius: .5rem !important;
+}

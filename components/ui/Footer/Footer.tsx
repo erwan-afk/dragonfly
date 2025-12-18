@@ -16,36 +16,31 @@ export default function Footer() {
             JOIN OUR COMMUNITY
           </h1>
           <div className="w-2/3 text-center">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
-            consectetur quis enim ut volutpat. In massa nulla, blandit sit amet
-            semper eget, accumsan eget nisl. In facilisis felis nulla.{' '}
+            Whether you're looking to sell your trimaran quickly and profitably,
+            or searching for your dream Dragonfly, our community provides the
+            tools and connections you need. Sign up today to unlock the full
+            potential of our automated marketplace and join a network of
+            dedicated Dragonfly enthusiasts.
           </div>
           <div className="flex flex-row gap-24">
             <Button
-              text="Sign Up"
+              text="Place an ad"
               icon="link"
               bgColor="bg-fullwhite"
               iconColor="text-oceanblue"
-              href="/forum"
-            />
-            <Button
-              text="Login in"
-              icon="link"
-              bgColor="bg-oceanblue"
-              iconColor="text-fullwhite"
-              href="/forum"
+              href="/list-boat"
             />
           </div>
         </div>
       </div>
       <div className="mx-auto max-w-screen-xl w-full flex flex-row gap-40 justify-between">
         <div className=" flex flex-col justify-between">
-          <Logo />
+          <Logo footer />
           <p className="font-light max-w-[530px]">
-            No responsibility is accepted by the publisher of these web pages
-            for contents submitted by other people! All Trademarks and
-            Copyrights shown or mentioned on this website are here with
-            acknowledged.
+            Dragonfly Trimarans Marketplace. All rights reserved. Content
+            submitted by users is the sole responsibility of the respective
+            submitters. All trademarks and copyrights mentioned herein are
+            acknowledged as the property of their respective owners.
           </p>
         </div>
         <div className=" flex flex-row gap-40">
@@ -129,7 +124,7 @@ export default function Footer() {
 
       <div className="mx-auto max-w-screen-xl w-full border-t-[0.5px] border-stonegrey text-smokygrey flex flex-row justify-between py-40">
         <div className="text-14 ">
-          Provence Online Shopping: Beautiful things direct from Provence
+          All rights reserved by Dragonfly Trimarans Marketplace
         </div>
         <div className="text-14">© 2025 Dragonfly</div>
       </div>

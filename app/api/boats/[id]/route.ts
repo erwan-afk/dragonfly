@@ -3,6 +3,7 @@ import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
 import { deleteAllBoatImages } from '@/utils/cloudflare/r2';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -63,6 +64,10 @@ export async function DELETE(
     `;
 
     console.log(`✅ Boat and images deleted: ${boatId} by user: ${userId}`);
+
+    // Invalidate cached account data so /account reflects the deletion immediately
+    revalidateTag('user-data');
+    revalidatePath('/account');
     
     return NextResponse.json({ 
       success: true, 

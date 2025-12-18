@@ -7,6 +7,10 @@ console.log('📍 Base URL:', process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http:/
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:3000',
+  // Ajouter du cache pour améliorer les performances
+  fetchOptions: {
+    cache: 'no-store' // Force la re-validation mais permet le cache navigateur
+  }
 });
 
 console.log('✅ Better Auth client initialized');

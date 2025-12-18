@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ArrowDropdown from '@/components/icons/ArrowDropdown';
 import ArrowSeemore from '@/components/icons/ArrowSeemore';
 
@@ -50,6 +50,8 @@ export default function SpotlightBoats({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [loadingBoatId, setLoadingBoatId] = useState<string | null>(null);
   const [deletingBoatId, setDeletingBoatId] = useState<string | null>(null);
+  // Supprimer l'ancien useEffect qui calculait incorrectement l'expiration
+  // Le calcul sera fait individuellement pour chaque bateau dans le map
 
   const handleDeleteBoat = async (boatId: string) => {
     if (
@@ -71,8 +73,9 @@ export default function SpotlightBoats({
         throw new Error(errorData.error || 'Failed to delete boat');
       }
 
-      // Refresh the page to update the boat list
-      window.location.reload();
+      // Refresh server components data without doing a full page reload,
+      // so we keep the current tab ("My ads") without flashing to "My details".
+      router.refresh();
     } catch (error) {
       console.error('Error deleting boat:', error);
       alert('Failed to delete boat listing. Please try again.');
@@ -407,9 +410,50 @@ export default function SpotlightBoats({
               const formattedDate = boat.createdAt
                 ? new Date(boat.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
+                    day: 'numeric',
                     month: 'long'
                   })
                 : 'Unknown';
+
+              // Calcule la date d'expiration (3 mois par défaut, 4 mois pour podium)
+              // Même logique que dans BoatListingFormV2
+              const expirationDate = boat.createdAt
+                ? (() => {
+                    const created = new Date(boat.createdAt);
+                    const expiration = new Date(created);
+                    // Par défaut 3 mois, mais on pourrait détecter podium par le nombre de photos (10 photos = podium = 4 mois)
+                    const monthsToAdd =
+                      boat.photos &&
+                      Array.isArray(boat.photos) &&
+                      boat.photos.length > 5
+                        ? 4
+                        : 3;
+                    expiration.setMonth(expiration.getMonth() + monthsToAdd);
+                    return expiration;
+                  })()
+                : null;
+
+              const formattedExpirationDate = expirationDate
+                ? expirationDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })
+                : 'Unknown';
+
+              // Vérifie si l'annonce est expirée ou expire bientôt
+              const now = new Date();
+              const isExpired = expirationDate ? expirationDate < now : false;
+              const daysUntilExpiration = expirationDate
+                ? Math.ceil(
+                    (expirationDate.getTime() - now.getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )
+                : null;
+              const expiresSoon =
+                daysUntilExpiration !== null &&
+                daysUntilExpiration <= 7 &&
+                daysUntilExpiration > 0;
 
               return edit ? (
                 <div
@@ -430,9 +474,6 @@ export default function SpotlightBoats({
                   {/* Contenu */}
                   <div className="flex flex-col p-32 flex-1 bg-fullwhite justify-around">
                     <div className="flex flex-col">
-                      <p className="text-oceanblue text-16 italic">
-                        {formattedDate}
-                      </p>
                       <h3 className="text-32 font-medium text-articblue">
                         {boat.model}
                       </h3>
@@ -440,9 +481,40 @@ export default function SpotlightBoats({
 
                     <div className="text-oceanblue flex flex-row text-20">
                       Price:
-                      <span className="text-oceanblue font-medium text-20 pl-2">
+                      <span className="text-oceanblue font-medium text-20 ">
                         {formatPrice(Number(boat.price))} {boat.currency}
                       </span>
+                    </div>
+                    <div className="text-oceanblue flex flex-col text-16 gap-1">
+                      <div>
+                        Expires:{' '}
+                        <span
+                          className={`font-medium ${
+                            isExpired
+                              ? 'text-red-500'
+                              : expiresSoon
+                                ? 'text-orange-500'
+                                : 'text-oceanblue'
+                          }`}
+                        >
+                          {formattedExpirationDate}
+                        </span>
+                      </div>
+                      {isExpired && (
+                        <span className="text-red-500 font-medium text-16">
+                          Expired
+                        </span>
+                      )}
+                      {!isExpired && daysUntilExpiration !== null && (
+                        <span
+                          className={`font-medium text-16 ${
+                            expiresSoon ? 'text-orange-500' : 'text-oceanblue'
+                          }`}
+                        >
+                          Expires in {daysUntilExpiration} day
+                          {daysUntilExpiration !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -464,11 +536,20 @@ export default function SpotlightBoats({
                           )}
                         </div>
                       </DropdownTrigger>
-                      <DropdownMenu aria-label="Boat actions">
+                      <DropdownMenu
+                        aria-label="Boat actions"
+                        classNames={{
+                          base: 'max-h-[400px] overflow-y-auto bg-fullwhite',
+                          list: 'bg-fullwhite'
+                        }}
+                      >
                         <DropdownItem
                           key="view"
                           startContent={<EyeIcon size={16} />}
                           onClick={() => router.push(`/boat/${boat.id}`)}
+                          classNames={{
+                            base: 'text-oceanblue data-[hover=true]:bg-lightgrey data-[hover=true]:text-oceanblue'
+                          }}
                         >
                           View Listing
                         </DropdownItem>
@@ -482,15 +563,19 @@ export default function SpotlightBoats({
                             );
                             router.push(`/edit-listing/${boat.id}`);
                           }}
+                          classNames={{
+                            base: 'text-oceanblue data-[hover=true]:bg-lightgrey data-[hover=true]:text-oceanblue'
+                          }}
                         >
                           Edit Listing
                         </DropdownItem>
                         <DropdownItem
                           key="delete"
-                          className="text-danger"
-                          color="danger"
                           startContent={<TrashIcon size={16} />}
                           onClick={() => handleDeleteBoat(boat.id)}
+                          classNames={{
+                            base: 'text-danger data-[hover=true]:bg-red-50 data-[hover=true]:text-danger'
+                          }}
                         >
                           Delete Listing
                         </DropdownItem>
@@ -502,6 +587,9 @@ export default function SpotlightBoats({
                 <Link href={`/boat/${boat.id}`} key={boat.id}>
                   <div
                     className={`group ${!spotlight ? 'border-stonegrey border-2 hover:border-articblue' : ''} flex flex-row  overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px]`}
+                    style={{
+                      boxShadow: '0px 1px 20px 0px #00000014'
+                    }}
                   >
                     {/* Image avec effet de zoom */}
                     <div className="w-1/3 flex justify-start items-end overflow-hidden">

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -9,20 +9,20 @@ datasource db {
 }
 
 model account {
-  id                      String    @id @default(cuid())
-  accountId               String    @map("account_id")
-  providerId              String    @map("provider_id")
-  userId                  String    @map("user_id")
-  accessToken             String?   @map("access_token")
-  refreshToken            String?   @map("refresh_token")
-  idToken                 String?   @map("id_token")
-  accessTokenExpiresAt    DateTime? @map("access_token_expires_at") @db.Timestamp(6)
-  refreshTokenExpiresAt   DateTime? @map("refresh_token_expires_at") @db.Timestamp(6)
-  scope                   String?
-  password                String?
-  createdAt               DateTime  @map("created_at") @db.Timestamp(6)
-  updatedAt               DateTime  @map("updated_at") @db.Timestamp(6)
-  user                    user      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamp(6)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamp(6)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime  @map("updated_at") @db.Timestamp(6)
+  user                  user      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model session {
@@ -39,30 +39,26 @@ model session {
 }
 
 model user {
-  id             String    @id @default(cuid())
-  name           String
-  email          String    @unique
-  emailVerified  Boolean   @map("email_verified")
-  image          String?
-  createdAt      DateTime  @map("created_at") @db.Timestamp(6)
-  updatedAt      DateTime  @map("updated_at") @db.Timestamp(6)
-  role           Role      @default(user)
-  banned         Boolean?
-  ban_reason     String?
-  ban_expires    DateTime? @db.Timestamp(6)
-  
-  // Nouveaux champs
-  full_name        String?
-  avatar_url       String?
-  billing_address  Json?
-  payment_method   Json?
-  
-  // Relations
-  account        account[]
-  session        session[]
-  boats          boat[]
-  payments       payment[]
-  customer       customer?
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  emailVerified   Boolean   @map("email_verified")
+  image           String?
+  createdAt       DateTime  @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime  @map("updated_at") @db.Timestamp(6)
+  role            Role      @default(user)
+  banned          Boolean?
+  ban_reason      String?
+  ban_expires     DateTime? @db.Timestamp(6)
+  full_name       String?
+  avatar_url      String?
+  billing_address Json?
+  payment_method  Json?
+  account         account[]
+  boats           boat[]
+  customer        customer?
+  payments        payment[]
+  session         session[]
 }
 
 model verification {
@@ -79,17 +75,16 @@ model boat {
   model          String
   price          Decimal    @db.Decimal
   country        String
-  description    String     @db.VarChar(2000) // Limite à 2000 caractères
+  description    String     @db.VarChar(2000)
   photos         String[]
   userId         String     @map("user_id")
-  createdAt      DateTime   @map("created_at") @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime   @map("updated_at") @default(now()) @db.Timestamp(6)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime   @default(now()) @map("updated_at") @db.Timestamp(6)
   currency       String     @default("EUR")
   specifications String[]   @default([])
-  vatPaid        Boolean    @map("vat_paid") @default(false)
+  vatPaid        Boolean    @default(false) @map("vat_paid")
   status         BoatStatus @default(pending)
-  
-  user           user     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user           user       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   payments       payment[]
 
   @@map("boats")
@@ -109,11 +104,10 @@ model payment {
   boatId          String?   @map("boat_id")
   amount          Decimal   @db.Decimal
   status          String?
-  createdAt       DateTime? @map("created_at") @default(now()) @db.Timestamp(6)
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   stripeSessionId String?   @map("stripe_session_id")
-  
-  user            user?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   boat            boat?     @relation(fields: [boatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user            user?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("payments")
 }
@@ -125,26 +119,24 @@ model product {
   description String?
   image       String?
   metadata    Json?
-  
   prices      price[]
 
   @@map("products")
 }
 
 model price {
-  id              String          @id
-  productId       String?         @map("product_id")
+  id              String           @id
+  productId       String?          @map("product_id")
   active          Boolean?
   description     String?
-  unitAmount      BigInt?         @map("unit_amount")
-  currency        String?         @db.Char(3)
+  unitAmount      BigInt?          @map("unit_amount")
+  currency        String?          @db.Char(3)
   type            PricingType?
   interval        PricingInterval?
-  intervalCount   Int?            @map("interval_count")
-  trialPeriodDays Int?            @map("trial_period_days")
+  intervalCount   Int?             @map("interval_count")
+  trialPeriodDays Int?             @map("trial_period_days")
   metadata        Json?
-  
-  product         product?        @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product         product?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("prices")
 }

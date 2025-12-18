@@ -17,7 +17,7 @@ export const updateSession = async (request: NextRequest) => {
     );
 
     if (isProtectedRoute && !session) {
-      return NextResponse.redirect(new URL('/signin', request.url));
+      return NextResponse.redirect(new URL('/signin/password_signin', request.url));
     }
 
     return NextResponse.next();

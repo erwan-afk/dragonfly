@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
-import { getBoatById } from '@/utils/database/products';
 import { dragonflyModels, currencies } from '@/utils/constants';
 import type { Boat } from '@/types/boats';
 import BoatImageGallery from '@/components/ui/BoatImageGallery/BoatImageGallery';
+import prisma from '@/utils/prisma/client';
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
 
 // Fonction pour valider et normaliser les URLs d'images
 function normalizeImageUrls(photos: string[] | null | undefined): string[] {
@@ -45,7 +47,42 @@ function normalizeImageUrls(photos: string[] | null | undefined): string[] {
 }
 
 export default async function BoatPage({ params }: { params: { id: string } }) {
-  const boat = (await getBoatById(params.id)) as Boat | null;
+  // Publicly, we only expose "active" listings.
+  // But right after purchase, the listing can still be "pending" until the Stripe webhook flips it to active.
+  // In that case, allow the owner to view their own listing (with a "processing" banner) to avoid an empty page.
+  const session = await auth.api.getSession({ headers: await headers() });
+  const viewerUserId = session?.user?.id ?? null;
+
+  const [row] = (await prisma.$queryRaw`
+    SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+    FROM "boats" b
+    LEFT JOIN "user" u ON b.user_id = u.id
+    WHERE b.id = ${params.id}
+    LIMIT 1
+  `) as any[];
+
+  if (!row) {
+    notFound();
+  }
+
+  const boat = {
+    ...row,
+    price: parseFloat(row.price.toString()),
+    createdAt: row.created_at,
+    user: {
+      name: row.user_name,
+      email: row.user_email,
+      avatar_url: row.user_avatar_url
+    }
+  } as Boat & { status?: string; userId?: string };
+
+  const isActive = (boat as any).status === 'active';
+  const isOwner = !!viewerUserId && (boat as any).userId === viewerUserId;
+
+  // If not active, only the owner can view it.
+  if (!isActive && !isOwner) {
+    notFound();
+  }
 
   if (!boat) {
     notFound();
@@ -76,6 +113,16 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
   return (
     <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
       <div className="mx-auto max-w-screen-xl flex flex-col gap-[56px]">
+        {/* Pending banner for owners */}
+        {!isActive && isOwner && (
+          <div className="rounded-[12px] border border-orange-200 bg-orange-50 px-4 py-3 text-oceanblue">
+            <div className="font-medium">Payment is being processed</div>
+            <div className="text-14 text-darkgrey">
+              Your listing will appear publicly as soon as Stripe confirms the payment (usually a few seconds). You can refresh this page.
+            </div>
+          </div>
+        )}
+
         {/* Galerie d'images avec carousel - Compatible R2 */}
         <BoatImageGallery images={allImages} boatModel={boat.model} />
 

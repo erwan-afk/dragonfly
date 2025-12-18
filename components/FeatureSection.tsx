@@ -103,7 +103,7 @@ const Char = ({ children, progress, range }: CharProps) => {
 
 export default function FeatureSection() {
   return (
-    <section className="mx-auto max-w-screen-xl flex flex-col justify-center items-center gap-40 py-[80px]">
+    <section className="mx-auto max-w-screen-xl flex flex-col justify-center items-center gap-40 py-[120px]">
       <motion.div
         className="text-oceanblue italic flex justify-center"
         initial={{ opacity: 0, y: 20 }}
@@ -126,13 +126,13 @@ export default function FeatureSection() {
         transition={{ duration: 0.6, delay: 0.3 }}
       >
         <Button
-          text="Sign in"
+          text="Place an ad"
           icon="link"
-          bgColor="bg-fullwhite"
-          iconColor="text-articblue"
-          href="/place-ad"
-          outline="border-articblue"
-          textColor="text-oceanblue"
+          bgColor="bg-articblue"
+          iconColor="text-fullwhite"
+          href="/list-boat"
+          outline="border-fullwhite"
+          textColor="text-fullwhite"
         />
       </motion.div>
     </section>

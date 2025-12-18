@@ -269,7 +269,7 @@ export default function UsefulLinkPage() {
   return (
     <div className="w-full bg-fullwhite">
       <div className="mx-auto max-w-screen-xl flex flex-col gap-[80px] pb-[128px] px-8">
-        <div className="flex flex-row justify-between items-center pt-[128px]">
+        <div className="flex flex-row justify-between items-center ">
           <h1 className="text-oceanblue text-56">
             <span className="text-articblue">Spare parts</span> directory
           </h1>
@@ -283,7 +283,7 @@ export default function UsefulLinkPage() {
         <div className="flex flex-row gap-[80px] relative">
           {/* Menu sticky sur la gauche pour grands écrans */}
           <div className="hidden xl:block w-[280px] flex-shrink-0">
-            <div className="sticky top-[32px]">
+            <div className="sticky top-[128px]">
               <nav className="bg-articblue rounded-[12px] p-6">
                 <ul className="flex flex-col gap-2">
                   {sections.map((section) => (

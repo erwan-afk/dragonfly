@@ -38,19 +38,44 @@ export function AccountClient({
   isLoading = false
 }: AccountClientProps) {
   const searchParams = useSearchParams();
-  const [activeView, setActiveView] = useState('details'); // 'details' ou 'ads'
+  // Avoid UI "flash" (details -> ads) by selecting the initial tab synchronously.
+  // Priority: URL (?section=ads|details) > localStorage > default ("details")
+  const [activeView, setActiveView] = useState<'details' | 'ads'>(() => {
+    const section = searchParams.get('section');
+    if (section === 'ads' || section === 'details') return section;
+    try {
+      const savedTab = localStorage.getItem('activeAccountTab');
+      if (savedTab === 'ads' || savedTab === 'details') return savedTab;
+    } catch {
+      // ignore (SSR / privacy mode)
+    }
+    return 'details';
+  });
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { withLoading } = useLoadingBar();
 
-  // Check URL parameters on component mount and when search params change
+  // Keep state in sync with URL params (payment redirect) and persist in localStorage
   useEffect(() => {
     const section = searchParams.get('section');
+    const payment = searchParams.get('payment');
+
     if (section === 'ads') {
       setActiveView('ads');
-      setShowSuccessMessage(true);
-      console.log('✅ Redirected to My ads section after successful payment');
+
+      // Si c'est après un paiement réussi, afficher le message de succès
+      if (payment === 'success') {
+        setShowSuccessMessage(true);
+        console.log('✅ Redirected to My ads section after successful payment');
+
+        // Attendre un peu pour que le webhook ait le temps de traiter
+        // puis rafraîchir les données (le cache est désactivé, donc les données seront rechargées)
+        setTimeout(() => {
+          // Rafraîchir la page sans le paramètre payment pour éviter une boucle
+          router.replace('/account?section=ads', { scroll: false });
+        }, 2000);
+      }
 
       // Save the active tab to localStorage
       localStorage.setItem('activeAccountTab', 'ads');
@@ -64,20 +89,15 @@ export function AccountClient({
     } else if (section === 'details') {
       setActiveView('details');
       localStorage.setItem('activeAccountTab', 'details');
-    } else {
-      // No URL parameter, check localStorage for last active tab
-      const savedTab = localStorage.getItem('activeAccountTab');
-      if (savedTab && (savedTab === 'details' || savedTab === 'ads')) {
-        setActiveView(savedTab);
-        console.log(`✅ Restored saved tab: ${savedTab}`);
-      }
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // Handle tab switching with localStorage persistence
   const handleTabChange = (newTab: 'details' | 'ads') => {
     setActiveView(newTab);
     localStorage.setItem('activeAccountTab', newTab);
+    // Persist in URL so a refresh lands on the correct tab immediately.
+    router.replace(`/account?section=${newTab}`, { scroll: false });
     console.log(`📝 Tab changed to: ${newTab}`);
   };
 
@@ -110,24 +130,30 @@ export function AccountClient({
         <>
           {/* Menu de gauche avec position sticky */}
           <div className="text-oceanblue flex flex-col gap-40 justify-between min-h-full sticky ">
-            <h1 className="text-24">My profile</h1>
-            <div className="flex flex-col gap-16 flex-1 h-full">
-              <div
-                className={`rounded-full ${activeView === 'details' ? 'bg-articblue text-fullwhite' : 'bg-lightgrey text-oceanblue'} px-[12px] text-16 py-[10px] cursor-pointer w-fit`}
-                onClick={() => handleTabChange('details')}
-              >
-                My details
-              </div>
-              <div
-                className={`rounded-full ${activeView === 'ads' ? 'bg-articblue text-fullwhite' : 'bg-lightgrey text-oceanblue'} px-[12px] text-16 py-[10px] cursor-pointer w-fit`}
-                onClick={() => handleTabChange('ads')}
-              >
-                My ads
+            <div className="flex flex-col gap-16 items-start">
+              <h1 className="text-24">My profile</h1>
+              <div className="flex flex-col gap-16 flex-1 h-full">
+                <div
+                  className={`rounded-full ${activeView === 'details' ? 'bg-articblue text-fullwhite' : 'bg-lightgrey text-oceanblue hover:bg-articblue/20'} px-[12px] text-16 py-[10px] cursor-pointer w-fit transition-all duration-300`}
+                  onClick={() => handleTabChange('details')}
+                >
+                  My details
+                </div>
+                <div
+                  className={`rounded-full ${activeView === 'ads' ? 'bg-articblue text-fullwhite' : 'bg-lightgrey text-oceanblue hover:bg-articblue/20'} px-[12px] text-16 py-[10px] cursor-pointer w-fit   transition-all duration-300`}
+                  onClick={() => handleTabChange('ads')}
+                >
+                  My ads
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="text-left text-danger px-4 py-2 rounded-full border border-danger w-full hover:bg-danger/5 transition-all duration-300"
+                >
+                  Sign Out
+                </button>
               </div>
             </div>
-            <button type="button" onClick={handleSignOut} className="text-left">
-              Sign Out
-            </button>
           </div>
 
           {/* Contenu de droite qui peut avoir n'importe quelle hauteur */}

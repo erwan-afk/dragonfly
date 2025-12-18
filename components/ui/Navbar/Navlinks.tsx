@@ -5,8 +5,11 @@ import { motion } from 'framer-motion';
 
 import Logo from '@/components/icons/Logo';
 import Button from '../Button/Button';
-import AccountButton from '@/components/icons/AccountButton';
+import AccountButton, {
+  AccountButtonFilled
+} from '@/components/icons/AccountButton';
 import { Skeleton } from '@heroui/skeleton';
+import { usePathname } from 'next/navigation';
 
 interface NavlinksProps {
   user?: any;
@@ -30,11 +33,10 @@ const navbarVariants = {
 };
 
 const itemVariants = {
-  hidden: { y: -20, opacity: 0, scale: 0.8 },
+  hidden: { y: -20, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
-    scale: 1,
     transition: {
       type: 'spring',
 
@@ -46,20 +48,11 @@ const itemVariants = {
 const logoVariants = {
   hidden: { scale: 0, opacity: 0 },
   visible: {
-    scale: 1,
     opacity: 1,
     transition: {
       type: 'spring',
 
       stiffness: 300
-    }
-  },
-  hover: {
-    y: -4,
-    scale: 1.1,
-    transition: {
-      type: 'spring',
-      stiffness: 400
     }
   }
 };
@@ -74,15 +67,6 @@ const linkVariants = {
 
       stiffness: 400
     }
-  },
-  hover: {
-    y: -4,
-    scale: 1.05,
-    transition: {
-      type: 'spring',
-
-      stiffness: 400
-    }
   }
 };
 
@@ -91,6 +75,7 @@ export default function Navlinks({
   isPending,
   isScrolled
 }: NavlinksProps) {
+  const pathname = usePathname();
   return (
     <motion.div
       className={`mx-auto max-w-screen-xl flex flex-row justify-between align-center text-darkgrey transition-all duration-300 ${
@@ -100,94 +85,92 @@ export default function Navlinks({
       animate="visible"
     >
       <div className="flex justify-between items-center flex-1">
-        <motion.div variants={logoVariants} whileHover="hover">
+        <div className="flex flex-row gap-[50px] items-center">
           <Link href="/" aria-label="Logo">
             <Logo />
           </Link>
-        </motion.div>
-
-        <div className="flex flex-row gap-40 items-center gap">
           <nav className="flex gap-6 flex-rows items-center h-full">
-            <motion.div variants={linkVariants} whileHover="hover">
+            <div className="hover:underline hover:underline-offset-4">
               <Link
                 href="/forsale"
-                className="hover:underline hover:underline-offset-4"
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/forsale' ? 'text-oceanblue' : 'text-darkgrey'}`}
               >
                 For Sale
               </Link>
-            </motion.div>
-            <motion.div variants={linkVariants} whileHover="hover">
+            </div>
+
+            <div className="hover:underline hover:underline-offset-4">
+              <Link
+                href="/forum"
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/forum' ? 'text-oceanblue' : 'text-darkgrey'}`}
+              >
+                Forum
+              </Link>
+            </div>
+
+            <div>
               <Link
                 href="/useful-links"
-                className="hover:underline hover:underline-offset-4"
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/useful-links' ? 'text-oceanblue' : 'text-darkgrey'}`}
               >
                 Useful Links
               </Link>
-            </motion.div>
-            <motion.div variants={linkVariants} whileHover="hover">
+            </div>
+            <div className="hover:underline hover:underline-offset-4">
+              <Link
+                href="/pricing"
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/pricing' ? 'text-oceanblue' : 'text-darkgrey'}`}
+              >
+                Pricing
+              </Link>
+            </div>
+            <div className="hover:underline hover:underline-offset-4">
               <Link
                 href="/contact"
-                className="hover:underline hover:underline-offset-4"
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/contact' ? 'text-oceanblue' : 'text-darkgrey'}`}
               >
                 Contact
               </Link>
-            </motion.div>
+            </div>
           </nav>
+        </div>
 
-          <motion.div variants={itemVariants}>
-            {isPending ? (
-              <Skeleton className="rounded-lg" isLoaded={false}>
-                <div className="w-[100px] h-[24px] bg-default-200 rounded-lg" />
-              </Skeleton>
-            ) : user ? (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', damping: 15, stiffness: 400 }}
+        <div className="flex flex-row gap-[20px] items-center">
+          {isPending ? (
+            <Skeleton className="rounded-lg" isLoaded={false}>
+              <div className="w-[100px] h-[24px] bg-default-200 rounded-lg" />
+            </Skeleton>
+          ) : user ? (
+            <div className="flex flex-row gap-[10px] hover:underline hover:underline-offset-4 ">
+              <Link
+                href="/account"
+                className={`${pathname === '/account' ? 'text-oceanblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
               >
-                <Link href="/account" className="flex flex-row gap-[10px]">
-                  <p>My account</p> <AccountButton />
-                </Link>
-              </motion.div>
-            ) : (
-              <motion.div
-                whileHover={{
-                  y: -4,
-                  scale: 1.05
-                }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400 }}
-              >
-                <Link
-                  href="/signin/password_signin"
-                  className="hover:underline hover:underline-offset-4"
-                >
-                  Sign In
-                </Link>
-              </motion.div>
-            )}
-          </motion.div>
+                {pathname === '/account' ? (
+                  <AccountButtonFilled className="text-articblue w-[15px] h-[15px]" />
+                ) : (
+                  <AccountButton className="w-[15px] h-[15px]" />
+                )}
+                Profile
+              </Link>
+            </div>
+          ) : (
+            <Link
+              href="/signin/password_signin"
+              className="hover:underline hover:underline-offset-4"
+            >
+              Sign In
+            </Link>
+          )}
 
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', damping: 15, stiffness: 400 }}
-          >
-            {isPending ? (
-              // Skeleton pendant la vérification d'authentification
-              <Skeleton className="rounded-lg" isLoaded={false}>
-                <div className="w-[120px] h-[40px] bg-default-200 rounded-lg" />
-              </Skeleton>
-            ) : (
-              <Button
-                text="Place an ad"
-                href="/list-boat"
-                icon="add"
-                bgColor="bg-articblue"
-              />
-            )}
-          </motion.div>
+          <div className="w-[1px] h-[20px] bg-stonegrey"></div>
+
+          <Button
+            text="Place an ad"
+            href="/list-boat"
+            icon="add"
+            bgColor="bg-articblue"
+          />
         </div>
       </div>
     </motion.div>

@@ -7,12 +7,34 @@ export async function createBoatPaymentRecord(
     userId: string
 ): Promise<{ success: boolean; paymentId?: string; error?: string }> {
     try {
-        console.log(`💳 Creating payment record for boat ${boatId}...`);
+        const stripeSessionId = checkoutSession.id;
+        console.log(`💳 Creating payment record for boat ${boatId}...`, {
+            stripeSessionId,
+            userId
+        });
 
         // Extraire les informations du paiement
         const amount = (checkoutSession.amount_total || 0) / 100; // Stripe utilise les centimes
         const status = checkoutSession.payment_status === 'paid' ? 'completed' : 'pending';
-        const stripeSessionId = checkoutSession.id;
+
+        // Idempotence: Stripe peut renvoyer le webhook (retries).
+        // On évite de créer 2 enregistrements pour le même PaymentIntent/Session.
+        const existing = await prisma.payment.findFirst({
+            where: {
+                stripeSessionId,
+                boatId
+            },
+            select: { id: true }
+        });
+
+        if (existing) {
+            console.log(`ℹ️ Payment record already exists, skipping create`, {
+                paymentId: existing.id,
+                boatId,
+                stripeSessionId
+            });
+            return { success: true, paymentId: existing.id };
+        }
 
         // Créer l'enregistrement de paiement
         const payment = await prisma.payment.create({
@@ -26,7 +48,11 @@ export async function createBoatPaymentRecord(
             }
         });
 
-        console.log(`✅ Payment record created with ID: ${payment.id} for boat: ${boatId}`);
+        console.log(`✅ Payment record created with ID: ${payment.id} for boat: ${boatId}`, {
+            stripeSessionId,
+            status,
+            amount
+        });
 
         return {
             success: true,
