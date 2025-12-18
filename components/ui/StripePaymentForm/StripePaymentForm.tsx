@@ -11,7 +11,11 @@ interface StripePaymentFormProps {
   onSuccess: () => void;
   onError: (error: string) => void;
   returnUrl: string;
-  onBeforePayment: () => Promise<{ success: boolean; boatId?: string }>;
+  onBeforePayment: () => Promise<{
+    success: boolean;
+    boatId?: string;
+    error?: string;
+  }>;
   amount: number;
   currency: string;
   priceId: string;
@@ -55,7 +59,8 @@ export default function StripePaymentForm({
 
       if (!result.success) {
         console.error('❌ Pre-payment tasks failed - result:', result);
-        const errorMsg = 'Please complete all required fields and try again';
+        const errorMsg =
+          result.error || 'Please complete all required fields and try again';
         setErrorMessage(errorMsg);
         onError(errorMsg);
         setIsProcessing(false);

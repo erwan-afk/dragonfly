@@ -478,6 +478,42 @@ export async function generateUploadSignedUrl(
   }
 }
 
+// Génère une URL signée pour un upload temporaire (avant paiement)
+// NOTE: pour rester compatible avec la logique existante (webhook), la clé doit contenir "temp_session_"
+// => le client doit fournir un sessionId de forme "session_..."
+export async function generateTempUploadSignedUrl(
+  sessionId: string,
+  userId: string,
+  filename: string,
+  contentType: string,
+  expiresIn: number = 300 // 5 minutes (court = plus sûr)
+): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
+  try {
+    const key = generateTempImageKey(sessionId, `user_${userId}/${filename}`);
+
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+      ContentType: contentType
+    });
+
+    const signedUrl = await getSignedUrl(r2Client, command, { expiresIn });
+
+    return {
+      success: true,
+      url: signedUrl,
+      key
+    };
+  } catch (error) {
+    console.error('Error generating temp signed URL:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to generate signed URL'
+    };
+  }
+}
+
 // Extrait l'ID du bateau depuis une clé R2
 export function extractBoatIdFromKey(key: string): string | null {
   const match = key.match(/^boats\/([^\/]+)\//);

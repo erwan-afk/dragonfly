@@ -216,14 +216,23 @@ export default function BoatListingFormV2({
           })
         });
 
-        const result = await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        const raw = await response.text();
+        const result = contentType.includes('application/json')
+          ? JSON.parse(raw)
+          : null;
 
-        if (response.ok && result.clientSecret) {
+        if (response.ok && result?.clientSecret) {
           setClientSecret(result.clientSecret);
           setPaymentIntentId(result.paymentIntentId);
           console.log('✅ Payment intent created:', result.paymentIntentId);
         } else {
-          console.error('❌ Failed to create payment intent:', result.error);
+          console.error('❌ Failed to create payment intent:', {
+            status: response.status,
+            error: result?.error,
+            code: result?.code,
+            raw: raw?.slice(0, 200)
+          });
         }
       } catch (error) {
         console.error('❌ Error creating payment intent:', error);
@@ -458,9 +467,13 @@ export default function BoatListingFormV2({
     setLoadingBoats(true);
     try {
       const response = await fetch('/api/boats/my-active');
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const raw = await response.text();
+      const data = contentType.includes('application/json')
+        ? JSON.parse(raw)
+        : null;
 
-      if (data.success && data.boats) {
+      if (response.ok && data?.success && data?.boats) {
         setUserBoats(data.boats);
       } else {
         toast.error('Failed to load your ads', {
@@ -728,6 +741,7 @@ export default function BoatListingFormV2({
   const handleBeforePayment = async (): Promise<{
     success: boolean;
     boatId?: string;
+    error?: string;
   }> => {
     console.log('🔄 handleBeforePayment called');
     setIsLoading(true);
@@ -739,7 +753,7 @@ export default function BoatListingFormV2({
         position: 'top-right'
       });
       router.push('/signin/signup');
-      return { success: false };
+      return { success: false, error: 'Please sign in to continue' };
     }
 
     // Valider le formulaire
@@ -756,7 +770,7 @@ export default function BoatListingFormV2({
         });
       });
       setIsLoading(false);
-      return { success: false };
+      return { success: false, error: validation.errors[0] || 'Form invalid' };
     }
 
     // En mode renewal, on renouvelle directement l'annonce sélectionnée
@@ -782,29 +796,63 @@ export default function BoatListingFormV2({
         console.log(`📸 Uploading ${photoFiles.length} photos...`);
         setUploadingPhotos(true);
         const uploadPromise = (async () => {
-          const uploadFormData = new FormData();
+          // Important (prod/Vercel): uploading multiple images in a single request can hit the
+          // serverless request body limit and return 413 before our handler runs.
+          // Scalable fix: direct-to-R2 upload using a short-lived signed URL.
           const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          uploadFormData.append('sessionId', sessionId);
+          const uploadedKeys: string[] = [];
 
-          photoFiles.forEach((file, index) => {
-            uploadFormData.append(`file${index}`, file);
-          });
+          for (const [index, file] of photoFiles.entries()) {
+            // 1) Ask server for a signed URL (authenticated)
+            const presignRes = await fetch('/api/upload-url', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId,
+                filename: file.name,
+                contentType: file.type,
+                size: file.size
+              })
+            });
 
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: uploadFormData
-          });
+            const presignType = presignRes.headers.get('content-type') || '';
+            const presignRaw = await presignRes.text();
+            const presignJson = presignType.includes('application/json')
+              ? JSON.parse(presignRaw)
+              : null;
 
-          const uploadResult = await uploadResponse.json();
+            if (!presignRes.ok || !presignJson?.success) {
+              throw new Error(
+                presignJson?.error ||
+                  `Failed to prepare upload (${presignRes.status}): ${presignRaw.slice(0, 200)}`
+              );
+            }
 
-          if (uploadResult.success) {
-            tempImageKeys =
-              uploadResult.keys || (uploadResult.key ? [uploadResult.key] : []);
-            console.log('✅ Images uploaded:', tempImageKeys);
-            return tempImageKeys.length;
-          } else {
-            throw new Error(uploadResult.error || 'Upload failed');
+            const signedUrl: string = presignJson.url;
+            const key: string = presignJson.key;
+
+            // 2) PUT directly to R2 (bypasses Vercel request body limits)
+            const putRes = await fetch(signedUrl, {
+              method: 'PUT',
+              headers: {
+                // Must match the ContentType used when signing
+                'Content-Type': file.type
+              },
+              body: file
+            });
+
+            if (!putRes.ok) {
+              throw new Error(
+                `Upload failed for image ${index + 1} (${putRes.status})`
+              );
+            }
+
+            uploadedKeys.push(key);
           }
+
+          tempImageKeys = uploadedKeys;
+          console.log('✅ Images uploaded:', tempImageKeys);
+          return tempImageKeys.length;
         })();
 
         toast.promise(uploadPromise, {
@@ -835,17 +883,24 @@ export default function BoatListingFormV2({
         })
       });
 
-      const boatResult = await boatResponse.json();
+      const boatContentType = boatResponse.headers.get('content-type') || '';
+      const boatRaw = await boatResponse.text();
+      const boatResult = boatContentType.includes('application/json')
+        ? JSON.parse(boatRaw)
+        : null;
       console.log('📋 Boat creation response:', boatResult);
 
-      if (!boatResult.success) {
-        console.error('❌ Boat creation failed:', boatResult.error);
-        toast.error(boatResult.error || 'Failed to create listing', {
+      if (!boatResponse.ok || !boatResult?.success) {
+        const errMsg =
+          boatResult?.error ||
+          `Failed to create listing (${boatResponse.status}): ${boatRaw.slice(0, 200)}`;
+        console.error('❌ Boat creation failed:', errMsg);
+        toast.error(errMsg, {
           duration: 4000,
           position: 'top-right'
         });
         setIsLoading(false);
-        return { success: false };
+        return { success: false, error: errMsg };
       }
 
       tempBoatId = boatResult.boatId;
@@ -860,13 +915,15 @@ export default function BoatListingFormV2({
         console.log('🧹 Cleaning up boat:', tempBoatId);
         await emergencyCleanupClient(tempBoatId, 'Error during boat creation');
       }
-      toast.error('An unexpected error occurred', {
+      const message =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      toast.error(message, {
         duration: 4000,
         position: 'top-right'
       });
       setIsLoading(false);
       setUploadingPhotos(false);
-      return { success: false };
+      return { success: false, error: message };
     }
   };
 

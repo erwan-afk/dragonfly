@@ -250,8 +250,7 @@ const webhookHandlers: Record<string, WebhookHandler> = {
       await prisma.boat.update({
         where: { id: boatId },
         data: { 
-          status: 'active',
-          publishedAt: new Date()
+          status: 'active'
         }
       });
       console.log(`✅ Boat activated`, { boatId });

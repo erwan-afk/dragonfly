@@ -65,6 +65,39 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: true,
     },
+    async headers() {
+        // Security headers (incl. CSP) for production. In particular, Stripe Payment Element
+        // requires connections to Stripe domains + iframes/scripts from js.stripe.com.
+        const csp = [
+            "default-src 'self'",
+            // Next.js needs unsafe-eval in dev; keep it out of production.
+            "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob: https:",
+            // Stripe elements run in iframes.
+            "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+            // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT).
+            "connect-src 'self' https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com",
+            "font-src 'self' data: https:",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'self'",
+        ].join('; ');
+
+        return [
+            {
+                source: '/(.*)',
+                headers: [
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+                    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+                    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+                    { key: 'Content-Security-Policy', value: csp },
+                ],
+            },
+        ];
+    },
 };
 
 module.exports = nextConfig; 
