@@ -1,8 +1,7 @@
 'use client'; // Ce composant est interactif
 
 import BoatList from '@/components/ui/AccountForms/BoatList';
-import { Tables } from '@/types_db';
-type Boat = Tables<'boats'>; // Type pour les données de la table 'boats'
+import { Boat } from '@/types/database';
 
 export default function MyListings({ boats }: { boats: Boat[] }) {
   return (

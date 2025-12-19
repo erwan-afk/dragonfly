@@ -9,7 +9,7 @@ import { Input, Textarea } from '@heroui/input';
 import { NumberInput } from '@heroui/number-input';
 import { Checkbox } from '@heroui/checkbox';
 import Valide from '@/components/icons/Valide';
-import { Tables } from '@/types_db';
+import { Boat } from '@/types/database';
 
 import {
   dragonflyModels,
@@ -17,8 +17,6 @@ import {
   countries,
   specificationsData
 } from '../BoatListingForm/BoatListingForm'; // Import shared data from BoatListingForm
-
-type Boat = Tables<'boats'>;
 
 export default function EditListing({ boat }: { boat: Boat }) {
   const router = useRouter();

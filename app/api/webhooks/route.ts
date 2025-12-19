@@ -12,6 +12,7 @@ import { createBoatPaymentRecord } from '@/utils/boats/payments';
 import { moveTempImagesToBoat, urlToKey } from '@/utils/cloudflare/r2';
 import prisma from '@/utils/prisma/client';
 import { revalidateTag } from 'next/cache';
+import { getProductFeatures } from '@/lib/product-features';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -245,15 +246,23 @@ const webhookHandlers: Record<string, WebhookHandler> = {
         return;
       }
 
-      // 2. Activer le bateau
+      // 2. Calculer la date d'expiration (par défaut 3 mois)
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setMonth(expiresAt.getMonth() + 3); // Par défaut 3 mois
+
+      console.log(`📅 Calculated expiration date: ${expiresAt.toISOString()} (${Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} days)`);
+
+      // 3. Activer le bateau avec la date d'expiration
       console.log(`✅ Activating boat ${boatId}...`);
       await prisma.boat.update({
         where: { id: boatId },
-        data: { 
-          status: 'active'
+        data: {
+          status: 'active',
+          expiresAt: expiresAt
         }
       });
-      console.log(`✅ Boat activated`, { boatId });
+      console.log(`✅ Boat activated with expiration date`, { boatId, expiresAt: expiresAt.toISOString() });
 
       // 3. Créer l'enregistrement de paiement
       const customerId = paymentIntent.customer as string | null;

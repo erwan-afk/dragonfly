@@ -14,21 +14,43 @@ jobs:
       - name: Send renewal reminders
         run: |
           echo "🚀 Envoi des rappels de renouvellement d'annonces..."
+          echo "📅 Date et heure: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "🌐 URL cible: https://dragonfly-livid.vercel.app/api/send-renewal-reminders"
 
-          # Utilisation de curl pour appeler l'API
-          response=$(curl -s -o response.json -w "%{http_code}" \
+          # Vérifier que le token secret est défini
+          if [ -z "${{ secrets.CRON_SECRET_TOKEN }}" ]; then
+            echo "❌ CRON_SECRET_TOKEN non défini dans les secrets GitHub"
+            exit 1
+          fi
+          echo "🔐 Token secret configuré: oui"
+
+          # Utilisation de curl pour appeler l'API avec plus de détails
+          echo "📡 Envoi de la requête POST..."
+          response=$(curl -v -s -o response.json -w "%{http_code}" \
             -X POST \
             https://dragonfly-livid.vercel.app/api/send-renewal-reminders \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET_TOKEN }}" \
-            -H "Content-Type: application/json")
+            -H "Content-Type: application/json" \
+            -H "User-Agent: GitHub-Actions-Renewal-Reminders" \
+            --connect-timeout 30 \
+            --max-time 300)
+
+          echo "📊 Code de réponse HTTP: $response"
+          echo "📄 Contenu de la réponse:"
+          cat response.json
+          echo ""
 
           # Vérification du code de réponse HTTP
           if [ "$response" -eq 200 ]; then
             echo "✅ Rappels de renouvellement envoyés avec succès"
-            cat response.json
+            echo "🎉 Workflow terminé avec succès"
           else
             echo "❌ Erreur lors de l'envoi des rappels (code HTTP: $response)"
-            cat response.json
+            echo "🔍 Détails de l'erreur:"
+            if [ -f response.json ]; then
+              cat response.json
+            fi
+            echo "💡 Vérifiez les logs de l'application pour plus de détails"
             exit 1
           fi
 

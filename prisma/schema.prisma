@@ -84,6 +84,7 @@ model boat {
   specifications String[]   @default([])
   vatPaid        Boolean    @default(false) @map("vat_paid")
   status         BoatStatus @default(pending)
+  expiresAt      DateTime?  @map("expires_at") @db.Timestamp(6)
   user           user       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   payments       payment[]
 

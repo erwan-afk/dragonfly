@@ -73,7 +73,7 @@ async function getUserData(userId: string) {
       WHERE id = ${userId}
     ` as Promise<any[]>,
     prisma.$queryRaw`
-      SELECT * FROM "boats"
+      SELECT *, expires_at FROM "boats"
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
     ` as Promise<any[]>,
@@ -119,6 +119,7 @@ export default async function Account() {
       ...boat,
       price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
       createdAt: boat.created_at, // Convertir created_at en camelCase
+      expiresAt: boat.expires_at, // Convertir expires_at en camelCase
       // Ensure client components always get absolute URLs for images
       photos: normalizeImageUrls(
         typeof boat.photos === 'string' ? JSON.parse(boat.photos) : boat.photos,

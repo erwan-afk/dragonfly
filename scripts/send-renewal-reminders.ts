@@ -6,8 +6,68 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import nodemailer from 'nodemailer';
-import { getProductFeatures } from '../lib/product-features';
+import * as nodemailer from 'nodemailer';
+
+/**
+ * Script de diagnostic rapide pour vérifier la configuration
+ */
+async function quickDiagnostic() {
+  console.log('🔍 DIAGNOSTIC RAPIDE - Vérification de la configuration');
+  console.log('=' .repeat(60));
+
+  // Vérifier les variables d'environnement
+  console.log('📋 Variables d\'environnement:');
+  console.log(`   SMTP_USER: ${process.env.SMTP_USER ? '✅ Défini' : '❌ Manquant'}`);
+  console.log(`   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? '✅ Défini' : '❌ Manquant'}`);
+  console.log(`   NEXT_PUBLIC_SITE_URL: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-trimarans.org'}`);
+  console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✅ Défini' : '❌ Manquant'}`);
+  console.log('');
+
+  // Tester la connexion à la base de données
+  console.log('🗄️ Test de connexion à la base de données:');
+  const prisma = new PrismaClient();
+  try {
+    await prisma.$connect();
+    console.log('   ✅ Connexion réussie');
+
+    const boatCount = await prisma.boat.count({ where: { status: 'active' } });
+    console.log(`   📊 Nombre d'annonces actives: ${boatCount}`);
+
+    await prisma.$disconnect();
+    } catch (error) {
+      console.log('   ❌ Échec de connexion:', error instanceof Error ? error.message : String(error));
+    }
+  console.log('');
+
+  // Tester la configuration SMTP
+  console.log('📧 Test de configuration SMTP:');
+  if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+    const transporter = nodemailer.createTransport({
+      host: 'mail.infomaniak.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    try {
+      await transporter.verify();
+      console.log('   ✅ Configuration SMTP valide');
+    } catch (error) {
+      console.log('   ❌ Configuration SMTP invalide:', error instanceof Error ? error.message : String(error));
+    }
+  } else {
+    console.log('   ❌ Variables SMTP manquantes');
+  }
+
+  console.log('=' .repeat(60));
+  console.log('💡 Pour lancer le script complet: npm run tsx scripts/send-renewal-reminders.ts');
+  console.log('💡 Pour mettre à jour les données existantes: npm run tsx scripts/send-renewal-reminders.ts --update-existing');
+  console.log('💡 Pour tester avec une annonce expirant bientôt: npm run tsx scripts/send-renewal-reminders.ts --test-expiring-soon');
+  console.log('💡 Pour tester l\'API: curl -X POST https://dragonfly-livid.vercel.app/api/send-renewal-reminders -H "Authorization: Bearer <TOKEN>"');
+}
 
 const prisma = new PrismaClient();
 
@@ -22,15 +82,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/**
- * Calcule la date d'expiration d'une annonce basée sur sa date de création et le produit
- */
-function calculateExpiryDate(createdAt: Date, productName?: string | null): Date {
-  const features = getProductFeatures(productName);
-  const expiryDate = new Date(createdAt);
-  expiryDate.setMonth(expiryDate.getMonth() + features.duration.months);
-  return expiryDate;
-}
 
 /**
  * Vérifie si une date est dans un intervalle de ±12 heures autour d'une date cible
@@ -148,12 +199,24 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
  */
 async function sendRenewalReminders() {
   console.log('🚀 Démarrage de la vérification des renouvellements d\'annonces...');
+  console.log(`📅 Date actuelle: ${formatDateFr(new Date())}`);
 
   try {
-    // Récupérer toutes les annonces actives avec les informations utilisateur
+    // Vérifier la configuration SMTP
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+      console.error('❌ Configuration SMTP manquante: SMTP_USER ou SMTP_PASSWORD non définis');
+      throw new Error('Configuration SMTP incomplète');
+    }
+    console.log('✅ Configuration SMTP vérifiée');
+
+    // Récupérer toutes les annonces actives avec les informations utilisateur et la date d'expiration
+    console.log('🔍 Recherche des annonces actives...');
     const activeBoats = await prisma.boat.findMany({
       where: {
-        status: 'active'
+        status: 'active',
+        expires_at: {
+          not: null // S'assurer que expiresAt est défini
+        }
       },
       include: {
         user: {
@@ -178,29 +241,71 @@ async function sendRenewalReminders() {
 
     console.log(`📊 ${activeBoats.length} annonces actives trouvées`);
 
+    if (activeBoats.length === 0) {
+      console.log('ℹ️  Aucune annonce active trouvée - arrêt du processus');
+      return;
+    }
+
     const today = new Date();
     let remindersSent = 0;
     let errors = 0;
+    let boatsChecked = 0;
 
     for (const boat of activeBoats) {
-      try {
-        // Utiliser la date de création comme référence (on pourrait améliorer pour utiliser les paiements)
-        const referenceDate = boat.createdAt;
-        const expiryDate = calculateExpiryDate(referenceDate, null); // Par défaut 3 mois pour le moment
+      boatsChecked++;
+      console.log(`🔍 Vérification annonce ${boatsChecked}/${activeBoats.length}: "${boat.model}" (ID: ${boat.id})`);
 
-        // Vérifier si l'annonce expire dans exactement 7 jours
-        if (isWithinIntervalDays(expiryDate, today, 7)) {
+      try {
+        // Utiliser la date d'expiration stockée en base de données
+        if (!boat.expires_at) {
+          console.warn(`⚠️  Aucune date d'expiration pour l'annonce ${boat.id} - ignorée`);
+          errors++;
+          continue;
+        }
+
+        const expiryDate = boat.expires_at;
+        console.log(`   ⏰ Date d'expiration (depuis BDD): ${formatDateFr(expiryDate)}`);
+
+        // Calculer les jours restants
+        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        console.log(`   📊 Jours jusqu'à expiration: ${daysUntilExpiry}`);
+
+        // Vérifier si l'annonce expire dans exactement 7 jours (±12 heures de tolérance)
+        const isWithin7Days = isWithinIntervalDays(expiryDate, today, 7);
+        console.log(`   🎯 Dans l'intervalle de 7 jours (±12h): ${isWithin7Days ? 'OUI' : 'NON'}`);
+
+        if (isWithin7Days) {
           console.log(`🎯 Annonce "${boat.model}" expire le ${formatDateFr(expiryDate)} - envoi du rappel`);
+
+          // Vérifier les informations utilisateur
+          if (!boat.user) {
+            console.warn(`⚠️  Aucun utilisateur associé à l'annonce ${boat.id}`);
+            errors++;
+            continue;
+          }
+
+          if (!boat.user.email) {
+            console.warn(`⚠️  Aucun email pour l'utilisateur ${boat.user.name || 'inconnu'} (annonce ID: ${boat.id})`);
+            errors++;
+            continue;
+          }
+
+          console.log(`📧 Envoi d'email à: ${boat.user.email} (${boat.user.name || 'nom inconnu'})`);
 
           const success = await sendRenewalEmail(boat, expiryDate);
           if (success) {
             remindersSent++;
+            console.log(`✅ Email envoyé avec succès pour "${boat.model}"`);
           } else {
             errors++;
+            console.log(`❌ Échec de l'envoi d'email pour "${boat.model}"`);
           }
 
           // Petit délai pour éviter de spammer le serveur SMTP
+          console.log('⏳ Pause de 1 seconde...');
           await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          console.log(`ℹ️  Annonce "${boat.model}" hors intervalle (expiration dans ${daysUntilExpiry} jours)`);
         }
       } catch (error) {
         console.error(`❌ Erreur lors du traitement de l'annonce ${boat.id}:`, error);
@@ -208,11 +313,79 @@ async function sendRenewalReminders() {
       }
     }
 
-    console.log(`✅ Vérification terminée: ${remindersSent} rappels envoyés, ${errors} erreurs`);
+    console.log(`✅ Vérification terminée: ${remindersSent} rappels envoyés, ${errors} erreurs, ${boatsChecked} annonces vérifiées`);
 
   } catch (error) {
     console.error('❌ Erreur lors de la vérification des renouvellements:', error);
     process.exit(1);
+  } finally {
+    console.log('🔌 Déconnexion de la base de données');
+    await prisma.$disconnect();
+  }
+}
+
+/**
+ * Met à jour les annonces existantes sans expiresAt
+ */
+async function updateExistingBoats() {
+  console.log('🔄 Mise à jour des annonces existantes sans date d\'expiration...');
+
+  const prisma = new PrismaClient();
+  try {
+    const now = new Date();
+    const threeMonthsFromNow = new Date(now);
+    threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+
+    const result = await prisma.boat.updateMany({
+      where: {
+        status: 'active',
+        expires_at: null
+      },
+      data: {
+        expires_at: threeMonthsFromNow
+      }
+    });
+
+    console.log(`✅ ${result.count} annonces mises à jour avec expiresAt = ${formatDateFr(threeMonthsFromNow)}`);
+  } catch (error) {
+    console.error('❌ Erreur lors de la mise à jour:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/**
+ * Mode test: définit une annonce pour expirer dans 7 jours pour tester les emails
+ */
+async function testExpiringSoon() {
+  console.log('🧪 MODE TEST - Définition d\'une annonce pour expirer dans 7 jours...');
+
+  const prisma = new PrismaClient();
+  try {
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+    // Prendre la première annonce active
+    const firstBoat = await prisma.boat.findFirst({
+      where: { status: 'active' },
+      select: { id: true, model: true }
+    });
+
+    if (!firstBoat) {
+      console.log('❌ Aucune annonce active trouvée pour le test');
+      return;
+    }
+
+    await prisma.boat.update({
+      where: { id: firstBoat.id },
+      data: { expires_at: sevenDaysFromNow }
+    });
+
+    console.log(`✅ Annonce "${firstBoat.model}" (ID: ${firstBoat.id}) définie pour expirer le ${formatDateFr(sevenDaysFromNow)}`);
+    console.log('💡 Relancez le script normal pour tester l\'envoi d\'email');
+  } catch (error) {
+    console.error('❌ Erreur lors du test:', error);
   } finally {
     await prisma.$disconnect();
   }
@@ -220,7 +393,37 @@ async function sendRenewalReminders() {
 
 // Exécuter le script si appelé directement
 if (require.main === module) {
-  sendRenewalReminders();
+  const args = process.argv.slice(2);
+
+  if (args.includes('--diagnostic') || args.includes('-d')) {
+    // Mode diagnostic rapide
+    quickDiagnostic().catch(console.error);
+  } else if (args.includes('--update-existing') || args.includes('-u')) {
+    // Mode mise à jour des données existantes
+    updateExistingBoats().catch(console.error);
+  } else if (args.includes('--test-expiring-soon') || args.includes('-t')) {
+    // Mode test: définir une annonce pour expirer dans 7 jours
+    testExpiringSoon().catch(console.error);
+  } else {
+    // Mode envoi des rappels (par défaut)
+    console.log('🎯 Script lancé directement - mode test/debug activé');
+    console.log('💡 Les logs détaillés sont activés pour diagnostiquer les problèmes');
+    console.log('🔍 Vérifiez la sortie pour identifier où le processus bloque');
+    console.log('💡 Utilisez --diagnostic pour un test rapide de configuration');
+    console.log('');
+
+    sendRenewalReminders()
+      .then(() => {
+        console.log('');
+        console.log('✅ Script terminé avec succès');
+        process.exit(0);
+      })
+      .catch((error) => {
+        console.error('');
+        console.error('❌ Script terminé avec erreur:', error);
+        process.exit(1);
+      });
+  }
 }
 
 export { sendRenewalReminders };
