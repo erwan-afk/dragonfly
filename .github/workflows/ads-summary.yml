@@ -47,7 +47,7 @@ jobs:
 
           # Exécuter le script
           echo "📡 Exécution du script..."
-          npm run tsx scripts/send-ads-summary.ts
+          npx tsx scripts/send-ads-summary.ts
           exit_code=$?
 
           if [ $exit_code -eq 0 ]; then
