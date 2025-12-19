@@ -1,0 +1,39 @@
+name: Send Renewal Reminders
+
+on:
+  schedule:
+    # Tous les jours à 9h00 UTC (14h00 heure de Paris en hiver, 15h00 en été)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Permet de déclencher manuellement depuis GitHub
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send renewal reminders
+        run: |
+          echo "🚀 Envoi des rappels de renouvellement d'annonces..."
+
+          # Utilisation de curl pour appeler l'API
+          response=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST \
+            https://dragonfly-livid.vercel.app/api/send-renewal-reminders \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET_TOKEN }}" \
+            -H "Content-Type: application/json")
+
+          # Vérification du code de réponse HTTP
+          if [ "$response" -eq 200 ]; then
+            echo "✅ Rappels de renouvellement envoyés avec succès"
+            cat response.json
+          else
+            echo "❌ Erreur lors de l'envoi des rappels (code HTTP: $response)"
+            cat response.json
+            exit 1
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Échec de l'envoi des rappels de renouvellement"
+          echo "Vérifiez les logs et la configuration"

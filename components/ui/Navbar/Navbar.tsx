@@ -71,11 +71,11 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-transparent "
+      className={`sticky top-0 z-50  backdrop-blur-md border-b border-transparent ${isScrolled ? 'bg-white/80' : 'bg-fullwhite'}`}
       variants={navbarContainerVariants}
       animate={isScrolled ? 'scrolled' : 'visible'}
       whileHover={{
-        backdropFilter: 'blur(15px)',
+        backdropFilter: 'blur(15px) ',
         transition: {
           type: 'spring',
           damping: 25,

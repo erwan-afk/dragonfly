@@ -50,14 +50,25 @@ export default function BoatImageGallery({
 
   const mainImage = validImages[0];
 
-  // Créer un tableau d'images pour la galerie (4 images maximum pour les petites vues)
+  // Images secondaires (max 4)
   const galleryImages = validImages.length > 1 ? validImages.slice(1, 5) : [];
+  const total = validImages.length;
 
   return (
     <>
       <div className="flex flex-row w-full gap-16 max-h-[384px]">
         {/* Image principale */}
-        <div className="w-full h-[384px] rounded-12 overflow-hidden relative">
+        <div
+          className={`h-[384px] rounded-12 overflow-hidden relative ${
+            total === 1
+              ? 'w-full'
+              : total === 2
+                ? 'w-2/3'
+                : total === 3
+                  ? 'w-3/5'
+                  : 'w-1/2'
+          }`}
+        >
           <BoatImage
             src={mainImage}
             alt={`${boatModel} main view`}
@@ -66,43 +77,76 @@ export default function BoatImageGallery({
           />
         </div>
 
-        {/* Conteneur pour les petites images (seulement si il y en a) */}
+        {/* Right side thumbnails */}
         {galleryImages.length > 0 && (
-          <div className="flex flex-row w-2/3 gap-16">
-            {/* Colonne 1 */}
-            <div className="flex flex-col gap-16">
-              {galleryImages.slice(0, 2).map((img, index) => (
-                <div
-                  key={`col1-${index}`}
-                  className="h-[184px] rounded-12 overflow-hidden relative"
-                >
-                  <BoatImage
-                    src={img}
-                    alt={`${boatModel} view ${index + 1}`}
-                    className="w-full h-full object-cover object-center"
-                    onClick={() => openCarousel(index + 1)}
-                  />
-                </div>
-              ))}
-            </div>
+          <>
+            {total === 2 && (
+              <div className="w-1/3 h-[384px] rounded-12 overflow-hidden relative">
+                <BoatImage
+                  src={galleryImages[0]}
+                  alt={`${boatModel} view 1`}
+                  className="w-full h-full object-cover object-center"
+                  onClick={() => openCarousel(1)}
+                />
+              </div>
+            )}
 
-            {/* Colonne 2 */}
-            <div className="flex flex-col gap-16">
-              {galleryImages.slice(2, 4).map((img, index) => (
-                <div
-                  key={`col2-${index}`}
-                  className="h-[184px] rounded-12 overflow-hidden relative"
-                >
-                  <BoatImage
-                    src={img}
-                    alt={`${boatModel} view ${index + 3}`}
-                    className="w-full h-full object-cover object-center"
-                    onClick={() => openCarousel(index + 3)}
-                  />
+            {total === 3 && (
+              <div className="w-2/5 flex flex-col gap-16">
+                {galleryImages.slice(0, 2).map((img, index) => (
+                  <div
+                    key={`right-${index}`}
+                    className="h-[184px] rounded-12 overflow-hidden relative"
+                  >
+                    <BoatImage
+                      src={img}
+                      alt={`${boatModel} view ${index + 1}`}
+                      className="w-full h-full object-cover object-center"
+                      onClick={() => openCarousel(index + 1)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {total >= 4 && (
+              <div className="w-1/2 flex flex-row gap-16">
+                {/* Colonne 1 */}
+                <div className="flex flex-col gap-16 w-1/2">
+                  {galleryImages.slice(0, 2).map((img, index) => (
+                    <div
+                      key={`col1-${index}`}
+                      className="h-[184px] rounded-12 overflow-hidden relative"
+                    >
+                      <BoatImage
+                        src={img}
+                        alt={`${boatModel} view ${index + 1}`}
+                        className="w-full h-full object-cover object-center"
+                        onClick={() => openCarousel(index + 1)}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+
+                {/* Colonne 2 */}
+                <div className="flex flex-col gap-16 w-1/2">
+                  {galleryImages.slice(2, 4).map((img, index) => (
+                    <div
+                      key={`col2-${index}`}
+                      className="h-[184px] rounded-12 overflow-hidden relative"
+                    >
+                      <BoatImage
+                        src={img}
+                        alt={`${boatModel} view ${index + 3}`}
+                        className="w-full h-full object-cover object-center"
+                        onClick={() => openCarousel(index + 3)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

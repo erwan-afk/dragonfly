@@ -1,14 +1,5 @@
-import { Suspense } from 'react';
-import prisma from '@/utils/prisma/client';
-import Pricing from '@/components/ui/Pricing/Pricing';
-
-import oceanImage from '../public/images/ocean.png';
-import Link from 'next/link';
-import { PricingCard } from '@/components/ui/PrincingCard/PrincingCard';
 import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
-import Button from '@/components/ui/Button/Button';
-import Scroll from '@/components/icons/Scroll';
-import { Prisma } from '@prisma/client';
+import prisma from '@/utils/prisma/client';
 
 // Désactiver le rendu statique - cette page doit être rendue dynamiquement
 export const dynamic = 'force-dynamic';
@@ -20,14 +11,15 @@ interface ForSalePageProps {
     minPrice?: string;
     maxPrice?: string;
     attributes?: string;
+    sort?: string;
   }>;
 }
 
 export default async function ForSalePage({ searchParams }: ForSalePageProps) {
+  const params = await searchParams;
   const isDev = process.env.NODE_ENV === 'development';
 
   try {
-    const params = await searchParams;
     if (isDev) {
       console.log('🔍 Loading boats for sale with params:', params);
     }
@@ -65,10 +57,10 @@ export default async function ForSalePage({ searchParams }: ForSalePageProps) {
     if (params.attributes) {
       const attributesList = params.attributes
         .split(',')
-        .map((attr) => attr.trim());
+        .map((attr: string) => attr.trim());
 
       // Pour chaque attribut, vérifier qu'il est présent dans le tableau specifications
-      attributesList.forEach((attr) => {
+      attributesList.forEach((attr: string) => {
         conditions.push(`$${paramIndex} = ANY(b.specifications)`);
         sqlParams.push(attr);
         paramIndex++;
@@ -76,6 +68,33 @@ export default async function ForSalePage({ searchParams }: ForSalePageProps) {
     }
 
     const whereClause = conditions.join(' AND ');
+
+    // Déterminer l'ordre de tri
+    let orderBy = 'b.created_at DESC'; // Par défaut
+    if (params.sort) {
+      switch (params.sort) {
+        case 'price_asc':
+          orderBy = 'b.price ASC';
+          break;
+        case 'price_desc':
+          orderBy = 'b.price DESC';
+          break;
+        case 'created_asc':
+          orderBy = 'b.created_at ASC';
+          break;
+        case 'created_desc':
+          orderBy = 'b.created_at DESC';
+          break;
+        case 'model_asc':
+          orderBy = 'b.model ASC';
+          break;
+        case 'model_desc':
+          orderBy = 'b.model DESC';
+          break;
+        default:
+          orderBy = 'b.created_at DESC';
+      }
+    }
 
     // Utilisons SQL brut pour éviter les problèmes de schéma
     // Ne récupérer que les bateaux avec le statut 'active' (payés)
@@ -85,7 +104,7 @@ export default async function ForSalePage({ searchParams }: ForSalePageProps) {
       FROM "boats" b
       LEFT JOIN "user" u ON b.user_id = u.id
       WHERE ${whereClause}
-      ORDER BY b.created_at DESC
+      ORDER BY ${orderBy}
     `,
       ...sqlParams
     )) as any[];
@@ -106,13 +125,14 @@ export default async function ForSalePage({ searchParams }: ForSalePageProps) {
       }
     }));
 
-    // Générer un message de description basé sur les filtres
+    // Générer un message de description basé sur les filtres et le tri
     const hasFilters =
       params.model ||
       params.country ||
       params.minPrice ||
       params.maxPrice ||
-      params.attributes;
+      params.attributes ||
+      params.sort;
 
     let filterDescription = '';
     if (hasFilters) {
@@ -131,6 +151,34 @@ export default async function ForSalePage({ searchParams }: ForSalePageProps) {
       if (params.attributes) {
         const attrCount = params.attributes.split(',').length;
         parts.push(`with ${attrCount} attribute${attrCount > 1 ? 's' : ''}`);
+      }
+
+      // Ajouter l'information de tri
+      if (params.sort) {
+        let sortDescription = '';
+        switch (params.sort) {
+          case 'price_asc':
+            sortDescription = 'sorted by price (low to high)';
+            break;
+          case 'price_desc':
+            sortDescription = 'sorted by price (high to low)';
+            break;
+          case 'created_asc':
+            sortDescription = 'sorted by date (oldest first)';
+            break;
+          case 'created_desc':
+            sortDescription = 'sorted by date (newest first)';
+            break;
+          case 'model_asc':
+            sortDescription = 'sorted by model (A-Z)';
+            break;
+          case 'model_desc':
+            sortDescription = 'sorted by model (Z-A)';
+            break;
+        }
+        if (sortDescription) {
+          parts.push(sortDescription);
+        }
       }
 
       filterDescription = parts.join(' ');

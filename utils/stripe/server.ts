@@ -57,7 +57,7 @@ export async function checkoutWithStripe(
         ...metadata
       },
       cancel_url: getURL(),
-      success_url: getURL('/payment-success') // Rediriger vers notre page custom
+      success_url: `${getURL('/account')}?payment=success` // Rediriger vers la page account avec indicateur de paiement réussi
     };
 
     const stripeSession = await stripe.checkout.sessions.create(params);

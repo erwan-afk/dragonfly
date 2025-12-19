@@ -66,12 +66,12 @@ export default function ImageCarousel({
       size="md"
       hideCloseButton={true}
       classNames={{
-        base: 'transparent shadow-none',
-        backdrop: 'bg-white/5 backdrop-blur-md',
+        base: 'transparent shadow-none border-2 border-lightgrey',
+
         wrapper: 'items-center justify-center'
       }}
     >
-      <ModalContent className="max-w-[1416px] relative">
+      <ModalContent className="max-w-7xl relative h-[90vh]">
         {(onClose) => (
           <>
             <ModalHeader className="flex flex-row justify-between items-center">
@@ -87,32 +87,41 @@ export default function ImageCarousel({
               </button>
             </ModalHeader>
 
-            <ModalBody className="p-4 flex flex-col h-full max-h-[90vh] mx-auto overflow-hidden">
+            <ModalBody className="p-4 flex flex-col h-full mx-auto overflow-hidden">
               {/* Conteneur de l'image avec navigation */}
               <div className="flex flex-col items-center justify-center h-full overflow-hidden rounded-[12px]">
-                <button
-                  onClick={goToPrevious}
-                  className="absolute w-[60px] ml-[-30px] h-[40px] left-4 z-10 border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full "
-                >
-                  <ArrowSeemore className="rotate-180" size={32} />
-                </button>
-                <button
-                  onClick={goToNext}
-                  className="absolute w-[60px] mr-[-30px] h-[40px] right-4 z-10 border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full "
-                >
-                  <ArrowSeemore size={32} />
-                </button>
                 {/* Image principale */}
-                <div className="flex items-center justify-center flex-1 w-full overflow-hidden rounded-[12px] relative">
-                  <img
-                    src={images[currentIndex]}
-                    alt={`Image ${currentIndex + 1}`}
-                    className="w-full  rounded-[12px]"
-                    onError={(e) => {
-                      e.currentTarget.src = '/images/ocean.png';
-                    }}
-                  />
+                <div className="grid grid-cols-[56px_1fr_56px] gap-3 w-full items-center h-[70vh]">
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    onClick={goToPrevious}
+                    className="w-[56px] h-[56px] border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full justify-self-start"
+                  >
+                    <ArrowSeemore className="rotate-180" size={28} />
+                  </button>
+
+                  <div className="w-full h-full overflow-hidden rounded-[12px] flex items-center justify-center">
+                    <img
+                      src={images[currentIndex]}
+                      alt={`Image ${currentIndex + 1}`}
+                      className="w-full h-full object-cover rounded-[12px]"
+                      onError={(e) => {
+                        e.currentTarget.src = '/images/ocean.png';
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    onClick={goToNext}
+                    className="w-[56px] h-[56px] border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full justify-self-end"
+                  >
+                    <ArrowSeemore size={28} />
+                  </button>
                 </div>
+
                 {/* Miniatures en dessous */}
                 <div className="flex gap-4 justify-center py-4 flex-shrink-0 overflow-x-auto">
                   {images.map((img, index) => (

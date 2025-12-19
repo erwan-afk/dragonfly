@@ -21,4 +21,10 @@ export const currencies = [
   { key: 'CNY', label: 'CNY', symbol: '¥' },
   { key: 'INR', label: 'INR', symbol: '₹' },
   { key: 'MXN', label: 'MXN', symbol: 'MX$' }
-] as const; 
+] as const;
+
+// Fonction utilitaire pour obtenir le nom complet du modèle
+export const getModelLabel = (modelKey: string): string => {
+  const model = dragonflyModels.find(m => m.key === modelKey);
+  return model ? model.label : modelKey; // Retourne la clé si pas trouvée
+}; 

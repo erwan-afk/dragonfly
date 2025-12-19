@@ -18,6 +18,7 @@ import {
   dragonflyModels,
   currencies,
   countries,
+  getModelLabel,
   specificationsData
 } from './BoatListingForm';
 import {
@@ -102,6 +103,11 @@ export default function BoatListingFormV2({
 }: BoatListingFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Local testing helper: show autofill controls only on localhost or in dev.
+  const showTestTools =
+    process.env.NODE_ENV !== 'production' ||
+    (typeof window !== 'undefined' && window.location.hostname === 'localhost');
 
   const normalizePlanName = (name: string | null | undefined) =>
     (name || '').toLowerCase().trim();
@@ -967,7 +973,7 @@ export default function BoatListingFormV2({
       });
     }
 
-    setTimeout(() => router.push('/account?section=ads&payment=success'), 1500);
+    setTimeout(() => router.push('/account?payment=success'), 1500);
   };
 
   const handlePaymentError = (error: string) => {
@@ -1010,6 +1016,158 @@ export default function BoatListingFormV2({
           </span>{' '}
           your advert
         </h1>
+
+        {showTestTools && !isRenewalMode && (
+          <div className="flex flex-col gap-2 rounded-xl border border-stonegrey/20 bg-stonegrey/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-oceanblue">
+                <span className="font-medium">Test tools</span> (dev only)
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => {
+                    const fallbackModel = dragonflyModels[0]?.key || '';
+                    const fallbackCountry = countries[0]?.key || '';
+                    const fallbackCurrency = 'EUR';
+                    const safePrice =
+                      priceLimit && priceLimit > 0
+                        ? Math.max(1000, Math.floor(priceLimit * 0.6))
+                        : 250000;
+
+                    setModel(fallbackModel);
+                    setCountry(fallbackCountry);
+                    setCurrency(fallbackCurrency);
+                    setPriceBoat(safePrice);
+                    setVatPaid(true);
+                    setSpecifications(
+                      specificationsData
+                        .flatMap((s) => s.items.map((i) => i.key))
+                        .slice(0, 4)
+                    );
+                    setDescription(
+                      'Test listing (autofilled). Great condition, ready to sail. Contact me for details.'
+                    );
+
+                    // Mark fields as touched so validations show consistent UI
+                    setTouched((prev) => ({
+                      ...prev,
+                      model: true,
+                      country: true,
+                      price: true,
+                      description: true,
+                      photos: true
+                    }));
+                    setShouldPulseInvalid(false);
+                    toast.success(
+                      'Form autofilled (photos must be added manually)',
+                      {
+                        duration: 2500,
+                        position: 'top-right'
+                      }
+                    );
+                  }}
+                  className="px-3 py-2 rounded-lg bg-oceanblue text-white text-sm font-medium hover:bg-oceanblue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Autofill
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={async () => {
+                    if (maxPhotos === 0) {
+                      toast.error('This offer does not allow photo uploads', {
+                        duration: 2500,
+                        position: 'top-right'
+                      });
+                      return;
+                    }
+
+                    const fallbackModel = dragonflyModels[0]?.key || '';
+                    const fallbackCountry = countries[0]?.key || '';
+                    const fallbackCurrency = 'EUR';
+                    const safePrice =
+                      priceLimit && priceLimit > 0
+                        ? Math.max(1000, Math.floor(priceLimit * 0.6))
+                        : 250000;
+
+                    setModel(fallbackModel);
+                    setCountry(fallbackCountry);
+                    setCurrency(fallbackCurrency);
+                    setPriceBoat(safePrice);
+                    setVatPaid(true);
+                    setSpecifications(
+                      specificationsData
+                        .flatMap((s) => s.items.map((i) => i.key))
+                        .slice(0, 4)
+                    );
+                    setDescription(
+                      'Test listing (autofilled). Great condition, ready to sail. Contact me for details.'
+                    );
+
+                    try {
+                      // Clear existing previews to avoid leaks
+                      photoPreview.forEach((url) => URL.revokeObjectURL(url));
+
+                      const demoPaths = [
+                        '/images/boat-1.webp',
+                        '/images/boat-2.webp',
+                        '/images/boat-3.webp',
+                        '/images/boat-4.webp'
+                      ].slice(0, Math.max(1, maxPhotos));
+
+                      const demoFiles: File[] = [];
+                      const demoPreviews: string[] = [];
+
+                      for (const p of demoPaths) {
+                        const res = await fetch(p);
+                        const blob = await res.blob();
+                        const name = p.split('/').pop() || 'demo.webp';
+                        const file = new File([blob], name, {
+                          type: blob.type || 'image/webp'
+                        });
+                        demoFiles.push(file);
+                        demoPreviews.push(URL.createObjectURL(file));
+                      }
+
+                      setPhotoFiles(demoFiles);
+                      setPhotoPreview(demoPreviews);
+                    } catch (e) {
+                      console.error('Demo photo autofill failed:', e);
+                      toast.error('Failed to load demo photos', {
+                        duration: 2500,
+                        position: 'top-right'
+                      });
+                    }
+
+                    setTouched((prev) => ({
+                      ...prev,
+                      model: true,
+                      country: true,
+                      price: true,
+                      description: true,
+                      photos: true
+                    }));
+                    setShouldPulseInvalid(false);
+                    toast.success('Autofilled with demo photos', {
+                      duration: 2500,
+                      position: 'top-right'
+                    });
+                  }}
+                  className="px-3 py-2 rounded-lg bg-articblue text-white text-sm font-medium hover:bg-articblue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Autofill + photos
+                </button>
+              </div>
+            </div>
+            <div className="text-xs text-stonegrey">
+              Note: real user file inputs can’t be auto-filled, but demo photos
+              can be loaded from /public for testing.
+            </div>
+          </div>
+        )}
         <div className="flex flex-col gap-[32px]">
           {/* Listing Type - 4 boutons */}
           <div className="flex flex-col gap-4">
@@ -1206,7 +1364,7 @@ export default function BoatListingFormV2({
                           <div className="flex flex-col p-32 flex-1 bg-fullwhite justify-around">
                             <div className="flex flex-col">
                               <h3 className="text-24 font-medium text-articblue">
-                                {boat.model}
+                                {getModelLabel(boat.model)}
                               </h3>
                             </div>
 
@@ -1832,7 +1990,7 @@ export default function BoatListingFormV2({
                 priceId={selectedPrice.id}
                 userId={user.id}
                 paymentIntentId={paymentIntentId}
-                returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account?section=ads&payment=success`}
+                returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account`}
               />
             </Elements>
           ) : (

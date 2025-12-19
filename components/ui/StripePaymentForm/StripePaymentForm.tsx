@@ -6,6 +6,7 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
+import { useLoading } from '../LoadingProvider';
 
 interface StripePaymentFormProps {
   onSuccess: () => void;
@@ -38,6 +39,7 @@ export default function StripePaymentForm({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const { startLoading, stopLoading } = useLoading();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +51,7 @@ export default function StripePaymentForm({
 
     setIsProcessing(true);
     setErrorMessage('');
+    startLoading(); // Activer le loading global
 
     try {
       // 1. Exécuter le callback avant le paiement (créer bateau, uploader images)

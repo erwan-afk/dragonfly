@@ -433,7 +433,7 @@ export default function BoatListingForm({
 
   const handlePaymentSuccess = () => {
     console.log('✅ Payment successful!');
-    router.push('/account?section=ads&payment=success');
+    router.push('/account?payment=success');
   };
 
   const handlePaymentError = (error: string) => {
@@ -738,7 +738,7 @@ export default function BoatListingForm({
                   <StripePaymentForm
                     onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
-                    returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account?section=ads&payment=success`}
+                    returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account`}
                   />
                 </Elements>
               ) : (

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Tables } from '@/types_db';
+import { getModelLabel } from '@/utils/constants';
 type Boat = Tables<'boats'>; // Type pour les données de la table 'boats'
 
 export default function BoatList({ boats }: { boats: Boat[] }) {
@@ -15,7 +16,7 @@ export default function BoatList({ boats }: { boats: Boat[] }) {
     <ul className="space-y-4">
       {boats.map((boat) => (
         <li key={boat.id} className="p-4 bg-zinc-800 rounded-md">
-          <h3 className="text-xl font-semibold text-white">{boat.model}</h3>
+          <h3 className="text-xl font-semibold text-white">{getModelLabel(boat.model)}</h3>
           <p className="text-zinc-400">{boat.description}</p>
           <p className="text-white">Price: ${boat.price}</p>
           <button

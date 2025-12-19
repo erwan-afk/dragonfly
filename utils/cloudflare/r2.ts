@@ -11,7 +11,21 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID!;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY!;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME!;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // Optionnel pour custom domain
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // Optionnel pour custom domain (with or without protocol)
+
+function getPublicBaseUrl(): string | null {
+  if (R2_PUBLIC_URL) {
+    const hasProtocol =
+      R2_PUBLIC_URL.startsWith('http://') || R2_PUBLIC_URL.startsWith('https://');
+    return hasProtocol ? R2_PUBLIC_URL : `https://${R2_PUBLIC_URL}`;
+  }
+
+  if (R2_ACCOUNT_ID && R2_BUCKET_NAME) {
+    return `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  }
+
+  return null;
+}
 
 // Configuration du client S3 pour Cloudflare R2
 const r2Client = new S3Client({
@@ -77,9 +91,8 @@ export async function uploadImageToR2(
     await r2Client.send(command);
 
     // Génère l'URL publique
-    const publicUrl = R2_PUBLIC_URL 
-      ? `https://${R2_PUBLIC_URL}/${key}`
-      : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    const baseUrl = getPublicBaseUrl();
+    const publicUrl = baseUrl ? `${baseUrl}/${key}` : key;
 
     return {
       success: true,
@@ -120,9 +133,8 @@ export async function uploadImageToTempR2(
     await r2Client.send(command);
 
     // Génère l'URL publique
-    const publicUrl = R2_PUBLIC_URL 
-      ? `https://${R2_PUBLIC_URL}/${key}`
-      : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    const baseUrl = getPublicBaseUrl();
+    const publicUrl = baseUrl ? `${baseUrl}/${key}` : key;
 
     return {
       success: true,
@@ -195,9 +207,8 @@ export async function uploadImageToR2WithWebP(
     await r2Client.send(command);
 
     // Génère l'URL publique
-    const publicUrl = R2_PUBLIC_URL 
-      ? `https://${R2_PUBLIC_URL}/${key}`
-      : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    const baseUrl = getPublicBaseUrl();
+    const publicUrl = baseUrl ? `${baseUrl}/${key}` : key;
 
     return {
       success: true,
@@ -244,9 +255,8 @@ export async function uploadImageToTempR2WithWebP(
     await r2Client.send(command);
 
     // Génère l'URL publique
-    const publicUrl = R2_PUBLIC_URL 
-      ? `https://${R2_PUBLIC_URL}/${key}`
-      : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`;
+    const baseUrl = getPublicBaseUrl();
+    const publicUrl = baseUrl ? `${baseUrl}/${key}` : key;
 
     return {
       success: true,
@@ -332,9 +342,8 @@ export async function moveTempImagesToBoat(
       await deleteImageFromR2(tempKey);
 
       // Générer l'URL finale
-      const finalUrl = R2_PUBLIC_URL 
-        ? `https://${R2_PUBLIC_URL}/${finalKey}`
-        : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${finalKey}`;
+      const baseUrl = getPublicBaseUrl();
+      const finalUrl = baseUrl ? `${baseUrl}/${finalKey}` : finalKey;
 
       finalUrls.push(finalUrl);
       console.log(`✅ Moved temp image ${tempKey} to ${finalKey}`);
