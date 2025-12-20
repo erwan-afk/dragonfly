@@ -72,11 +72,28 @@ const webhookHandlers: Record<string, WebhookHandler> = {
 
           if (paymentResult.success) {
             console.log(`✅ Payment recorded with ID: ${paymentResult.paymentId}`);
+
+            // 3. Mettre à jour le productId du boat avec le produit acheté
+            if (checkoutSession.line_items?.data && checkoutSession.line_items.data.length > 0) {
+              const firstItem = checkoutSession.line_items.data[0];
+              if (firstItem.price && typeof firstItem.price.product === 'string') {
+                const productId = firstItem.price.product;
+                try {
+                  await prisma.boat.update({
+                    where: { id: boatId },
+                    data: { productId }
+                  });
+                  console.log(`✅ Boat ${boatId} productId updated to: ${productId}`);
+                } catch (error) {
+                  console.error(`❌ Failed to update boat productId: ${error}`);
+                }
+              }
+            }
           } else {
             console.error(`❌ Failed to record payment: ${paymentResult.error}`);
           }
 
-          // 3. Déplacer les images du dossier temporaire vers le dossier final
+          // 5. Déplacer les images du dossier temporaire vers le dossier final
           try {
             console.log(`🖼️ Moving temporary images to final location for boat ${boatId}...`);
 
@@ -201,16 +218,13 @@ const webhookHandlers: Record<string, WebhookHandler> = {
     const userId = paymentIntent.metadata?.user_id;
 
     console.log(
-      '🔔 Payment Intent succeeded (Payment Element)',
+      '🔔 Payment Intent succeeded',
       JSON.stringify({
-        eventId: event.id,
         paymentIntentId: paymentIntent.id,
-        status: paymentIntent.status,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
         boatId,
         userId,
-        livemode: event.livemode
+        listingType: paymentIntent.metadata?.listing_type,
+        productId: paymentIntent.metadata?.product_id
       })
     );
 
@@ -283,11 +297,25 @@ const webhookHandlers: Record<string, WebhookHandler> = {
 
       if (paymentResult.success) {
         console.log(`✅ Payment recorded with ID: ${paymentResult.paymentId}`);
+
+        // 4. Mettre à jour le productId du boat avec le produit acheté (pour les autres cas)
+        const productId = paymentIntent.metadata?.product_id;
+        if (productId && boatId) {
+          try {
+            await prisma.boat.update({
+              where: { id: boatId },
+              data: { productId: productId }
+            });
+            console.log(`✅ Boat ${boatId} productId updated to: ${productId} (webhook)`);
+          } catch (error) {
+            console.error(`❌ Failed to update boat productId via webhook: ${error}`);
+          }
+        }
       } else {
         console.error(`❌ Failed to record payment: ${paymentResult.error}`);
       }
 
-      // 4. Déplacer les images du dossier temporaire vers le dossier final
+      // 5. Déplacer les images du dossier temporaire vers le dossier final
       try {
         console.log(`🖼️ Moving temporary images to final location for boat ${boatId}...`);
 
@@ -334,7 +362,7 @@ const webhookHandlers: Record<string, WebhookHandler> = {
         console.error(`❌ Error moving images for boat ${boatId}:`, error);
       }
 
-      // 5. Invalider le cache pour forcer le rafraîchissement des données utilisateur
+      // 6. Invalider le cache pour forcer le rafraîchissement des données utilisateur
       try {
         revalidateTag('user-data');
         console.log(`🔄 Cache invalidated for user data`);
@@ -355,6 +383,12 @@ export async function POST(req: Request) {
     const body = await req.text();
     const sig = req.headers.get('stripe-signature');
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    console.log('🔗 Webhook request received', {
+      hasSignature: !!sig,
+      bodyLength: body.length,
+      headers: Object.fromEntries(req.headers.entries())
+    });
 
     // Sécurité: ne jamais accepter un webhook Stripe sans vérification de signature.
     // Sinon, n'importe qui peut "faker" un paiement et déclencher l'activation/délivrance.
@@ -383,7 +417,7 @@ export async function POST(req: Request) {
 
     // Logs utiles (sans données sensibles)
     console.log(
-      '🔔 Stripe webhook received',
+      '🔔 Stripe webhook received and validated',
       JSON.stringify({
         id: event.id,
         type: event.type,

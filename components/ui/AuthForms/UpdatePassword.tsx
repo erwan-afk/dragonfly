@@ -5,6 +5,7 @@ import { updatePassword } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
+import Input from '@/components/ui/Input/Input';
 
 interface UpdatePasswordProps {
   redirectMethod: string;
@@ -23,7 +24,15 @@ export default function UpdatePassword({
   };
 
   return (
-    <div className="my-8">
+    <div className="flex flex-col">
+      <div className="flex flex-col space-y-1 mb-8">
+        <h1 className="font-bold text-oceanblue text-40 tracking-wide">
+          Update Password
+        </h1>
+        <p className="text-base text-darkgrey">
+          Update your password
+        </p>
+      </div>
       <form
         noValidate={true}
         className="mb-4"
@@ -31,33 +40,29 @@ export default function UpdatePassword({
       >
         <div className="grid gap-2">
           <div className="grid gap-1">
-            <label htmlFor="password">New Password</label>
-            <input
+            <Input
               id="password"
+              label="New Password"
               placeholder="Password"
               type="password"
               name="password"
               autoComplete="current-password"
-              className="w-full p-3 rounded-md bg-zinc-800"
             />
-            <label htmlFor="passwordConfirm">Confirm New Password</label>
-            <input
+            <Input
               id="passwordConfirm"
+              label="Confirm New Password"
               placeholder="Password"
               type="password"
               name="passwordConfirm"
               autoComplete="current-password"
-              className="w-full p-3 rounded-md bg-zinc-800"
             />
           </div>
           <Button
-            variant="slim"
+            text="Update Password"
             type="submit"
-            className="mt-1"
             loading={isSubmitting}
-          >
-            Update Password
-          </Button>
+            anim_disabled
+          />
         </div>
       </form>
     </div>

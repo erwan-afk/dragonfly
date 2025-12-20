@@ -51,7 +51,7 @@ export default function HeroSection() {
         </div>
       </section> */}
 
-      <section className="w-full  p-40 rounded-16  flex flex-row justify-between items-center bg-[url('/images/dragonfly-boat.webp')]  text-40 font-medium bg-cover bg-center ">
+      <section className="w-full mt-32 p-40 rounded-16  flex flex-row justify-between items-center bg-[url('/images/dragonfly-boat.webp')]  text-40 font-medium bg-cover bg-center ">
         <SearchBar />
 
         <div className="text-fullwhite text-40 px-32">
@@ -68,7 +68,7 @@ export default function HeroSection() {
         <div className="flex flex-row gap-32">
           <Link
             href="/forsale?model=df25"
-            target="_blank"
+            target="_self"
             rel="noopener noreferrer"
             className="relative h-[200px] w-full rounded-16 overflow-hidden"
           >
@@ -83,7 +83,7 @@ export default function HeroSection() {
           </Link>
           <Link
             href="/forsale?model=df28"
-            target="_blank"
+            target="_self"
             rel="noopener noreferrer"
             className="relative h-[200px] w-full rounded-16 overflow-hidden"
           >
@@ -98,7 +98,7 @@ export default function HeroSection() {
           </Link>
           <Link
             href="/forsale?model=df32"
-            target="_blank"
+            target="_self"
             rel="noopener noreferrer"
             className="relative h-[200px] w-full rounded-16 overflow-hidden"
           >
@@ -113,7 +113,7 @@ export default function HeroSection() {
           </Link>
           <Link
             href="/forsale?model=df40"
-            target="_blank"
+            target="_self"
             rel="noopener noreferrer"
             className="relative h-[200px] w-full rounded-16 overflow-hidden"
           >

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import CustomerPortalForm from '@/components/ui/AccountForms/CustomerPortalForm';
 import MyListings from '@/components/ui/AccountForms/MyListing';
 import { Json, User, Boat } from '@/types/database';
@@ -15,6 +15,7 @@ import SpotlightBoats from '../SpotlightBoats/SpotlightBoats';
 import Button from '../Button/Button';
 import { useLoadingBar } from '../LoadingProvider';
 import { getModelLabel } from '@/utils/constants';
+import Link from 'next/link';
 
 interface UserDetails {
   avatar_url: string | null;
@@ -30,6 +31,7 @@ interface AccountClientProps {
   userDetails: UserDetails;
   boats: Boat[];
   payments: any[];
+  products: any[];
   isLoading?: boolean;
 }
 
@@ -37,6 +39,7 @@ export function AccountClient({
   userDetails,
   boats,
   payments,
+  products,
   isLoading = false
 }: AccountClientProps) {
   const router = useRouter();
@@ -44,6 +47,68 @@ export function AccountClient({
   const searchParams = useSearchParams();
   const { withLoading, stopLoading } = useLoadingBar();
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [currentBoats, setCurrentBoats] = useState(boats);
+  const [statusMessage, setStatusMessage] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
+
+  // Gérer les messages de statut depuis l'URL
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const statusDescription = searchParams.get('status_description');
+
+    if (status && statusDescription) {
+      setStatusMessage({
+        title: status,
+        description: statusDescription
+      });
+
+      // Nettoyer l'URL après avoir affiché le message
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('status');
+      newSearchParams.delete('status_description');
+
+      const newUrl =
+        pathname +
+        (newSearchParams.toString() ? `?${newSearchParams.toString()}` : '');
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, pathname, router]);
+
+  // Fonction pour recharger les données des bateaux
+  const refreshBoatsData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/user/boats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.boats) {
+          console.log(
+            '🔄 Boats data refreshed:',
+            data.boats.map((b: any) => ({
+              id: b.id,
+              status: b.status,
+              model: b.model
+            }))
+          );
+          setCurrentBoats(data.boats);
+          return data.boats;
+        }
+      } else {
+        console.error('Failed to refresh boats data:', response.status);
+      }
+    } catch (error) {
+      console.error('Error refreshing boats data:', error);
+    }
+    return null;
+  }, []);
 
   // Détecter si on vient d'un paiement réussi
   useEffect(() => {
@@ -64,6 +129,11 @@ export function AccountClient({
     }
   }, [searchParams, router]);
 
+  // Mettre à jour currentBoats quand les props changent
+  useEffect(() => {
+    setCurrentBoats(boats);
+  }, [boats]);
+
   // Gérer le loading après paiement réussi
   useEffect(() => {
     // Si on a des données (boats), arrêter le loading global
@@ -72,8 +142,37 @@ export function AccountClient({
     }
   }, [boats, userDetails, stopLoading]);
 
-  const pendingBoats = boats.filter((b: any) => b?.status === 'pending');
-  const activeBoats = boats.filter((b: any) => b?.status === 'active');
+  // Vérifier périodiquement les changements de statut quand il y a des bateaux en pending ou après un paiement
+  useEffect(() => {
+    const pendingBoats = currentBoats.filter(
+      (b: any) => b?.status === 'pending'
+    );
+
+    // Continuer le polling si :
+    // 1. Il y a des bateaux en pending, OU
+    // 2. On vient d'arriver après un paiement réussi (pour attendre la transition pending -> active)
+    const shouldPoll = pendingBoats.length > 0 || showPaymentSuccess;
+
+    if (shouldPoll) {
+      console.log('🔄 Starting polling for boat status updates...', {
+        pendingCount: pendingBoats.length,
+        showPaymentSuccess,
+        totalBoats: currentBoats.length
+      });
+
+      const interval = setInterval(() => {
+        refreshBoatsData();
+      }, 3000); // Vérifier toutes les 3 secondes
+
+      return () => {
+        console.log('🛑 Stopping polling');
+        clearInterval(interval);
+      };
+    }
+  }, [currentBoats, refreshBoatsData, showPaymentSuccess]);
+
+  const pendingBoats = currentBoats.filter((b: any) => b?.status === 'pending');
+  const activeBoats = currentBoats.filter((b: any) => b?.status === 'active');
   const pendingBoatsCount = pendingBoats.length;
   const hasPendingBoats = pendingBoatsCount > 0;
 
@@ -82,7 +181,7 @@ export function AccountClient({
       await withLoading(async () => {
         await signOut();
         // Force a full page refresh to update all components
-        window.location.href = '/';
+        window.location.href = '/signin';
       });
     } catch (error) {
       console.error('Error signing out:', error);
@@ -123,6 +222,19 @@ export function AccountClient({
             <>
               <h1 className=" text-56 text-articblue">My ads</h1>
 
+              {/* Status message banner */}
+              {statusMessage && (
+                <div className="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-md mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="text-lg">✅</div>
+                    <div>
+                      <div className="font-medium">{statusMessage.title}</div>
+                      <div className="text-sm">{statusMessage.description}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Pending banner */}
               {hasPendingBoats && (
                 <div className="bg-articblue/10 border border-articblue/30 text-articblue px-4 py-3 rounded-md mb-4 flex items-center justify-between gap-4">
@@ -146,44 +258,16 @@ export function AccountClient({
                 </div>
               )}
 
-              {/* Indicateur de paiement réussi */}
-              {showPaymentSuccess && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      <svg
-                        className="h-6 w-6 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-green-800 font-medium">
-                        🎉 Payment Successful!
-                      </h3>
-                      <p className="text-green-700 text-sm">
-                        Your boat listing is now live and visible to all users.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {activeBoats.length === 0 && pendingBoats.length === 0 ? (
-                <div className="flex flex-col gap-[20px]">
-                  <p className="text-oceanblue text-18">
+                <div className="flex flex-col gap-[20px] w-full items-center justify-center">
+                  <p className="text-oceanblue text-18 text-center">
                     Vous n'avez pas encore d'annonces.{' '}
-                    <span className="text-articblue font-medium">
+                    <Link
+                      href="/list-boat"
+                      className="text-articblue font-medium hover:underline"
+                    >
                       Commencez dès maintenant !
-                    </span>
+                    </Link>
                   </p>
                   <Button
                     text="Place an ad"
@@ -194,23 +278,6 @@ export function AccountClient({
                 </div>
               ) : (
                 <div className="flex flex-col gap-6">
-                  {/* Section spéciale pour les nouvelles annonces après paiement */}
-                  {showPaymentSuccess && activeBoats.length > 0 && (
-                    <div className="flex flex-col gap-3">
-                      <div className="text-oceanblue font-medium flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
-                        New listing - Activating now...
-                      </div>
-                      <SpotlightBoats
-                        spotlight
-                        edit
-                        userId={userDetails.id}
-                        boats={activeBoats.slice(0, 1)} // Montrer seulement la plus récente
-                        isLoading={false}
-                      />
-                    </div>
-                  )}
-
                   {pendingBoats.length > 0 && (
                     <div className="flex flex-col gap-3">
                       <div className="text-oceanblue font-medium">
@@ -240,12 +307,44 @@ export function AccountClient({
 
                   {activeBoats.length > 0 && (
                     <SpotlightBoats
-                      spotlight
-                      edit
+                      accountTable
                       userId={userDetails.id}
                       boats={activeBoats}
+                      products={products}
                       isLoading={isLoading}
                     />
+                  )}
+
+                  {/* Indicateur de paiement réussi en bas */}
+                  {showPaymentSuccess && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          <svg
+                            className="h-6 w-6 text-green-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-green-800 font-medium">
+                            🎉 Payment Successful!
+                          </h3>
+                          <p className="text-green-700 text-sm">
+                            Your boat listing is now live and visible to all
+                            users.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

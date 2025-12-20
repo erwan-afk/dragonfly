@@ -65,6 +65,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log('✅ [create-payment-intent] PaymentIntent created:', paymentIntent.id);
+
     console.log('✅ [create-payment-intent] created', {
       paymentIntentId: paymentIntent.id,
       amount: paymentIntent.amount,

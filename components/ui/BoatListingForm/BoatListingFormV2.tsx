@@ -18,9 +18,9 @@ import {
   dragonflyModels,
   currencies,
   countries,
-  getModelLabel,
   specificationsData
 } from './BoatListingForm';
+import { getModelLabel } from '@/utils/constants';
 import {
   getMaxPhotos,
   getPriceLimit,
@@ -885,7 +885,8 @@ export default function BoatListingFormV2({
           photos: tempImageKeys,
           currency,
           specifications,
-          vatPaid
+          vatPaid,
+          productId: selectedProductId
         })
       });
 
@@ -1923,7 +1924,7 @@ export default function BoatListingFormV2({
       </div>
 
       {/* Payment Element à droite */}
-      <div className="w-full max-w-md border-2 border-oceanblue/10 p-6 gap-[24px] flex flex-col rounded-2xl self-start sticky top-[70px] ">
+      <div className="w-full max-w-md border-2 border-oceanblue/10 p-6 gap-[24px] flex flex-col rounded-2xl self-start sticky top-[120px] ">
         <h1 className="text-24 text-oceanblue">Order summary</h1>
         <div className="flex flex-col gap-[32px]">
           <div className="flex flex-col gap-[24px] px-[20px] border-2 border-articblue rounded-lg p-4 text-oceanblue ">

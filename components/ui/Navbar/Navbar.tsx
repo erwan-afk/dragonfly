@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from '@/lib/auth-client';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import s from './Navbar.module.css';
 import Navlinks from './Navlinks';
@@ -16,16 +16,6 @@ const navbarContainerVariants = {
       damping: 25,
       stiffness: 400
     }
-  },
-  scrolled: {
-    opacity: 1,
-    y: 0,
-    backdropFilter: 'blur(15px)',
-    transition: {
-      type: 'spring',
-      damping: 25,
-      stiffness: 400
-    }
   }
 };
 
@@ -35,6 +25,9 @@ export default function Navbar() {
 
   // Affichage optimiste : ne pas montrer le skeleton immédiatement
   const [showSkeleton, setShowSkeleton] = useState(false);
+
+  // État pour le background lors du scroll
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     // Afficher le skeleton seulement si le chargement prend plus de 300ms
@@ -53,37 +46,24 @@ export default function Navbar() {
     }
   }, [isPending]);
 
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const { scrollY } = useScroll();
+  // Détecter le scroll pour changer le background
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 10); // Seuil de 10px pour déclencher le background
+    };
 
-  useMotionValueEvent(scrollY, 'change', (latest) => {
-    const isScrollingDown = latest > lastScrollY;
-
-    if (isScrollingDown && latest > 50) {
-      setIsScrolled(true);
-    } else if (!isScrollingDown && latest <= 0) {
-      setIsScrolled(false);
-    }
-
-    setLastScrollY(latest);
-  });
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <motion.nav
-      className={`sticky top-0 z-50  backdrop-blur-md border-b border-transparent ${isScrolled ? 'bg-white/80' : 'bg-fullwhite'}`}
+      className={`sticky top-0 z-50 backdrop-blur-[60px]  border-b border-transparent ${isScrolled ? 'bg-white/80 ' : ''}`}
       variants={navbarContainerVariants}
-      animate={isScrolled ? 'scrolled' : 'visible'}
-      whileHover={{
-        backdropFilter: 'blur(15px) ',
-        transition: {
-          type: 'spring',
-          damping: 25,
-          stiffness: 400
-        }
-      }}
+      animate="visible"
     >
-      <Navlinks user={user} isPending={showSkeleton} isScrolled={isScrolled} />
+      <Navlinks user={user} isPending={showSkeleton} />
     </motion.nav>
   );
 }

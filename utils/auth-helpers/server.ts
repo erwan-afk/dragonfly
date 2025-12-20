@@ -202,10 +202,10 @@ export async function signOut() {
     await auth.api.signOut({
       headers: await headers()
     });
-    redirect('/');
+    redirect('/signin');
   } catch (error) {
     console.error('Error signing out:', error);
-    redirect('/');
+    redirect('/signin');
   }
 }
 
@@ -346,34 +346,53 @@ export async function updateName(formData: FormData) {
   return redirect(redirectPath);
 }
 
-export async function updateListing(formData: FormData): Promise<any> {
-  const name = String(formData.get('name')).trim();
-  let redirectPath: string;
+export async function updateListing(formData: FormData): Promise<string> {
+  const id = String(formData.get('id')).trim();
+  const model = String(formData.get('model')).trim();
+  const description = String(formData.get('description')).trim();
+  const country = String(formData.get('country')).trim();
+  const price = String(formData.get('price')).trim();
+  const currency = String(formData.get('currency')).trim();
+  const specifications = String(formData.get('specifications')).trim();
+  const vat_paid = String(formData.get('vat_paid')).trim();
+  const photos = String(formData.get('photos')).trim();
 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      redirectPath = getErrorRedirect(
+      return getErrorRedirect(
         '/account',
         'You could not be updated.',
         'You are not signed in.'
       );
-      return redirect(redirectPath);
     }
 
-    // Logique de mise à jour des annonces avec Prisma
-    redirectPath = getStatusRedirect(
+    // Update the listing with Prisma
+    await prisma.boat.update({
+      where: { id: id },
+      data: {
+        model,
+        description,
+        country,
+        price: parseFloat(price),
+        currency,
+        specifications: JSON.parse(specifications),
+        vatPaid: vat_paid === 'true',
+        photos: photos.split(',').filter(Boolean),
+        updatedAt: new Date()
+      }
+    });
+
+    return getStatusRedirect(
       '/account',
       'Success!',
       'Your listing has been updated.'
     );
   } catch (error: any) {
-    redirectPath = getErrorRedirect(
+    return getErrorRedirect(
       '/account',
       'Your listing could not be updated.',
-      error.message
+      error.message || 'An unexpected error occurred.'
     );
   }
-
-  return redirect(redirectPath);
 }

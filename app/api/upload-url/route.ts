@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
-import { generateTempUploadSignedUrl } from '@/utils/cloudflare/r2';
+import { generateTempUploadSignedUrl, generateFinalUploadSignedUrl } from '@/utils/cloudflare/r2';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 type Body = {
-  sessionId: string;
+  sessionId?: string;
+  boatId?: string;
   filename: string;
   contentType: string;
   size?: number;
+  isEdit?: boolean;
 };
 
 function sanitizeFilename(filename: string) {
@@ -31,16 +33,28 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as Body;
-    const sessionId = String(body.sessionId || '');
+    const sessionId = body.sessionId ? String(body.sessionId) : undefined;
+    const boatId = body.boatId ? String(body.boatId) : undefined;
     const filename = sanitizeFilename(String(body.filename || 'image'));
     const contentType = String(body.contentType || '');
     const size = typeof body.size === 'number' ? body.size : undefined;
+    const isEdit = Boolean(body.isEdit);
 
-    if (!sessionId || !sessionId.startsWith('session_')) {
-      return NextResponse.json(
-        { error: 'Invalid sessionId' },
-        { status: 400 }
-      );
+    // Validation des paramètres selon le mode
+    if (isEdit) {
+      if (!boatId) {
+        return NextResponse.json(
+          { error: 'boatId is required for edit mode' },
+          { status: 400 }
+        );
+      }
+    } else {
+      if (!sessionId || !sessionId.startsWith('session_')) {
+        return NextResponse.json(
+          { error: 'Invalid sessionId' },
+          { status: 400 }
+        );
+      }
     }
 
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -60,13 +74,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await generateTempUploadSignedUrl(
-      sessionId,
-      session.user.id,
-      filename,
-      contentType,
-      300
-    );
+    const result = isEdit
+      ? await generateFinalUploadSignedUrl(
+          boatId!,
+          filename,
+          contentType,
+          300
+        )
+      : await generateTempUploadSignedUrl(
+          sessionId!,
+          session.user.id,
+          filename,
+          contentType,
+          300
+        );
 
     if (!result.success || !result.url || !result.key) {
       return NextResponse.json(

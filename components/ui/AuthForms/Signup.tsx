@@ -1,13 +1,13 @@
 'use client';
-
 import Link from 'next/link';
-import { signUp } from '@/lib/auth-client';
+import { signUp } from '@/lib/auth-client'; // Import direct
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Mail, Lock } from 'lucide-react';
-import Button from '../Button/Button';
+import Button from '@/components/ui/Button';
+import Input from '../Input/Input';
+import { useReCaptcha } from 'next-recaptcha-v3';
 
-// Define prop type with allowEmail boolean
 interface SignUpProps {
   redirectMethod: string;
 }
@@ -16,105 +16,182 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
   const router = redirectMethod === 'client' ? useRouter() : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const { executeRecaptcha } = useReCaptcha();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setIsSubmitting(true);
+      setError(null);
 
-    try {
-      const formData = new FormData(e.currentTarget);
-      const email = String(formData.get('email')).trim();
-      const password = String(formData.get('password')).trim();
-      const name = email.split('@')[0]; // Utiliser la partie avant @ comme nom par défaut
+      try {
+        const formData = new FormData(e.currentTarget);
+        const email = String(formData.get('email')).trim();
+        const password = String(formData.get('password')).trim();
 
-      console.log('🔍 Better Auth SignUp started for email:', email);
-      console.log('📝 Using Better Auth signUp.email method');
+        // Vérifier que les mots de passe correspondent
+        if (password !== confirmPassword) {
+          setError('Passwords do not match. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
 
-      const result = await signUp.email({
-        email,
-        password,
-        name
-      });
+        // Validation basique du mot de passe
+        if (password.length < 8) {
+          setError('Password must be at least 8 characters long.');
+          setIsSubmitting(false);
+          return;
+        }
 
-      console.log('📊 Better Auth SignUp result:', result);
+        // Generate reCAPTCHA token
+        const token = await executeRecaptcha('signup');
+        if (!token) {
+          setError('Please complete the reCAPTCHA verification.');
+          setIsSubmitting(false);
+          return;
+        }
 
-      if (result.data) {
-        console.log(
-          '✅ Better Auth SignUp successful! User data:',
-          result.data
+        console.log('🔐 Validating reCAPTCHA...');
+
+        // Valider le captcha côté serveur
+        const captchaValidation = await fetch('/api/auth/validate-captcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+
+        if (!captchaValidation.ok) {
+          setError('reCAPTCHA verification failed. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log('✅ reCAPTCHA validated');
+
+        const name = email.split('@')[0];
+
+        console.log('🔍 Starting Better Auth SignUp for:', email);
+
+        // Utiliser signUp.email directement (pas authClient.signUp.email)
+        const { data, error: signUpError } = await signUp.email(
+          {
+            email,
+            password,
+            name,
+            callbackURL: '/account'
+          },
+          {
+            onRequest: () => {
+              console.log('📤 SignUp request sent...');
+            },
+            onSuccess: (ctx) => {
+              console.log('✅ SignUp successful!', ctx);
+            },
+            onError: (ctx) => {
+              console.error('❌ SignUp error:', ctx.error);
+            }
+          }
         );
-        console.log('🔄 Redirecting to account page...');
-        // Utiliser window.location.href pour forcer un refresh complet et récupérer la session
-        window.location.href =
-          '/account?status=Welcome!&status_description=Your account has been created successfully and you are now signed in.';
-      } else {
-        console.error('❌ Better Auth SignUp failed. Full result:', result);
-        console.error('❌ Error details:', result.error);
-        setError(result.error?.message || 'Sign up failed. Please try again.');
+
+        console.log('📊 SignUp result:', { data, error: signUpError });
+
+        if (signUpError) {
+          console.error('❌ SignUp failed:', signUpError);
+          setError(signUpError.message || 'Sign up failed. Please try again.');
+          return;
+        }
+
+        if (data) {
+          console.log('✅ SignUp successful!');
+          console.log('👤 User:', data.user);
+
+          const status = 'Success!';
+          const description =
+            'Your account has been created successfully and you are now signed in.';
+          const params = new URLSearchParams({
+            status: status,
+            status_description: description
+          });
+
+          const redirectUrl = `/account?${params.toString()}`;
+          console.log('🔗 Redirecting to:', redirectUrl);
+
+          // Petit délai pour s'assurer que les cookies sont bien définis
+          setTimeout(() => {
+            if (redirectMethod === 'client' && router) {
+              router.push(redirectUrl);
+            } else {
+              window.location.href = redirectUrl;
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error('❌ Better Auth SignUp exception:', error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred.';
+        setError(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error('❌ Better Auth SignUp exception:', error);
-      console.error(
-        '❌ Exception stack:',
-        error instanceof Error ? error.stack : 'No stack trace'
-      );
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    [executeRecaptcha, confirmPassword, redirectMethod, router]
+  );
 
   return (
-    <div className="flex flex-col">
-      <p className="text-16 text-darkgrey mb-24">
-        Already have an account?
-        <Link
-          href="/signin/password_signin"
-          className="ml-[5px] text-16 underline text-articblue"
-        >
-          Sign in
-        </Link>
-      </p>
+    <div>
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-12">
+        <div
+          style={{
+            color: '#dc2626',
+            padding: '12px',
+            marginBottom: '16px',
+            backgroundColor: '#fee2e2',
+            border: '1px solid #fecaca',
+            borderRadius: '6px',
+            fontSize: '14px'
+          }}
+        >
           {error}
         </div>
       )}
       <form
-        noValidate={true}
-        className="mb-4"
-        onSubmit={(e) => handleSubmit(e)}
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-24 items-center justify-center"
       >
-        <div className="flex flex-col gap-24">
-          <div className="flex flex-col gap-24">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-              <input
-                id="email"
-                placeholder="name@example.com"
-                type="email"
-                name="email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
-                className="w-full h-[50px] p-3 pl-[50px] rounded-12 bg-fullwhite text-darkgrey placeholder-zinc-500"
-              />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-              <input
-                id="password"
-                placeholder="Password"
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                className="w-full h-[50px] p-3 pl-[50px] rounded-12 bg-fullwhite text-darkgrey placeholder-zinc-500"
-              />
-            </div>
-          </div>
-          <Button text="Sign up" lowercase type="submit"></Button>
-        </div>
+        <Input
+          name="email"
+          type="email"
+          placeholder="Email"
+          required
+          autoComplete="email"
+          startContent={<Mail />}
+        />
+        <Input
+          name="password"
+          type="password"
+          placeholder="Password (min. 8 characters)"
+          required
+          autoComplete="new-password"
+          startContent={<Lock />}
+        />
+        <Input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+          startContent={<Lock />}
+        />
+        <Button
+          type="submit"
+          text={isSubmitting ? 'Creating account...' : 'Sign Up'}
+          loading={isSubmitting}
+          icon="link"
+        />
       </form>
     </div>
   );

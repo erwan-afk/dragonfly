@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AccountClient } from '@/components/ui/Account/AccountClient';
 import prisma from '@/utils/prisma/client';
+import { getProductsFromDatabase } from '@/utils/database/products';
 
 // Forcer le rendu dynamique comme dans forsale pour éviter les problèmes de cache
 export const dynamic = 'force-dynamic';
@@ -73,7 +74,7 @@ async function getUserData(userId: string) {
       WHERE id = ${userId}
     ` as Promise<any[]>,
     prisma.$queryRaw`
-      SELECT *, expires_at FROM "boats"
+      SELECT id, model, price, country, description, photos, user_id, product_id, created_at, updated_at, currency, specifications, vat_paid, status, expires_at, view_count FROM "boats"
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
     ` as Promise<any[]>,
@@ -109,6 +110,7 @@ export default async function Account() {
   try {
     // Récupérer les données utilisateur directement (sans cache)
     const { userDetails, boats, payments } = await getUserData(user.id);
+    const products = await getProductsFromDatabase();
 
     if (!userDetails || userDetails.length === 0) {
       return redirect('/signin/password_signin');
@@ -120,6 +122,7 @@ export default async function Account() {
       price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
       createdAt: boat.created_at, // Convertir created_at en camelCase
       expiresAt: boat.expires_at, // Convertir expires_at en camelCase
+      productId: boat.product_id, // Convertir product_id en camelCase
       // Ensure client components always get absolute URLs for images
       photos: normalizeImageUrls(
         typeof boat.photos === 'string' ? JSON.parse(boat.photos) : boat.photos,
@@ -147,6 +150,7 @@ export default async function Account() {
         userDetails={userDetails[0]}
         boats={serializedBoats || []}
         payments={serializedPayments || []}
+        products={products}
       />
     );
   } catch (error) {

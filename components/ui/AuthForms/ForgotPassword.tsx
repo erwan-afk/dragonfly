@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Mail } from 'lucide-react';
 import Button from '../Button/Button';
+import Input from '../Input/Input';
 
 // Define prop type with allowEmail boolean
 interface ForgotPasswordProps {
@@ -29,10 +30,15 @@ export default function ForgotPassword({
 
   return (
     <div className="flex flex-col">
-      <p className="text-16 text-darkgrey mb-24">
-        Enter your email address and we'll send you a link to reset your
-        password
-      </p>
+      <div className="flex flex-col space-y-1 mb-8">
+        <h1 className="font-bold text-oceanblue text-40 tracking-wide">
+          Reset Password
+        </h1>
+        <p className="text-base text-darkgrey">
+          Enter your email address and we'll send you a link to reset your password
+        </p>
+      </div>
+
       <form
         noValidate={true}
         className="mb-4"
@@ -40,19 +46,16 @@ export default function ForgotPassword({
       >
         <div className="flex flex-col gap-24">
           <div className="flex flex-col gap-24">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-              <input
-                id="email"
-                placeholder="name@example.com"
-                type="email"
-                name="email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
-                className="w-full h-[50px] p-3 pl-[50px] rounded-12 bg-fullwhite text-darkgrey placeholder-zinc-500"
-              />
-            </div>
+            <Input
+              id="email"
+              placeholder="name@example.com"
+              type="email"
+              name="email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              startContent={<Mail className="w-5 h-5" />}
+            />
           </div>
           <Button text="Send Email" lowercase type="submit"></Button>
         </div>

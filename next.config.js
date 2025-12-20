@@ -68,16 +68,22 @@ const nextConfig = {
     async headers() {
         // Security headers (incl. CSP) for production. In particular, Stripe Payment Element
         // requires connections to Stripe domains + iframes/scripts from js.stripe.com.
+
+        // Next.js needs unsafe-eval in dev for React Fast Refresh; keep it out of production.
+        const isDev = process.env.NODE_ENV !== 'production';
+        const scriptSrc = isDev
+            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.google.com https://www.gstatic.com"
+            : "'self' 'unsafe-inline' https://js.stripe.com https://www.google.com https://www.gstatic.com";
+
         const csp = [
             "default-src 'self'",
-            // Next.js needs unsafe-eval in dev; keep it out of production.
-            "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+            `script-src ${scriptSrc}`,
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https:",
             // Stripe elements run in iframes.
-            "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
-            // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT).
-            "connect-src 'self' https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com",
+            "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com",
+            // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT) + reCAPTCHA.
+            "connect-src 'self' https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com",
             "font-src 'self' data: https:",
             "object-src 'none'",
             "base-uri 'self'",

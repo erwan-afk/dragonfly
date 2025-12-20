@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
 import Button from '../Button/Button';
+import Input from '../Input/Input';
 
 // Define prop type with allowEmail boolean
 interface PasswordSignInProps {
@@ -70,15 +71,6 @@ export default function PasswordSignIn({
 
   return (
     <div className="flex flex-col">
-      <p className="text-16 text-darkgrey mb-24">
-        Are you a new user?
-        <Link
-          href="/signin/signup"
-          className="ml-[5px] text-16 underline text-articblue"
-        >
-          Create an account
-        </Link>
-      </p>
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-12">
           {error}
@@ -91,42 +83,30 @@ export default function PasswordSignIn({
       >
         <div className="flex flex-col gap-24">
           <div className="flex flex-col gap-24">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-              <input
-                id="email"
-                placeholder="name@example.com"
-                type="email"
-                name="email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
-                className="w-full h-[50px] p-3 pl-[50px] rounded-12 bg-fullwhite text-darkgrey placeholder-zinc-500"
-              />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-              <input
-                id="password"
-                placeholder="Password"
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                className="w-full h-[50px] p-3 pl-[50px] rounded-12 bg-fullwhite text-darkgrey placeholder-zinc-500"
-              />
-            </div>
+            <Input
+              id="email"
+              placeholder="name@example.com"
+              type="email"
+              name="email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              startContent={<Mail className="w-5 h-5" />}
+            />
+            <Input
+              id="password"
+              placeholder="Password"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              startContent={<Lock className="w-5 h-5" />}
+            />
           </div>
-          <Button text="Sign in" lowercase type="submit"></Button>
+          <div className="flex justify-center">
+            <Button text="Sign in" icon="link" lowercase type="submit"></Button>
+          </div>
         </div>
       </form>
-      <p>
-        <Link
-          href="/signin/forgot_password"
-          className="text-darkgrey text-16 underline"
-        >
-          Forgot your password?
-        </Link>
-      </p>
     </div>
   );
 }

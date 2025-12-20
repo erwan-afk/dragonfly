@@ -523,6 +523,38 @@ export async function generateTempUploadSignedUrl(
   }
 }
 
+// Génère une URL signée pour un upload définitif (édition d'annonce existante)
+export async function generateFinalUploadSignedUrl(
+  boatId: string,
+  filename: string,
+  contentType: string,
+  expiresIn: number = 300 // 5 minutes
+): Promise<{ success: boolean; url?: string; key?: string; error?: string }> {
+  try {
+    const key = generateImageKey(boatId, filename);
+
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+      ContentType: contentType
+    });
+
+    const signedUrl = await getSignedUrl(r2Client, command, { expiresIn });
+
+    return {
+      success: true,
+      url: signedUrl,
+      key
+    };
+  } catch (error) {
+    console.error('Error generating final signed URL:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
 // Extrait l'ID du bateau depuis une clé R2
 export function extractBoatIdFromKey(key: string): string | null {
   const match = key.match(/^boats\/([^\/]+)\//);

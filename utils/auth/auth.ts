@@ -63,7 +63,7 @@ export const auth = betterAuth({
   },
   socialProviders: getSocialProviders(),
   secret: process.env.BETTER_AUTH_SECRET || 'fallback-secret-for-development',
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000'
 });
 
 if (!isBuild) {

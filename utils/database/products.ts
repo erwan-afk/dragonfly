@@ -15,7 +15,7 @@ export const getProductsFromDatabase = unstable_cache(
                pr.description as price_description, pr.type as price_type, pr.interval,
                pr.interval_count, pr.trial_period_days, pr.metadata as price_metadata
         FROM "products" p
-        LEFT JOIN "prices" pr ON p.id = pr.product_id 
+        LEFT JOIN "prices" pr ON p.id = pr.product_id
         WHERE p.active = true AND (pr.active = true OR pr.active IS NULL)
         ORDER BY p.name ASC, pr.unit_amount ASC
       ` as any[];
@@ -85,7 +85,8 @@ export const getBoatsFromDatabase = unstable_cache(
       // Ne récupérer que les bateaux avec le statut 'active' (payés)
       if (limit) {
         boats = await prisma.$queryRaw`
-          SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+          SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+                 u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
           FROM "boats" b
           LEFT JOIN "user" u ON b.user_id = u.id
           WHERE b.status = 'active'
@@ -94,7 +95,8 @@ export const getBoatsFromDatabase = unstable_cache(
         ` as any[];
       } else {
         boats = await prisma.$queryRaw`
-          SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+          SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+                 u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
           FROM "boats" b
           LEFT JOIN "user" u ON b.user_id = u.id
           WHERE b.status = 'active'
@@ -107,6 +109,8 @@ export const getBoatsFromDatabase = unstable_cache(
         ...boat,
         price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
         createdAt: boat.created_at, // Convertir created_at en camelCase
+        viewCount: boat.view_count,
+        specifications: boat.specifications,
         user: {
           name: boat.user_name,
           email: boat.user_email,
@@ -136,7 +140,8 @@ export async function getBoatById(id: string) {
     console.log('🔍 Fetching boat by ID:', id);
 
     const [boat] = await prisma.$queryRaw`
-      SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+      SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+             u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
       FROM "boats" b
       LEFT JOIN "user" u ON b.user_id = u.id
       -- Sécurité: ne jamais exposer publiquement une annonce "pending" (non payée).

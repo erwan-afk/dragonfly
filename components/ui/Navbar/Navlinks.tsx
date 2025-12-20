@@ -69,7 +69,6 @@ const linkVariants = {
     }
   }
 };
-
 export default function Navlinks({
   user,
   isPending,
@@ -78,13 +77,11 @@ export default function Navlinks({
   const pathname = usePathname();
   return (
     <motion.div
-      className={`mx-auto max-w-screen-xl flex flex-row justify-between align-center text-darkgrey transition-all duration-300 ${
-        isScrolled ? 'py-[20px]' : 'py-[40px]'
-      }`}
+      className="mx-auto max-w-screen-xl flex flex-row justify-between align-center text-darkgrey transition-all duration-300 py-[30px]"
       variants={navbarVariants}
       animate="visible"
     >
-      <div className="flex justify-between items-center flex-1">
+      <div className="flex justify-between items-center flex-1 font-medium">
         <div className="flex flex-row gap-[50px] items-center">
           <Link href="/" aria-label="Logo">
             <Logo />
@@ -93,7 +90,7 @@ export default function Navlinks({
             <div className="hover:underline hover:underline-offset-4">
               <Link
                 href="/forsale"
-                className={`hover:underline hover:underline-offset-4 ${pathname === '/forsale' ? 'text-oceanblue' : 'text-darkgrey'}`}
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/forsale' ? 'text-articblue' : 'text-darkgrey'}`}
               >
                 For Sale
               </Link>
@@ -102,7 +99,7 @@ export default function Navlinks({
             <div className="hover:underline hover:underline-offset-4">
               <Link
                 href="/forum"
-                className={`hover:underline hover:underline-offset-4 ${pathname === '/forum' ? 'text-oceanblue' : 'text-darkgrey'}`}
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/forum' ? 'text-articblue' : 'text-darkgrey'}`}
               >
                 Forum
               </Link>
@@ -111,7 +108,7 @@ export default function Navlinks({
             <div>
               <Link
                 href="/useful-links"
-                className={`hover:underline hover:underline-offset-4 ${pathname === '/useful-links' ? 'text-oceanblue' : 'text-darkgrey'}`}
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/useful-links' ? 'text-articblue' : 'text-darkgrey'}`}
               >
                 Useful Links
               </Link>
@@ -119,7 +116,7 @@ export default function Navlinks({
             <div className="hover:underline hover:underline-offset-4">
               <Link
                 href="/pricing"
-                className={`hover:underline hover:underline-offset-4 ${pathname === '/pricing' ? 'text-oceanblue' : 'text-darkgrey'}`}
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/pricing' ? 'text-articblue' : 'text-darkgrey'}`}
               >
                 Pricing
               </Link>
@@ -127,7 +124,7 @@ export default function Navlinks({
             <div className="hover:underline hover:underline-offset-4">
               <Link
                 href="/contact"
-                className={`hover:underline hover:underline-offset-4 ${pathname === '/contact' ? 'text-oceanblue' : 'text-darkgrey'}`}
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/contact' ? 'text-articblue' : 'text-darkgrey'}`}
               >
                 Contact
               </Link>
@@ -144,7 +141,7 @@ export default function Navlinks({
             <div className="flex flex-row gap-[10px] hover:underline hover:underline-offset-4 ">
               <Link
                 href="/account"
-                className={`${pathname === '/account' ? 'text-oceanblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
+                className={`${pathname === '/account' ? 'text-articblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
               >
                 {pathname === '/account' ? (
                   <AccountButtonFilled className="text-articblue w-[15px] h-[15px]" />
@@ -157,7 +154,7 @@ export default function Navlinks({
           ) : (
             <Link
               href="/signin/password_signin"
-              className="hover:underline hover:underline-offset-4"
+              className={`hover:underline hover:underline-offset-4 ${pathname === '/signin' ? 'text-articblue' : 'text-darkgrey'}`}
             >
               Sign In
             </Link>

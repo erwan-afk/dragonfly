@@ -74,3 +74,18 @@ p a {
 #link-branded-root div {
   border-radius: .5rem !important;
 }
+
+/* Masquer le badge reCAPTCHA */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Alternative: masquer complètement */
+iframe[src*="recaptcha"], 
+.grecaptcha-badge {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}

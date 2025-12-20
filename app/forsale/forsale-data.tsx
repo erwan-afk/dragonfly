@@ -22,7 +22,10 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     }
 
     // Construire les conditions WHERE dynamiquement
-    const conditions: string[] = ["b.status = 'active'"];
+    const conditions: string[] = [
+      "b.status = 'active'",
+      'b.expires_at IS NULL OR b.expires_at > NOW()'
+    ];
     const sqlParams: any[] = [];
     let paramIndex = 1;
 
@@ -97,7 +100,8 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     // Ne récupérer que les bateaux avec le statut 'active' (payés)
     const boats = (await prisma.$queryRawUnsafe(
       `
-      SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+      SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+             u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
       FROM "boats" b
       LEFT JOIN "user" u ON b.user_id = u.id
       WHERE ${whereClause}
@@ -115,6 +119,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       ...boat,
       price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
       createdAt: boat.created_at, // Convertir created_at en camelCase
+      viewCount: boat.view_count,
       user: {
         name: boat.user_name,
         email: boat.user_email,
@@ -189,15 +194,19 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
         <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
           <div className="mx-auto max-w-screen-xl w-full flex flex-col gap-[56px]">
             <div className="flex flex-row items-center justify-between">
-              <h1 className="text-articblue text-56">
-                {hasFilters ? 'Search Results' : 'Advertisements'}
-              </h1>
+              <h1 className="text-articblue text-56">Advertisements</h1>
               <p className="text-darkgrey w-1/2 text-16 font-light">
-                {filterDescription}
+                Browse all available Dragonfly boats for sale. Use the filters
+                below to narrow down your search by model, location, and price
+                range.
               </p>
             </div>
             {/* Ajouter w-full ici pour garantir la largeur de SpotlightBoats */}
-            <SpotlightBoats key="forsale" boats={formattedBoats ?? []} />
+            <SpotlightBoats
+              key="forsale"
+              boats={formattedBoats ?? []}
+              searchResultsInfo={hasFilters ? filterDescription : null}
+            />
           </div>
         </section>
       </div>

@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation';
-import { dragonflyModels, currencies } from '@/utils/constants';
+import { dragonflyModels, currencies, countries } from '@/utils/constants';
 import type { Boat } from '@/types/boats';
 import BoatImageGallery from '@/components/ui/BoatImageGallery/BoatImageGallery';
 import prisma from '@/utils/prisma/client';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
-
+import { ViewTracker } from './ViewTracker';
+import { ViewStats } from './ViewStats';
+import FlagIcon from '@/components/icons/Flag';
 // Fonction pour valider et normaliser les URLs d'images
 function normalizeImageUrls(photos: string[] | null | undefined): string[] {
   if (!photos || !Array.isArray(photos) || photos.length === 0) {
@@ -54,7 +56,8 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
   const viewerUserId = session?.user?.id ?? null;
 
   const [row] = (await prisma.$queryRaw`
-    SELECT b.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+    SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+           u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
     FROM "boats" b
     LEFT JOIN "user" u ON b.user_id = u.id
     WHERE b.id = ${params.id}
@@ -112,13 +115,17 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
 
   return (
     <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
+      {/* Composant invisible qui enregistre les vues */}
+      <ViewTracker boatId={boat.id} />
+
       <div className="mx-auto max-w-screen-xl flex flex-col gap-[56px]">
         {/* Pending banner for owners */}
         {!isActive && isOwner && (
           <div className="rounded-[12px] border border-orange-200 bg-orange-50 px-4 py-3 text-oceanblue">
             <div className="font-medium">Payment is being processed</div>
             <div className="text-14 text-darkgrey">
-              Your listing will appear publicly as soon as Stripe confirms the payment (usually a few seconds). You can refresh this page.
+              Your listing will appear publicly as soon as Stripe confirms the
+              payment (usually a few seconds). You can refresh this page.
             </div>
           </div>
         )}
@@ -128,10 +135,17 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
 
         <div className="flex flex-row justify-between">
           <div className="flex-1 flex flex-col gap-48">
-            <div className="px-2.5 py-1.5 w-fit bg-oceanblue rounded-full uppercase text-fullwhite">
-              {boat.country}
+            <div className="flex flex-row gap-8 items-center px-2.5 py-1.5 w-fit bg-oceanblue rounded-lg uppercase text-fullwhite">
+              {boat.country}{' '}
+              {boat.country && (
+                <FlagIcon
+                  flag={
+                    countries.find((country) => country.key === boat.country)
+                      ?.flag || ''
+                  }
+                />
+              )}
             </div>
-
             <div className="gap-32 flex flex-col">
               <h1 className="text-articblue leading-[100%] text-40">
                 {dragonflyModels.find((model) => model.key === boat.model)
@@ -145,9 +159,9 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               </h2>
               <div className="text-darkgrey text-16">{formattedDate}</div>
             </div>
-            <div className="w-full h-[1px] bg-darkgrey/40"></div>
+            <div className="w-full h-[1px] bg-stonegrey"></div>
             <p className="text-darkgrey text-20">{boat.description}</p>
-            <div className="w-full h-[1px] bg-darkgrey/40"></div>
+            <div className="w-full h-[1px] bg-stonegrey"></div>
             <div className="flex flex-col gap-32">
               <h1 className="text-oceanblue text-24">Spécificités</h1>
               <div className="flex flex-row gap-16 flex-wrap">
@@ -162,7 +176,7 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               </div>
             </div>
           </div>
-          <div className="w-[320px] flex flex-col">
+          <div className="w-[320px] flex flex-col gap-32">
             {/* Card du vendeur */}
             <div className="bg-lightgrey rounded-[12px] p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-4">
@@ -186,6 +200,10 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
                   </div>
                 </div>
               </div>
+            </div>
+            {/* Stats de vues */}
+            <div className="w-full h-[1px]  px-6">
+              <ViewStats boatId={boat.id} viewCount={row.view_count || 0} />
             </div>
           </div>
         </div>

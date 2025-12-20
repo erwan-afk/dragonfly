@@ -71,7 +71,7 @@ async function sendAdsSummaryEmail(user: any, boats: any[]) {
         </div>
 
         <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin: 20px 0;">
-          <h2 style="color: #1e3a8a; margin-top: 0;">Bonjour ${user.name || 'Cher utilisateur'},</h2>
+          <h2 style="color: #1e3a8a; margin-top: 0;">Cher utilisateur,</h2>
 
           <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">
             Voici un récapitulatif de vos annonces sur Dragonfly Trimarans :

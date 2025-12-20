@@ -59,7 +59,7 @@ export default function OauthSignIn() {
       {oAuthProviders.map((provider) => (
         <form
           key={provider.name}
-          className="pb-2"
+          className=" "
           onSubmit={(e) => handleSubmit(e)}
         >
           <input type="hidden" name="provider" value={provider.name} />
@@ -71,8 +71,8 @@ export default function OauthSignIn() {
             loading={isSubmitting}
             icon={'google'}
             anim_disabled
-            bgColor="bg-fullwhite"
-            textColor="text-oceanblue"
+            bgColor="bg-oceanblue"
+            textColor="text-fullwhite"
             fullwidth
             lowercase
           ></Button>

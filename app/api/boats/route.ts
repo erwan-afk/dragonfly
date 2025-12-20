@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
             photos,
             currency,
             specifications,
-            vatPaid
+            vatPaid,
+            productId
         } = body;
 
         // Validation
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
                 currency: currency || 'EUR',
                 specifications: specifications || [],
                 vatPaid: vatPaid || false,
+                productId: productId || null,
                 // Sécurité: une annonce payante doit rester "pending" tant que Stripe
                 // n'a pas confirmé le paiement via webhook.
                 status: 'pending',
