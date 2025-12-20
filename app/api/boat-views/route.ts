@@ -3,6 +3,8 @@ import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 // Fonction pour obtenir l'adresse IP du client
 function getClientIP(request: NextRequest): string | null {
   // Essayer plusieurs headers possibles pour l'IP

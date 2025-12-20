@@ -3,6 +3,8 @@ import { stripe } from '@/utils/stripe/config';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     // Guardrails: in production we prefer explicit env config (instead of failing deep inside Stripe SDK).

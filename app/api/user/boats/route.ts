@@ -3,6 +3,8 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import prisma from '@/utils/prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 // Normalise photo entries to absolute URLs when needed (R2 key -> https://.../key).
 function normalizeImageUrls(photos: any, boatId?: string): string[] {
   if (!photos || !Array.isArray(photos) || photos.length === 0) return [];
