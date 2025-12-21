@@ -257,7 +257,7 @@ async function sendRenewalReminders() {
 
       try {
         // Utiliser la date d'expiration stockée en base de données
-        if (!boat.expires_at) {
+        if (!boat.expiresAt) {
           console.warn(`⚠️  Aucune date d'expiration pour l'annonce ${boat.id} - ignorée`);
           errors++;
           continue;
@@ -339,7 +339,7 @@ async function updateExistingBoats() {
     const result = await prisma.boat.updateMany({
       where: {
         status: 'active',
-        expires_at: null
+        expiresAt: null
       },
       data: {
         expiresAt: threeMonthsFromNow
