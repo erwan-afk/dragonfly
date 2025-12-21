@@ -1,4 +1,4 @@
-name: Send Renewal Reminders
+name: Ads Summary 
 
 on:
   schedule:
