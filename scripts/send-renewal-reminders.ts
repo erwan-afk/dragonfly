@@ -263,7 +263,7 @@ async function sendRenewalReminders() {
           continue;
         }
 
-        const expiryDate = boat.expires_at;
+        const expiryDate = boat.expiresAt;
         console.log(`   ⏰ Date d'expiration (depuis BDD): ${formatDateFr(expiryDate)}`);
 
         // Calculer les jours restants
@@ -342,7 +342,7 @@ async function updateExistingBoats() {
         expires_at: null
       },
       data: {
-        expires_at: threeMonthsFromNow
+        expiresAt: threeMonthsFromNow
       }
     });
 
@@ -379,7 +379,7 @@ async function testExpiringSoon() {
 
     await prisma.boat.update({
       where: { id: firstBoat.id },
-      data: { expires_at: sevenDaysFromNow }
+      data: { expiresAt: sevenDaysFromNow }
     });
 
     console.log(`✅ Annonce "${firstBoat.model}" (ID: ${firstBoat.id}) définie pour expirer le ${formatDateFr(sevenDaysFromNow)}`);
