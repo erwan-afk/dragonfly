@@ -19,7 +19,7 @@ async function quickDiagnostic() {
   console.log('📋 Variables d\'environnement:');
   console.log(`   SMTP_USER: ${process.env.SMTP_USER ? '✅ Défini' : '❌ Manquant'}`);
   console.log(`   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? '✅ Défini' : '❌ Manquant'}`);
-  console.log(`   NEXT_PUBLIC_SITE_URL: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-trimarans.org'}`);
+  console.log(`   NEXT_PUBLIC_SITE_URL: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app'}`);
   console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✅ Défini' : '❌ Manquant'}`);
   console.log('');
 
@@ -181,7 +181,7 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
         <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
           Cet email a été envoyé automatiquement par le système de Dragonfly Trimarans.<br>
           Si vous ne souhaitez plus recevoir ces rappels, vous pouvez
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-trimarans.org'}/account" style="color: #3b82f6;">gérer vos préférences</a>.
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app'}/account" style="color: #3b82f6;">gérer vos préférences</a>.
         </p>
       </div>
     `,
