@@ -27,6 +27,9 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           NEXT_PUBLIC_SITE_URL: https://dragonfly-trimarans.org
-        run: |
+        run: | 
+          set -e    
           echo "🚀 Envoi des rappels de renouvellement..."
-          npm run tsx scripts/send-renewal-reminders.ts
+          which npx
+          npx --version
+          npx tsx scripts/send-renewal-reminders.ts
