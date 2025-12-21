@@ -154,7 +154,7 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
 
             <div style="text-align: center; margin: 25px 0;">
               <a
-  href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app/'}/list-boat?preference=Renewal"
+  href="https://dragonfly-livid.vercel.app/list-boat?preference=Renewal"
   style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;"
 >
   🔄 Renouveler mon annonce
@@ -180,8 +180,6 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
 
         <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
           Cet email a été envoyé automatiquement par le système de Dragonfly Trimarans.<br>
-          Si vous ne souhaitez plus recevoir ces rappels, vous pouvez
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app'}/account" style="color: #3b82f6;">gérer vos préférences</a>.
         </p>
       </div>
     `,
