@@ -153,10 +153,13 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
             </p>
 
             <div style="text-align: center; margin: 25px 0;">
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-trimarans.org'}/pricing"
-                 style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                📋 Voir les options de renouvellement
-              </a>
+              <a
+  href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-trimarans.org'}/list-boat?preference=Renewal"
+  style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;"
+>
+  🔄 Renouveler mon annonce
+</a>
+
             </div>
           </div>
 
