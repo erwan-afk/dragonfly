@@ -118,7 +118,7 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
 
   const renewalDate = formatDateFr(expiryDate);
   const daysUntilExpiry = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-
+  console.log(`📅 Days until expiru: ${daysUntilExpiry}`);
   const mailOptions = {
     from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
     to: user.email,
