@@ -154,7 +154,7 @@ async function sendRenewalEmail(boat: any, expiryDate: Date) {
 
             <div style="text-align: center; margin: 25px 0;">
               <a
-  href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-trimarans.org'}/list-boat?preference=Renewal"
+  href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app/'}/list-boat?preference=Renewal"
   style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;"
 >
   🔄 Renouveler mon annonce
