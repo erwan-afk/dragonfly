@@ -214,7 +214,7 @@ async function sendRenewalReminders() {
     const activeBoats = await prisma.boat.findMany({
       where: {
         status: 'active',
-        expires_at: {
+        expiresAt: {
           not: null // S'assurer que expiresAt est défini
         }
       },
