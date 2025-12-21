@@ -2,60 +2,31 @@ name: Send Renewal Reminders
 
 on:
   schedule:
-    # Tous les jours à 9h00 UTC (14h00 heure de Paris en hiver, 15h00 en été)
     - cron: '0 9 * * *'
-  workflow_dispatch: # Permet de déclencher manuellement depuis GitHub
+  workflow_dispatch:
 
 jobs:
   send-reminders:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Send renewal reminders
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NEXT_PUBLIC_SITE_URL: https://dragonfly-trimarans.org
         run: |
-          echo "🚀 Envoi des rappels de renouvellement d'annonces..."
-          echo "📅 Date et heure: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-          echo "🌐 URL cible: https://dragonfly-livid.vercel.app/api/send-renewal-reminders"
-
-          # Vérifier que le token secret est défini
-          if [ -z "${{ secrets.CRON_SECRET_TOKEN }}" ]; then
-            echo "❌ CRON_SECRET_TOKEN non défini dans les secrets GitHub"
-            exit 1
-          fi
-          echo "🔐 Token secret configuré: oui"
-
-          # Utilisation de curl pour appeler l'API avec plus de détails
-          echo "📡 Envoi de la requête POST..."
-          response=$(curl -v -s -o response.json -w "%{http_code}" \
-            -X POST \
-            https://dragonfly-livid.vercel.app/api/send-renewal-reminders \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -H "User-Agent: GitHub-Actions-Renewal-Reminders" \
-            --connect-timeout 30 \
-            --max-time 300)
-
-          echo "📊 Code de réponse HTTP: $response"
-          echo "📄 Contenu de la réponse:"
-          cat response.json
-          echo ""
-
-          # Vérification du code de réponse HTTP
-          if [ "$response" -eq 200 ]; then
-            echo "✅ Rappels de renouvellement envoyés avec succès"
-            echo "🎉 Workflow terminé avec succès"
-          else
-            echo "❌ Erreur lors de l'envoi des rappels (code HTTP: $response)"
-            echo "🔍 Détails de l'erreur:"
-            if [ -f response.json ]; then
-              cat response.json
-            fi
-            echo "💡 Vérifiez les logs de l'application pour plus de détails"
-            exit 1
-          fi
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "❌ Échec de l'envoi des rappels de renouvellement"
-          echo "Vérifiez les logs et la configuration"
+          echo "🚀 Envoi des rappels de renouvellement..."
+          npm run tsx scripts/send-renewal-reminders.ts
