@@ -114,18 +114,48 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       console.log('✅ Boats loaded:', boats.length);
     }
 
+    // Si aucun résultat avec les filtres, récupérer des bateaux suggérés
+    let suggestedBoats: any[] = [];
+    const hasUrlFilters =
+      params.model ||
+      params.country ||
+      params.minPrice ||
+      params.maxPrice ||
+      params.attributes;
+
+    if (boats.length === 0 && hasUrlFilters) {
+      suggestedBoats = (await prisma.$queryRawUnsafe(
+        `
+        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+               u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+        FROM "boats" b
+        LEFT JOIN "user" u ON b.user_id = u.id
+        WHERE b.status = 'active' AND (b.expires_at IS NULL OR b.expires_at > NOW())
+        ORDER BY b.created_at DESC
+        LIMIT 4
+        `
+      )) as any[];
+
+      if (isDev) {
+        console.log('✅ Suggested boats loaded:', suggestedBoats.length);
+      }
+    }
+
     // Reformater les données et convertir les objets Decimal en nombres
-    const formattedBoats = boats.map((boat: any) => ({
+    const formatBoat = (boat: any) => ({
       ...boat,
-      price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
-      createdAt: boat.created_at, // Convertir created_at en camelCase
+      price: parseFloat(boat.price.toString()),
+      createdAt: boat.created_at,
       viewCount: boat.view_count,
       user: {
         name: boat.user_name,
         email: boat.user_email,
         avatar_url: boat.user_avatar_url
       }
-    }));
+    });
+
+    const formattedBoats = boats.map(formatBoat);
+    const formattedSuggestedBoats = suggestedBoats.map(formatBoat);
 
     // Générer un message de description basé sur les filtres et le tri
     const hasFilters =
@@ -205,6 +235,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
             <SpotlightBoats
               key="forsale"
               boats={formattedBoats ?? []}
+              suggestedBoats={formattedSuggestedBoats}
               searchResultsInfo={hasFilters ? filterDescription : null}
             />
           </div>

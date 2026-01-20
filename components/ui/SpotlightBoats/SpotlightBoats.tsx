@@ -40,9 +40,11 @@ import {
   dragonflyModels
 } from '@/utils/constants';
 import FlagIcon from '@/components/icons/Flag';
+import { specificationsData } from '@/components/ui/BoatListingForm/BoatListingForm';
 
 interface SpotlightBoatsProps {
   boats: Boat[];
+  suggestedBoats?: Boat[]; // Bateaux suggérés quand les filtres URL ne retournent rien
   spotlight?: boolean;
   accountTable?: boolean; // Nouveau prop pour le mode tableau account
   userId?: string;
@@ -53,6 +55,7 @@ interface SpotlightBoatsProps {
 
 export default function SpotlightBoats({
   boats,
+  suggestedBoats = [],
   spotlight,
   accountTable,
   userId,
@@ -147,7 +150,16 @@ export default function SpotlightBoats({
   ]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
   const [selectedSort, setSelectedSort] = useState<string>('created_desc');
+
+  // Reset les filtres client quand les boats changent (navigation)
+  useEffect(() => {
+    setSelectedModel(null);
+    setSelectedCountry(null);
+    setSelectedSpecs([]);
+    setSelectedPrice([0, maxPrice]);
+  }, [boats.length, maxPrice]);
   const [deletingBoatId, setDeletingBoatId] = useState<string | null>(null);
   const [imageRetryCount, setImageRetryCount] = useState<
     Record<string, number>
@@ -252,7 +264,10 @@ export default function SpotlightBoats({
           const matchesModel = !selectedModel || boat.model === selectedModel;
           const matchesCountry =
             !selectedCountry || boat.country === selectedCountry;
-          return inPriceRange && matchesModel && matchesCountry;
+          const matchesSpecs =
+            selectedSpecs.length === 0 ||
+            selectedSpecs.every((spec) => boat.specifications?.includes(spec));
+          return inPriceRange && matchesModel && matchesCountry && matchesSpecs;
         });
 
         return filtered.sort((a, b) => {
@@ -951,6 +966,47 @@ export default function SpotlightBoats({
                   </AutocompleteItem>
                 </Autocomplete>
               </div>
+
+              {/* Filtre par spécifications */}
+              <Dropdown
+                classNames={{ content: 'bg-fullwhite' }}
+                closeOnSelect={false}
+              >
+                <DropdownTrigger>
+                  <button className="rounded-[100px] px-[20px] h-[30px] flex flex-row gap-2 items-center hover:bg-smokygrey bg-lightgrey text-oceanblue">
+                    <div className="font-medium text-14">
+                      Specifications{' '}
+                      {selectedSpecs.length > 0 && `(${selectedSpecs.length})`}
+                    </div>
+                    <ArrowDropdown />
+                  </button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Specifications filter"
+                  classNames={{
+                    base: 'max-h-[400px] overflow-y-auto',
+                    list: 'bg-fullwhite'
+                  }}
+                  selectionMode="multiple"
+                  selectedKeys={new Set(selectedSpecs)}
+                  onSelectionChange={(keys) => {
+                    setSelectedSpecs(Array.from(keys) as string[]);
+                  }}
+                >
+                  {specificationsData.flatMap((section) =>
+                    section.items.map((item) => (
+                      <DropdownItem
+                        key={item.key}
+                        classNames={{
+                          base: 'text-oceanblue data-[hover=true]:bg-articblue/10 data-[selected=true]:bg-articblue/20'
+                        }}
+                      >
+                        {item.label}
+                      </DropdownItem>
+                    ))
+                  )}
+                </DropdownMenu>
+              </Dropdown>
             </div>
 
             {/* Tri */}
@@ -1067,6 +1123,12 @@ export default function SpotlightBoats({
         <div className=" flex flex-row items-center justify-between gap-4 ">
           <p className="text-oceanblue text-16 ">
             {(() => {
+              // Si on a des infos de recherche URL, les utiliser
+              if (searchResultsInfo) {
+                return searchResultsInfo;
+              }
+
+              // Sinon, utiliser les filtres client
               const activeFilters = [];
               if (selectedModel) {
                 const model = dragonflyModels.find(
@@ -1078,15 +1140,28 @@ export default function SpotlightBoats({
               if (selectedPrice[0] > 0 || selectedPrice[1] < maxPrice) {
                 activeFilters.push(`${selectedPrice[0]} - ${selectedPrice[1]}`);
               }
+              if (selectedSpecs.length > 0) {
+                const specLabels = selectedSpecs.map((key) => {
+                  const spec = specificationsData
+                    .flatMap((s) => s.items)
+                    .find((item) => item.key === key);
+                  return spec?.label || key;
+                });
+                activeFilters.push(...specLabels);
+              }
 
               return activeFilters.length > 0
                 ? `Search for: ${activeFilters.join(', ')}`
-                : 'Search :';
+                : '';
             })()}
           </p>
-          <p className="text-oceanblue text-16 ">
-            {filteredBoats.length} result{filteredBoats.length !== 1 ? 's' : ''}
-          </p>
+          {/* N'afficher le nombre de résultats que si on n'a pas searchResultsInfo (qui le contient déjà) */}
+          {!searchResultsInfo && (
+            <p className="text-oceanblue text-16 ">
+              {filteredBoats.length} result
+              {filteredBoats.length !== 1 ? 's' : ''}
+            </p>
+          )}
         </div>
       )}
 
@@ -1096,17 +1171,180 @@ export default function SpotlightBoats({
         {isLoading ? (
           createSkeletonCards(spotlight ? 3 : 6)
         ) : filteredBoats.length === 0 ? (
-          <div className="col-span-2 flex flex-col items-center justify-center py-16 px-4">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🚤</div>
-              <h3 className="text-24 font-medium text-oceanblue mb-2">
-                No boats found
-              </h3>
-              <p className="text-16 text-oceanblue/70">
-                Try adjusting your search filters to find more results.
-              </p>
+          <>
+            <div className="col-span-2 flex flex-col items-center justify-center py-16 px-4">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🚤</div>
+                <h3 className="text-24 font-medium text-oceanblue mb-2">
+                  No boats found
+                </h3>
+                <p className="text-16 text-oceanblue/70">
+                  Try adjusting your search filters to find more results.
+                </p>
+                {/* Lien pour réinitialiser les filtres URL (prioritaire) */}
+                {suggestedBoats.length > 0 ? (
+                  <Link
+                    href="/forsale"
+                    className="mt-4 inline-block px-6 py-2 bg-articblue text-fullwhite rounded-full hover:bg-oceanblue transition-colors"
+                  >
+                    View all boats
+                  </Link>
+                ) : (
+                  /* Bouton pour réinitialiser les filtres client (seulement si pas de filtres URL) */
+                  boats.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedModel(null);
+                        setSelectedCountry(null);
+                        setSelectedSpecs([]);
+                        setSelectedPrice([0, maxPrice]);
+                      }}
+                      className="mt-4 px-6 py-2 bg-articblue text-fullwhite rounded-full hover:bg-oceanblue transition-colors"
+                    >
+                      Clear all filters
+                    </button>
+                  )
+                )}
+              </div>
             </div>
-          </div>
+
+            {/* Section "See also" - Show some boats when filters return no results */}
+            {(suggestedBoats.length > 0 || boats.length > 0) && (
+              <div className="col-span-2 mt-16">
+                <div className="border-t border-stonegrey pt-16">
+                  <h3 className="text-24 font-medium text-oceanblue my-[32px]">
+                    You might also like
+                  </h3>
+                  <div className="grid grid-cols-2 gap-x-[17px] gap-y-[32px]">
+                    {(suggestedBoats.length > 0
+                      ? suggestedBoats
+                      : boats.slice(0, 4)
+                    ).map((boat) => {
+                      const photos =
+                        boat.photos && typeof boat.photos === 'string'
+                          ? JSON.parse(boat.photos)
+                          : boat.photos;
+
+                      const prefixedPhotos = Array.isArray(photos)
+                        ? photos
+                            .map((photo) => normalizePhotoUrl(photo, boat.id))
+                            .filter((url) => url && url.trim() !== '')
+                        : [];
+
+                      const hasValidImages = prefixedPhotos.length > 0;
+                      const imageUrl = hasValidImages
+                        ? prefixedPhotos[0]
+                        : null;
+
+                      const formattedDate = boat.createdAt
+                        ? new Date(boat.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            day: 'numeric',
+                            month: 'long'
+                          })
+                        : 'Unknown';
+
+                      return (
+                        <Link href={`/boat/${boat.id}`} key={boat.id}>
+                          <div
+                            className="group border-stonegrey border-2 hover:border-articblue flex flex-row overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px]"
+                            style={{
+                              boxShadow: '0px 1px 20px 0px #00000014'
+                            }}
+                          >
+                            {/* Image */}
+                            <div className="w-1/3 relative overflow-hidden min-h-[180px]">
+                              <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
+                                {countries.find(
+                                  (country) => country.key === boat.country
+                                )?.label || ''}
+                                <FlagIcon
+                                  flag={
+                                    countries.find(
+                                      (country) => country.key === boat.country
+                                    )?.flag || ''
+                                  }
+                                />
+                              </div>
+
+                              {hasValidImages && imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={`${getModelLabel(boat.model)} photo`}
+                                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  loading="lazy"
+                                  onLoad={() =>
+                                    logImageEvent(
+                                      'load',
+                                      boat.id,
+                                      imageUrl as string
+                                    )
+                                  }
+                                  onError={(e) => {
+                                    handleImageError(
+                                      boat.id,
+                                      imageUrl as string,
+                                      e.currentTarget
+                                    );
+                                  }}
+                                />
+                              ) : (
+                                <div className="absolute inset-0 w-full h-full bg-gray-100 flex items-center justify-center">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-articblue"></div>
+                                    <span className="text-xs text-oceanblue font-medium">
+                                      Loading image...
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Contenu */}
+                            <div className="flex flex-1 flex-col gap-16 bg-fullwhite p-24">
+                              <div className="flex flex-col gap-8">
+                                <p className="text-oceanblue text-14 italic">
+                                  {formattedDate}
+                                </p>
+                                <h3 className="text-24 font-medium text-articblue leading-tight">
+                                  {getModelLabel(boat.model)}
+                                </h3>
+                              </div>
+
+                              <div className="flex-1 flex items-center">
+                                <div className="text-oceanblue text-18">
+                                  <span className="text-oceanblue/70">
+                                    Price:{' '}
+                                  </span>
+                                  <span className="font-semibold text-oceanblue">
+                                    {formatPrice(Number(boat.price))}{' '}
+                                    {boat.currency}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-oceanblue/60 font-medium text-14">
+                                  {boat.viewCount} views
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Flèche See More */}
+                            <div className="bg-fullwhite flex items-center justify-center">
+                              <div className="w-[60px] mr-24 h-fit py-2 flex justify-center text-articblue bg-fullwhite border-2 border-articblue rounded-[75px] transition-all duration-300 group-hover:text-fullwhite group-hover:bg-articblue">
+                                <ArrowSeemore />
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           filteredBoats.map((boat) => {
             const photos =

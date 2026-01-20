@@ -8,13 +8,10 @@
   box-sizing: inherit;
 }
 
-
-
 html {
   height: 100%;
   box-sizing: border-box;
   touch-action: manipulation;
-  scroll-behavior: smooth;
   font-feature-settings:
     'case' 1,
     'rlig' 1,
@@ -33,7 +30,6 @@ html {
 
 /* Vous pouvez maintenant utiliser la police dans le body ou ailleurs */
 body {
-  
 }
 
 html,
@@ -72,7 +68,7 @@ p a {
 }
 
 #link-branded-root div {
-  border-radius: .5rem !important;
+  border-radius: 0.5rem !important;
 }
 
 /* Masquer le badge reCAPTCHA */
@@ -83,7 +79,7 @@ p a {
 }
 
 /* Alternative: masquer complètement */
-iframe[src*="recaptcha"], 
+iframe[src*='recaptcha'],
 .grecaptcha-badge {
   display: none !important;
   visibility: hidden !important;
