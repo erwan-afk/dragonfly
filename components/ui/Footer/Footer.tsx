@@ -47,7 +47,7 @@ export default function Footer() {
           <div className="flex flex-col gap-24">
             <div className="font-medium">Support</div>
             <Link
-              href="#"
+              href="/contact"
               className=" w-fit font-light text-white hover:underline"
             >
               Contact us
@@ -65,7 +65,7 @@ export default function Footer() {
               Terms
             </Link>
             <Link
-              href="#"
+              href="/policies"
               className=" w-fit font-light text-white hover:underline"
             >
               Cookies
@@ -74,46 +74,46 @@ export default function Footer() {
           <div className="flex flex-col gap-24">
             <div className="font-medium">Navigation</div>
             <Link
-              href="#"
+              href="/"
               className=" w-fit font-light text-white hover:underline"
             >
               Home
             </Link>
             <Link
-              href="#"
+              href="/forsale"
               className=" w-fit font-light text-white hover:underline"
             >
               For sale
             </Link>
             <Link
-              href="#"
+              href="/forum"
               className=" w-fit font-light text-white hover:underline"
             >
               Forum
             </Link>
             <Link
-              href="#"
+              href="/useful-links"
               className=" w-fit font-light text-white hover:underline"
             >
-              Usefull links
+              Useful links
             </Link>
           </div>
           <div className="flex flex-col gap-24">
             <div className="font-medium">Actions</div>
             <Link
-              href="#"
+              href="/list-boat"
               className=" w-fit font-light text-white hover:underline"
             >
               Place an ad
             </Link>
             <Link
-              href="#"
+              href="/signin"
               className=" w-fit font-light text-white hover:underline"
             >
               Sign Up
             </Link>
             <Link
-              href="#"
+              href="/signin"
               className=" w-fit font-light text-white hover:underline"
             >
               Log In
@@ -126,7 +126,7 @@ export default function Footer() {
         <div className="text-14 ">
           All rights reserved by Dragonfly Trimarans Marketplace
         </div>
-        <div className="text-14">© 2025 Dragonfly</div>
+        <div className="text-14">© 2026 Dragonfly</div>
       </div>
     </footer>
   );

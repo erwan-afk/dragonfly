@@ -427,6 +427,7 @@ export default function ForumSection() {
                               </p>
                               <p
                                 className={`text-12 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+                                suppressHydrationWarning
                               >
                                 {new Date(
                                   forum.last_post_time * 1000
@@ -568,6 +569,7 @@ export default function ForumSection() {
                                 </p>
                                 <p
                                   className={`text-12 ${pathname === '/forum' ? ' text-oceanblue' : 'text-fullwhite'}`}
+                                  suppressHydrationWarning
                                 >
                                   {new Date(
                                     forum.last_post_time * 1000

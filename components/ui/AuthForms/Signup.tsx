@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { signUp } from '@/lib/auth-client'; // Import direct
 import { useRouter } from 'next/navigation';
 import React, { useState, useCallback } from 'react';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, User } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '../Input/Input';
 import { useReCaptcha } from 'next-recaptcha-v3';
@@ -29,6 +29,7 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
         const formData = new FormData(e.currentTarget);
         const email = String(formData.get('email')).trim();
         const password = String(formData.get('password')).trim();
+        const name = String(formData.get('name')).trim();
 
         // Vérifier que les mots de passe correspondent
         if (password !== confirmPassword) {
@@ -69,7 +70,7 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
 
         console.log('✅ reCAPTCHA validated');
 
-        const name = email.split('@')[0];
+        const displayName = name || email.split('@')[0];
 
         console.log('🔍 Starting Better Auth SignUp for:', email);
 
@@ -78,7 +79,7 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
           {
             email,
             password,
-            name,
+            name: displayName,
             callbackURL: '/account'
           },
           {
@@ -161,6 +162,14 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
         onSubmit={handleSubmit}
         className="flex flex-col gap-24 items-center justify-center"
       >
+        <Input
+          name="name"
+          type="text"
+          placeholder="Full name"
+          required
+          autoComplete="name"
+          startContent={<User />}
+        />
         <Input
           name="email"
           type="email"

@@ -131,7 +131,7 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
             <p className="text-darkgrey text-20">{boat.description}</p>
             <div className="w-full h-[1px] bg-stonegrey"></div>
             <div className="flex flex-col gap-32">
-              <h1 className="text-oceanblue text-24">Spécificités</h1>
+              <h1 className="text-oceanblue text-24">Specifications</h1>
               <div className="flex flex-row gap-16 flex-wrap">
                 {boat.specifications.map((spec: string, index: number) => (
                   <div
@@ -158,13 +158,13 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
                 <div className="flex flex-col gap-1">
                   {/* Nom */}
                   <div className="text-articblue text-32 font-medium leading-tight">
-                    {boat.user?.name || 'Utilisateur anonyme'}
+                    {boat.user?.name || 'Anonymous user'}
                   </div>
 
                   {/* Email */}
                   <div className="text-darkgrey text-14">
                     <span className="font-medium">Mail : </span>
-                    <span>{boat.user?.email || 'Non disponible'}</span>
+                    <span>{boat.user?.email || 'Not available'}</span>
                   </div>
                 </div>
               </div>
