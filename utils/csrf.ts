@@ -1,35 +1,62 @@
 import crypto from 'crypto';
+import prisma from '@/utils/prisma/client';
 
-// Store tokens in memory (in production, use Redis or database)
-export const tokenStore = new Map<string, { token: string; timestamp: number; ip: string }>();
+/**
+ * Generate a CSRF token and store it in the database.
+ * Returns { sessionId, token, expiresAt }.
+ */
+export async function generateCSRFToken(): Promise<{ sessionId: string; token: string; expiresAt: Date }> {
+  const sessionId = crypto.randomUUID();
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 3600000); // 1 hour
 
-// Clean expired tokens every hour
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    const oneHour = 3600000;
+  await prisma.csrf_token.upsert({
+    where: { sessionId },
+    update: { token, expiresAt },
+    create: { sessionId, token, expiresAt }
+  });
 
-    Array.from(tokenStore.entries()).forEach(([sessionId, data]) => {
-      if (now - data.timestamp > oneHour) {
-        tokenStore.delete(sessionId);
-      }
-    });
-  }, 3600000);
+  return { sessionId, token, expiresAt };
 }
 
-export function validateCSRFToken(sessionId: string, token: string, ip: string): boolean {
-  const stored = tokenStore.get(sessionId);
-  if (!stored) return false;
+/**
+ * Validate a CSRF token. Returns true if valid, false otherwise.
+ * Also cleans up expired tokens opportunistically.
+ */
+export async function validateCSRFToken(sessionId: string, token: string): Promise<boolean> {
+  if (!sessionId || !token) return false;
 
-  if (stored.token !== token) return false;
+  try {
+    const stored = await prisma.csrf_token.findUnique({
+      where: { sessionId }
+    });
 
-  const now = Date.now();
-  if (now - stored.timestamp > 3600000) {
-    tokenStore.delete(sessionId);
+    if (!stored) return false;
+
+    // Check expiration
+    if (stored.expiresAt < new Date()) {
+      await prisma.csrf_token.delete({ where: { sessionId } }).catch(() => {});
+      return false;
+    }
+
+    // Validate token (constant-time comparison)
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(stored.token, 'hex'),
+      Buffer.from(token, 'hex')
+    );
+
+    if (isValid) {
+      // Delete used token (one-time use)
+      await prisma.csrf_token.delete({ where: { sessionId } }).catch(() => {});
+    }
+
+    // Opportunistic cleanup: delete expired tokens (non-blocking)
+    prisma.csrf_token.deleteMany({
+      where: { expiresAt: { lt: new Date() } }
+    }).catch(() => {});
+
+    return isValid;
+  } catch {
     return false;
   }
-
-  if (stored.ip !== ip) return false;
-
-  return true;
 }

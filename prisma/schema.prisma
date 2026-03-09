@@ -196,6 +196,14 @@ model email_log {
   @@map("email_logs")
 }
 
+model csrf_token {
+  sessionId String   @id @map("session_id")
+  token     String
+  expiresAt DateTime @map("expires_at")
+
+  @@map("csrf_tokens")
+}
+
 enum Role {
   user
   admin

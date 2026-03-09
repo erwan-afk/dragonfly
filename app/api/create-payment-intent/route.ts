@@ -3,6 +3,7 @@ import { stripe } from '@/utils/stripe/config';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
+import prisma from '@/utils/prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,19 @@ export async function POST(req: NextRequest) {
     if (metadata) {
       for (const key of allowedMetadataKeys) {
         if (metadata[key]) safeMetadata[key] = String(metadata[key]);
+      }
+    }
+
+    // Verify boat ownership if boat_id is provided
+    if (safeMetadata.boat_id) {
+      const boat = await prisma.boat.findFirst({
+        where: { id: safeMetadata.boat_id, userId: user.id }
+      });
+      if (!boat) {
+        return NextResponse.json(
+          { error: 'Boat not found or not owned by you' },
+          { status: 403 }
+        );
       }
     }
 

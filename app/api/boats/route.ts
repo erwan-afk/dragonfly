@@ -47,15 +47,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Vérifier la limite de description
+        // Input validation
         if (description.length > 2000) {
-            return NextResponse.json(
-                { error: 'Description must be less than 2000 characters' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Description must be less than 2000 characters' }, { status: 400 });
+        }
+        if (model.length > 200) {
+            return NextResponse.json({ error: 'Model name too long' }, { status: 400 });
+        }
+        if (country.length > 100) {
+            return NextResponse.json({ error: 'Country name too long' }, { status: 400 });
+        }
+        if (photos && (!Array.isArray(photos) || photos.length > 20)) {
+            return NextResponse.json({ error: 'Invalid photos (max 20)' }, { status: 400 });
+        }
+        if (specifications && (!Array.isArray(specifications) || specifications.length > 50)) {
+            return NextResponse.json({ error: 'Invalid specifications (max 50)' }, { status: 400 });
+        }
+        if (email && (typeof email !== 'string' || email.length > 255)) {
+            return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
         }
 
-        // Create boat with Prisma (standard fields)
+        // Create boat with Prisma
         const boat = await prisma.boat.create({
             data: {
                 model,
@@ -68,19 +80,11 @@ export async function POST(request: NextRequest) {
                 vatPaid: vatPaid || false,
                 productId: productId || null,
                 status: 'pending',
-                userId: session.user.id
+                userId: session.user.id,
+                email: email || null,
+                condition: condition || null
             }
         });
-
-        // Update email and condition with raw SQL (new columns not yet in Prisma client)
-        if (email || condition) {
-            await prisma.$executeRaw`
-                UPDATE "boats" SET
-                    email = ${email || null},
-                    "condition" = ${condition || null}
-                WHERE id = ${boat.id}
-            `;
-        }
 
         return NextResponse.json({
             success: true,

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         body: {
           currentPassword,
           newPassword,
-          revokeOtherSessions: false, // Keep other sessions active
+          revokeOtherSessions: true, // Revoke other sessions for security
         },
         headers: await headers()
       });

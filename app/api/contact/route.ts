@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validation du token CSRF
-    if (!validateCSRFToken(data.sessionId, data.csrfToken, ip)) {
+    if (!await validateCSRFToken(data.sessionId, data.csrfToken)) {
       logSuspiciousActivity(ip, userAgent, 'Invalid CSRF token');
       return NextResponse.json(
         { error: 'Token de sécurité invalide' },

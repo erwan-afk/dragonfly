@@ -3,8 +3,11 @@ import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
 import { generateSessionId } from '@/utils/session-id';
+import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 
 export const dynamic = 'force-dynamic';
+
+const viewLimiter = createRateLimiter('boat_view', 30, 60); // 30 views/min per IP
 
 function getClientIP(request: NextRequest): string | null {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -22,6 +25,11 @@ function getClientIP(request: NextRequest): string | null {
 // POST /api/boat-views - Enregistrer une vue d'annonce
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip = getClientIP(request) || 'unknown';
+    const rateLimitResponse = await checkRateLimit(viewLimiter, ip);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { boatId } = await request.json();
 
     if (!boatId) {
@@ -105,9 +113,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Incrémenter le compteur de vues du bateau
-    await prisma.$executeRaw`
-      UPDATE boats SET view_count = view_count + 1 WHERE id = ${boatId}
-    `;
+    await prisma.boat.update({
+      where: { id: boatId },
+      data: { viewCount: { increment: 1 } }
+    });
 
     return NextResponse.json({
       success: true,

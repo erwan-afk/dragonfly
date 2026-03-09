@@ -45,7 +45,9 @@ const webhookHandlers: Record<string, WebhookHandler> = {
 
       try {
         if (boatId) {
-          // Nouveau système : Activer le bateau existant ET créer l'enregistrement de paiement
+          // Idempotence: skip if boat is already active
+          const existingBoat = await prisma.boat.findUnique({ where: { id: boatId }, select: { status: true } });
+          if (existingBoat?.status === 'active') return;
 
           // 1. Récupérer l'utilisateur à partir du customer Stripe
           const customer = await prisma.customer.findFirst({
