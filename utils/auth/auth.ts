@@ -47,7 +47,7 @@ if (!isBuild) {
   console.log('📝 Better Auth configuration:');
   console.log('- Database adapter: Prisma with PostgreSQL');
   console.log('- Email/Password: enabled');
-  console.log('- Email verification:', process.env.NODE_ENV === 'production' ? 'enabled' : 'disabled (dev)');
+  console.log('- Email verification: disabled');
   console.log('- Secret:', process.env.BETTER_AUTH_SECRET ? 'configured' : 'missing');
   console.log('- Base URL:', process.env.BETTER_AUTH_URL || 'http://localhost:3000');
 }
@@ -58,7 +58,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: process.env.NODE_ENV === 'production',
+    requireEmailVerification: false,
     sendResetPassword: async ({ user, url }: any) => {
       if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
         console.error('❌ SMTP non configuré — email de reset non envoyé');
