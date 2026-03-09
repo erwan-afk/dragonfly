@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
+import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 
 // Force dynamic rendering - don't try to statically generate this route
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+// 2 password changes per day per user
+const passwordLimiter = createRateLimiter('change-password', 5, 86400);
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +20,10 @@ export async function POST(request: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Rate limit: 2 per day per user
+    const rateLimited = await checkRateLimit(passwordLimiter, session.user.id);
+    if (rateLimited) return rateLimited;
 
     const { currentPassword, newPassword } = await request.json();
 

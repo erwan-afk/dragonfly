@@ -13,7 +13,6 @@ import {
 import cn from 'classnames';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
-import BoatListingForm from '@/components/ui/BoatListingForm/BoatListingForm';
 import Valide from '@/components/icons/Valide';
 import Star from '@/components/icons/Star';
 import { motion } from 'framer-motion';

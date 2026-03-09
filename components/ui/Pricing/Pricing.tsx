@@ -1,23 +1,11 @@
 'use client';
 
-import Button from '@/components/ui/Button';
-import LogoCloud from '@/components/ui/LogoCloud';
-import { Product, Price, Json } from '@/types/database';
-import { getStripe } from '@/utils/stripe/client';
+import type { ProductWithPrices, StripePrice } from '@/types/database';
 import { checkoutWithStripe } from '@/utils/stripe/server';
 import { getErrorRedirect } from '@/utils/helpers';
 import { UserSimple as User } from '@/types/database';
-import cn from 'classnames';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
-
-type Boat = Tables<'boats'>;
-type Price = Tables<'prices'>;
-type Product = Tables<'products'>;
-
-interface ProductWithPrices extends Product {
-  prices: Price[];
-}
 
 interface Props {
   user: User | null | undefined;
@@ -30,7 +18,7 @@ export default function Pricing({ user, products }: Props) {
   const currentPath = usePathname();
 
   const handleStripeCheckout = async (
-    price: Price,
+    price: StripePrice,
     product: ProductWithPrices
   ) => {
     setPriceIdLoading(price.id);
@@ -41,13 +29,13 @@ export default function Pricing({ user, products }: Props) {
     }
 
     // Ajoutez les métadonnées du bateau pour la session Stripe
-    const metadata = {
-      boat_model: product.name,
-      boat_description: product.description
+    const metadata: Record<string, string> = {
+      boat_model: product.name || '',
+      boat_description: product.description || ''
       // Vous pouvez ajouter d'autres métadonnées nécessaires ici
     };
 
-    const { errorRedirect, sessionId } = await checkoutWithStripe(
+    const { errorRedirect, sessionUrl } = await checkoutWithStripe(
       price,
       currentPath,
       metadata
@@ -58,7 +46,7 @@ export default function Pricing({ user, products }: Props) {
       return router.push(errorRedirect);
     }
 
-    if (!sessionId) {
+    if (!sessionUrl) {
       setPriceIdLoading(undefined);
       return router.push(
         getErrorRedirect(
@@ -69,10 +57,8 @@ export default function Pricing({ user, products }: Props) {
       );
     }
 
-    const stripe = await getStripe();
-    stripe?.redirectToCheckout({ sessionId });
-
-    setPriceIdLoading(undefined);
+    // Redirect to Stripe Checkout
+    window.location.href = sessionUrl;
   };
 
   if (!products.length) {
@@ -114,9 +100,9 @@ export default function Pricing({ user, products }: Props) {
 
             const priceString = new Intl.NumberFormat('en-US', {
               style: 'currency',
-              currency: price.currency!,
+              currency: price.currency || 'eur',
               minimumFractionDigits: 0
-            }).format(Number(price?.unit_amount || 0) / 100);
+            }).format(Number(price?.unitAmount || 0) / 100);
 
             return (
               <div
@@ -135,11 +121,11 @@ export default function Pricing({ user, products }: Props) {
                   </p>
                   <button
                     type="button"
-                    //loading={priceIdLoading === price.id}
+                    disabled={!!priceIdLoading}
                     onClick={() => handleStripeCheckout(price, product)}
-                    className="block w-full py-2 mt-8 text-sm font-semibold text-center text-white rounded-md hover:bg-zinc-900"
+                    className="block w-full py-2 mt-8 text-sm font-semibold text-center text-white rounded-md hover:bg-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Proceed to Checkout
+                    {priceIdLoading === price.id ? 'Loading...' : 'Proceed to Checkout'}
                   </button>
                 </div>
               </div>

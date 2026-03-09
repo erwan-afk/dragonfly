@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { dragonflyModels, currencies, countries } from '@/utils/constants';
+import { dragonflyModels, currencies, countries, boatConditions } from '@/utils/constants';
 import type { Boat } from '@/types/boats';
 import BoatImageGallery from '@/components/ui/BoatImageGallery/BoatImageGallery';
 import prisma from '@/utils/prisma/client';
@@ -8,45 +8,7 @@ import { headers } from 'next/headers';
 import { ViewTracker } from './ViewTracker';
 import { ViewStats } from './ViewStats';
 import FlagIcon from '@/components/icons/Flag';
-// Fonction pour valider et normaliser les URLs d'images
-function normalizeImageUrls(photos: string[] | null | undefined): string[] {
-  if (!photos || !Array.isArray(photos) || photos.length === 0) {
-    return [];
-  }
-
-  return photos
-    .filter((url) => url && typeof url === 'string' && url.trim() !== '')
-    .map((url) => {
-      const trimmedUrl = url.trim();
-
-      // Si l'URL est déjà complète (commence par http), la retourner telle quelle
-      if (
-        trimmedUrl.startsWith('http://') ||
-        trimmedUrl.startsWith('https://')
-      ) {
-        return trimmedUrl;
-      }
-
-      // Si l'URL commence par '/', c'est une URL relative locale
-      if (trimmedUrl.startsWith('/')) {
-        return trimmedUrl;
-      }
-
-      // Pour les clés R2 relatives, construire l'URL complète
-      const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
-      const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-      const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-
-      if (R2_PUBLIC_URL) {
-        return `${R2_PUBLIC_URL}/${trimmedUrl}`;
-      } else if (R2_ACCOUNT_ID && R2_BUCKET_NAME) {
-        return `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${trimmedUrl}`;
-      }
-
-      // Fallback : retourner l'URL telle quelle
-      return trimmedUrl;
-    });
-}
+import { normalizeImageUrls } from '@/utils/image-urls';
 
 export default async function BoatPage({ params }: { params: { id: string } }) {
   // Publicly, we only expose "active" listings.
@@ -56,8 +18,8 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
   const viewerUserId = session?.user?.id ?? null;
 
   const [row] = (await prisma.$queryRaw`
-    SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
-           u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+    SELECT b.id, b.model, b.price, b.country, b.description, b.email as boat_email, b.condition, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+           u.name as user_name, u.full_name as user_full_name, u.email as user_email, u.avatar_url as user_avatar_url
     FROM "boats" b
     LEFT JOIN "user" u ON b.user_id = u.id
     WHERE b.id = ${params.id}
@@ -73,8 +35,8 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
     price: parseFloat(row.price.toString()),
     createdAt: row.created_at,
     user: {
-      name: row.user_name,
-      email: row.user_email,
+      name: row.user_full_name || row.user_name || null,
+      email: row.boat_email || row.user_email,
       avatar_url: row.user_avatar_url
     }
   } as Boat & { status?: string; userId?: string };
@@ -158,8 +120,14 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
                   ?.symbol || boat.currency}
               </h2>
               <div className="text-darkgrey text-16">{formattedDate}</div>
+              {row.condition && (
+                <div className="px-3 py-1.5 bg-articblue/10 text-articblue rounded-lg w-fit text-14 font-medium">
+                  {boatConditions.find(c => c.key === row.condition)?.label || row.condition}
+                </div>
+              )}
             </div>
             <div className="w-full h-[1px] bg-stonegrey"></div>
+            <h1 className="text-oceanblue text-24">Description</h1>
             <p className="text-darkgrey text-20">{boat.description}</p>
             <div className="w-full h-[1px] bg-stonegrey"></div>
             <div className="flex flex-col gap-32">

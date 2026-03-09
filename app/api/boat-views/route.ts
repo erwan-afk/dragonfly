@@ -2,27 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
+import { generateSessionId } from '@/utils/session-id';
 
 export const dynamic = 'force-dynamic';
 
-// Fonction pour obtenir l'adresse IP du client
 function getClientIP(request: NextRequest): string | null {
-  // Essayer plusieurs headers possibles pour l'IP
   const forwarded = request.headers.get('x-forwarded-for');
   const realIP = request.headers.get('x-real-ip');
   const cfConnectingIP = request.headers.get('cf-connecting-ip');
 
-  // Prendre la première IP valide (x-forwarded-for peut contenir plusieurs IPs séparées par des virgules)
-  const ip = cfConnectingIP || realIP || (forwarded ? forwarded.split(',')[0].trim() : null);
+  const ip =
+    cfConnectingIP ||
+    realIP ||
+    (forwarded ? forwarded.split(',')[0].trim() : null);
 
   return ip || null;
-}
-
-// Fonction pour générer un ID de session basé sur l'IP et le user agent
-function generateSessionId(ip: string | null, userAgent: string | null): string {
-  const crypto = require('crypto');
-  const data = `${ip || 'unknown'}-${userAgent || 'unknown'}-${Date.now()}`;
-  return crypto.createHash('sha256').update(data).digest('hex').substring(0, 16);
 }
 
 // POST /api/boat-views - Enregistrer une vue d'annonce
@@ -31,7 +25,10 @@ export async function POST(request: NextRequest) {
     const { boatId } = await request.json();
 
     if (!boatId) {
-      return NextResponse.json({ error: 'boatId is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'boatId is required' },
+        { status: 400 }
+      );
     }
 
     // Vérifier que le bateau existe et est actif
@@ -43,7 +40,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!boat) {
-      return NextResponse.json({ error: 'Boat not found or not active' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Boat not found or not active' },
+        { status: 404 }
+      );
     }
 
     // Obtenir l'utilisateur connecté (optionnel)
@@ -113,10 +113,12 @@ export async function POST(request: NextRequest) {
       success: true,
       viewId: view.id
     });
-
   } catch (error) {
     console.error('Error recording boat view:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -127,7 +129,10 @@ export async function GET(request: NextRequest) {
     const boatId = searchParams.get('boatId');
 
     if (!boatId) {
-      return NextResponse.json({ error: 'boatId parameter is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'boatId parameter is required' },
+        { status: 400 }
+      );
     }
 
     // Vérifier que l'utilisateur a le droit de voir ces stats (propriétaire ou admin)
@@ -135,7 +140,10 @@ export async function GET(request: NextRequest) {
     const userId = session?.user?.id;
 
     if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     // Vérifier que l'utilisateur est propriétaire du bateau ou admin
@@ -143,14 +151,17 @@ export async function GET(request: NextRequest) {
       where: {
         id: boatId,
         OR: [
-          { userId }, // Propriétaire
+          { userId } // Propriétaire
           // TODO: Ajouter vérification admin si nécessaire
         ]
       }
     });
 
     if (!boat) {
-      return NextResponse.json({ error: 'Boat not found or access denied' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Boat not found or access denied' },
+        { status: 404 }
+      );
     }
 
     // Obtenir les statistiques de vues
@@ -173,14 +184,15 @@ export async function GET(request: NextRequest) {
     `;
 
     // Vues uniques par utilisateur (derniers 30 jours)
-    const uniqueUserViews = await prisma.boat_view.count({
+    const uniqueUserViewsResult = await prisma.boat_view.groupBy({
+      by: ['userId'],
       where: {
         boatId,
         viewedAt: { gte: thirtyDaysAgo },
         userId: { not: null }
-      },
-      distinct: ['userId']
+      }
     });
+    const uniqueUserViews = uniqueUserViewsResult.length;
 
     return NextResponse.json({
       boatId,
@@ -188,9 +200,11 @@ export async function GET(request: NextRequest) {
       uniqueUserViews,
       dailyViews
     });
-
   } catch (error) {
     console.error('Error fetching boat view stats:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

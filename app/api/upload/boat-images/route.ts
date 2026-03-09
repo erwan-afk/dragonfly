@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadImagesForBoatWithWebP, validateR2Config } from "@/utils/cloudflare/r2";
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
+import prisma from '@/utils/prisma/client';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
+  // Authentication check
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // Valider la configuration R2
   const configValidation = validateR2Config();
   if (!configValidation.valid) {
     console.error('Missing R2 configuration:', configValidation.missing);
     return NextResponse.json(
-      { error: `Missing R2 configuration: ${configValidation.missing.join(', ')}` },
+      { error: 'Storage not configured' },
       { status: 500 }
     );
   }
@@ -22,6 +31,15 @@ export async function POST(req: NextRequest) {
 
     if (!boatId) {
       return NextResponse.json({ error: "boatId is required" }, { status: 400 });
+    }
+
+    // Verify boat ownership
+    const boat = await prisma.boat.findFirst({
+      where: { id: boatId, userId: session.user.id },
+      select: { id: true }
+    });
+    if (!boat) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Récupérer tous les fichiers
@@ -56,8 +74,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`📤 Uploading ${files.length} files for boat ID: ${boatId}`);
-
     // Upload tous les fichiers en parallèle avec conversion WebP
     const results = await uploadImagesForBoatWithWebP(files, boatId, 80);
 
@@ -76,8 +92,6 @@ export async function POST(req: NextRequest) {
     }
 
     const uploadedUrls = successfulUploads.map(result => result.url!);
-    
-    console.log(`✅ Successfully uploaded ${uploadedUrls.length} files for boat ${boatId}`);
 
     return NextResponse.json({
       success: true,
@@ -89,7 +103,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Multiple upload error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
+      { error: "Upload failed" },
       { status: 500 }
     );
   }

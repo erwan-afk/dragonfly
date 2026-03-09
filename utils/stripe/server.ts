@@ -15,6 +15,7 @@ import { StripePrice as Price } from '@/types/database';
 type CheckoutResponse = {
   errorRedirect?: string;
   sessionId?: string;
+  sessionUrl?: string;
 };
 
 export async function checkoutWithStripe(
@@ -61,8 +62,10 @@ export async function checkoutWithStripe(
     };
 
     const stripeSession = await stripe.checkout.sessions.create(params);
-    return { sessionId: stripeSession.id };
-
+    return {
+      sessionId: stripeSession.id,
+      sessionUrl: stripeSession.url || undefined
+    };
   } catch (error) {
     if (error instanceof Error) {
       return {
@@ -138,58 +141,5 @@ export async function createStripePortal(currentPath: string) {
         'Please try again later or contact a system administrator.'
       );
     }
-  }
-}
-
-// Nouvelle fonction pour récupérer les produits depuis Stripe
-export async function getActiveProductsFromStripe() {
-  try {
-    console.log('🔍 Fetching products from Stripe...');
-
-    // Récupérer tous les produits actifs depuis Stripe
-    const products = await stripe.products.list({
-      active: true,
-      expand: ['data.default_price']
-    });
-
-    // Pour chaque produit, récupérer tous ses prix
-    const productsWithPrices = await Promise.all(
-      products.data.map(async (product) => {
-        const prices = await stripe.prices.list({
-          product: product.id,
-          active: true
-        });
-
-        return {
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          active: product.active,
-          image: product.images?.[0] || null,
-          metadata: product.metadata,
-          prices: prices.data.map(price => ({
-            id: price.id,
-            product_id: typeof price.product === 'string' ? price.product : price.product?.id || null,
-            active: price.active,
-            description: price.nickname,
-            unit_amount: price.unit_amount,
-            currency: price.currency,
-            type: price.type === 'one_time' ? 'one_time' : 'recurring',
-            interval: price.recurring?.interval || null,
-            interval_count: price.recurring?.interval_count || null,
-            trial_period_days: price.recurring?.trial_period_days || null,
-            metadata: price.metadata
-          }))
-        };
-      })
-    );
-
-    console.log('✅ Products fetched from Stripe successfully');
-    console.log('📊 Products found:', productsWithPrices.length);
-
-    return productsWithPrices;
-  } catch (error) {
-    console.error('❌ Error fetching products from Stripe:', error);
-    throw error;
   }
 }

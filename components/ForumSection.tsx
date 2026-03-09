@@ -30,12 +30,26 @@ interface ForumData {
 
 type SortOption = 'recent' | 'topics' | 'posts' | 'name';
 
+// Short labels extracted from model names for filter buttons
+const MODEL_FILTERS = [
+  { key: 'DF25', label: 'DF25' },
+  { key: 'DF800', label: 'DF800' },
+  { key: 'DF28', label: 'DF28' },
+  { key: 'DF920', label: 'DF920' },
+  { key: 'DF1000', label: 'DF1000' },
+  { key: 'DF32', label: 'DF32' },
+  { key: 'DF35', label: 'DF35' },
+  { key: 'DF1200', label: 'DF1200' },
+  { key: 'DF40', label: 'DF40' }
+] as const;
+
 export default function ForumSection() {
   const [forumData, setForumData] = useState<ForumData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
+  const [selectedModel, setSelectedModel] = useState<string>('DF25');
   const pathname = usePathname();
 
   useEffect(() => {
@@ -60,8 +74,30 @@ export default function ForumSection() {
     fetchForumData();
   }, []);
 
-  // Séparer catégories et forums - TOUJOURS appeler les hooks
-  const categories = forumData.filter((f) => f.forum_type === 0);
+  // Séparer catégories: "General" (première) vs modèles (DF25, DF28, etc.)
+  const allCategories = useMemo(
+    () => forumData.filter((f) => f.forum_type === 0),
+    [forumData]
+  );
+
+  const generalCategory = useMemo(
+    () => (allCategories.length > 0 ? allCategories[0] : null),
+    [allCategories]
+  );
+
+  const modelCategories = useMemo(() => {
+    const models = allCategories.slice(1);
+    return models.filter((c) =>
+      c.forum_name.toUpperCase().includes(selectedModel.toUpperCase())
+    );
+  }, [allCategories, selectedModel]);
+
+  // Combined for backward compat with search/sort logic
+  const categories = useMemo(() => {
+    return generalCategory
+      ? [generalCategory, ...modelCategories]
+      : modelCategories;
+  }, [generalCategory, modelCategories]);
 
   // Filtrer et trier les forums - TOUJOURS appeler useMemo
   const filteredAndSortedForums = useMemo(() => {
@@ -328,15 +364,182 @@ export default function ForumSection() {
         )}
 
         <div className="space-y-8 w-full mb-[120px]">
-          {categories
-            .slice(0, pathname === '/forum' ? categories.length : 2)
-            .map((cat) => (
-              <div key={cat.forum_id} className=" rounded-16  ">
+          {/* General category — always visible */}
+          {generalCategory && (
+            <div key={generalCategory.forum_id} className="rounded-16">
+              <div
+                className={`flex ${pathname === '/forum' ? 'flex-row items-center justify-between' : 'flex-col items-center'} mb-32 ${pathname !== '/forum' ? 'py-64' : ''}`}
+              >
                 <h3
-                  className={`text-24 ${pathname === '/forum' ? 'text-oceanblue  text-left' : 'text-fullwhite text-center py-64'} font-medium  mb-32`}
+                  className={`text-24 ${pathname === '/forum' ? 'text-oceanblue text-left' : 'text-fullwhite text-center'} font-medium`}
                 >
-                  {cat.forum_name}
+                  {generalCategory.forum_name}
                 </h3>
+                {forumsByParent[generalCategory.forum_id] && (
+                  <div
+                    className={`flex gap-3 text-13 ${pathname !== '/forum' ? 'mt-3' : ''}`}
+                  >
+                    <span
+                      className={`${pathname === '/forum' ? 'text-darkgrey' : 'text-fullwhite/70'}`}
+                    >
+                      {forumsByParent[generalCategory.forum_id].reduce(
+                        (sum, f) => sum + f.topics,
+                        0
+                      )}{' '}
+                      topics
+                    </span>
+                    <span
+                      className={`${pathname === '/forum' ? 'text-darkgrey' : 'text-fullwhite/70'}`}
+                    >
+                      {forumsByParent[generalCategory.forum_id].reduce(
+                        (sum, f) => sum + f.posts,
+                        0
+                      )}{' '}
+                      posts
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-3 px-32">
+                {forumsByParent[generalCategory.forum_id]
+                  ?.slice(
+                    0,
+                    pathname === '/forum'
+                      ? forumsByParent[generalCategory.forum_id].length
+                      : 3
+                  )
+                  .map((forum) => (
+                    <a
+                      key={forum.forum_id}
+                      href={`https://www.dragonfly-trimarans.org/phpBB/viewforum.php?f=${forum.forum_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-row justify-between items-center gap-4 border-t-2 last:border-b-2 py-6 border-stonegrey group"
+                    >
+                      <div className="flex flex-col justify-between items-start gap-4">
+                        <div className="flex flex-col justify-between items-start">
+                          {forum.last_post_time ? (
+                            <div className="flex flex-row gap-4 items-center">
+                              <p
+                                className={`text-12 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+                              >
+                                by {forum.last_post_author}
+                              </p>
+                              <p
+                                className={`text-12 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+                              >
+                                {new Date(
+                                  forum.last_post_time * 1000
+                                ).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="italic text-stonegrey">
+                              No posts yet
+                            </p>
+                          )}
+                          <p
+                            className={`text-32 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+                          >
+                            {forum.forum_name}
+                          </p>
+                        </div>
+                        <div
+                          className={`flex gap-4 mt-2 text-14 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+                        >
+                          <span
+                            className={`px-4 py-1 rounded-full ${pathname === '/forum' ? 'text-fullwhite bg-oceanblue' : 'text-oceanblue bg-fullwhite'}`}
+                          >
+                            {forum.topics} Topic{forum.topics !== 1 ? 's' : ''}
+                          </span>
+                          <span
+                            className={`px-4 py-1 rounded-full ${pathname === '/forum' ? 'text-fullwhite bg-oceanblue' : 'text-oceanblue bg-fullwhite'}`}
+                          >
+                            {forum.posts} Post{forum.posts !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-row justify-between items-center gap-4 max-w-[600px] pl-32">
+                        <p
+                          className={`text-16 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+                        >
+                          {forum.forum_desc}
+                        </p>
+                        <div
+                          className={`min-w-[60px] h-fit py-2 flex justify-center rounded-[75px] transition-all duration-300 ${pathname === '/forum' ? 'text-oceanblue bg-fullwhite group-hover:text-fullwhite group-hover:bg-oceanblue' : 'text-fullwhite group-hover:text-oceanblue group-hover:bg-fullwhite'}`}
+                        >
+                          <ArrowSeemore />
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Model filter buttons */}
+          <div className="flex flex-row gap-3 flex-wrap w-full justify-center pt-64 pb-8">
+            {MODEL_FILTERS.map((model) => (
+              <button
+                key={model.key}
+                onClick={() => setSelectedModel(model.key)}
+                className={`px-5 py-2 rounded-full text-14 font-medium transition-all duration-200 border ${
+                  selectedModel === model.key
+                    ? pathname === '/forum'
+                      ? 'bg-oceanblue text-fullwhite border-oceanblue'
+                      : 'bg-fullwhite text-oceanblue border-fullwhite'
+                    : pathname === '/forum'
+                      ? 'bg-transparent text-oceanblue border-oceanblue hover:bg-oceanblue/10'
+                      : 'bg-transparent text-fullwhite border-fullwhite/50 hover:bg-fullwhite/10'
+                }`}
+              >
+                {model.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Model categories — filtered by selected model */}
+          {modelCategories
+            .slice(0, pathname === '/forum' ? modelCategories.length : 1)
+            .map((cat) => (
+              <div key={cat.forum_id} className="rounded-16 ">
+                <div
+                  className={`flex ${pathname === '/forum' ? 'flex-row items-center justify-between' : 'flex-col items-center'} mb-32 ${pathname !== '/forum' ? 'py-16' : ''}`}
+                >
+                  <h3
+                    className={`text-24 ${pathname === '/forum' ? 'text-oceanblue text-left' : 'text-fullwhite text-center'} font-medium`}
+                  >
+                    {cat.forum_name}
+                  </h3>
+                  {forumsByParent[cat.forum_id] && (
+                    <div
+                      className={`flex gap-3 text-13 ${pathname !== '/forum' ? 'mt-3' : ''}`}
+                    >
+                      <span
+                        className={`${pathname === '/forum' ? 'text-darkgrey' : 'text-fullwhite/70'}`}
+                      >
+                        {forumsByParent[cat.forum_id].reduce(
+                          (sum, f) => sum + f.topics,
+                          0
+                        )}{' '}
+                        topics
+                      </span>
+                      <span
+                        className={`${pathname === '/forum' ? 'text-darkgrey' : 'text-fullwhite/70'}`}
+                      >
+                        {forumsByParent[cat.forum_id].reduce(
+                          (sum, f) => sum + f.posts,
+                          0
+                        )}{' '}
+                        posts
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col gap-3 px-32">
                   {forumsByParent[cat.forum_id]
@@ -413,7 +616,7 @@ export default function ForumSection() {
                           </p>
 
                           <div
-                            className={`min-w-[60px]  h-fit py-2 flex justify-center 
+                            className={`min-w-[60px]  h-fit py-2 flex justify-center
                               ${pathname === '/forum' ? 'text-oceanblue bg-fullwhite' : 'text-fullwhite '} rounded-[75px] transition-all duration-300
                               ${pathname === '/forum' ? 'text-oceanblue bg-fullwhite group-hover:text-fullwhite group-hover:bg-oceanblue' : 'text-fullwhite  group-hover:text-oceanblue group-hover:bg-fullwhite'} rounded-[75px] transition-all duration-300 `}
                           >

@@ -20,18 +20,20 @@ import {
   ModalFooter,
   useDisclosure
 } from '@heroui/modal';
+import { ArrowUpCircle } from 'lucide-react';
 import { Button } from '@heroui/button';
 import {
   EditIcon,
   EyeIcon,
   TrashIcon,
   MoreVertical,
-  ArrowUpDown
+  ArrowUpDown,
+  RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import { Spinner } from '@heroui/spinner';
 import { Skeleton } from '@heroui/skeleton';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Boat } from '@/types/database';
 import {
   countries,
@@ -40,7 +42,8 @@ import {
   dragonflyModels
 } from '@/utils/constants';
 import FlagIcon from '@/components/icons/Flag';
-import { specificationsData } from '@/components/ui/BoatListingForm/BoatListingForm';
+import { specificationsData } from '@/utils/specifications';
+import { normalizePhotoUrl } from '@/utils/image-urls.client';
 
 interface SpotlightBoatsProps {
   boats: Boat[];
@@ -64,63 +67,14 @@ export default function SpotlightBoats({
   searchResultsInfo
 }: SpotlightBoatsProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const renderStartedAtRef = useRef<number>(Date.now());
   const loggedImageEventsRef = useRef<Set<string>>(new Set());
 
   const shouldLogImages =
     process.env.NODE_ENV !== 'production' ||
     (typeof window !== 'undefined' && window.location.hostname === 'localhost');
-
-  const normalizePhotoUrl = (value: any, boatId?: string): string => {
-    if (!value || typeof value !== 'string') return '';
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-
-    if (trimmed.includes('temp_session_') && trimmed.startsWith('http')) {
-      const urlParts = trimmed.split('/');
-      const tempFilename = urlParts[urlParts.length - 1];
-
-      if (tempFilename && boatId) {
-        const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_NAME;
-        const accountId = process.env.NEXT_PUBLIC_R2_ACCOUNT_ID;
-        const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-
-        if (publicUrl) {
-          const hasProtocol =
-            publicUrl.startsWith('http://') || publicUrl.startsWith('https://');
-          const base = hasProtocol ? publicUrl : `https://${publicUrl}`;
-          return `${base}/boats/${boatId}/${tempFilename}`;
-        }
-
-        if (bucket && accountId) {
-          return `https://${bucket}.${accountId}.r2.cloudflarestorage.com/boats/${boatId}/${tempFilename}`;
-        }
-      }
-      return '';
-    }
-
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
-    }
-    if (trimmed.startsWith('/')) return trimmed;
-
-    const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_NAME;
-    const accountId = process.env.NEXT_PUBLIC_R2_ACCOUNT_ID;
-    const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-
-    if (publicUrl) {
-      const hasProtocol =
-        publicUrl.startsWith('http://') || publicUrl.startsWith('https://');
-      const base = hasProtocol ? publicUrl : `https://${publicUrl}`;
-      return `${base}/${trimmed}`;
-    }
-
-    if (bucket && accountId) {
-      return `https://${bucket}.${accountId}.r2.cloudflarestorage.com/${trimmed}`;
-    }
-
-    return trimmed;
-  };
 
   const logImageEvent = (
     kind: 'load' | 'error',
@@ -144,22 +98,92 @@ export default function SpotlightBoats({
       ? Math.max(...boats.map((boat) => Number(boat.price) || 0))
       : 1000;
 
-  const [selectedPrice, setSelectedPrice] = useState<[number, number]>([
-    0,
-    maxPrice
-  ]);
-  const [selectedModel, setSelectedModel] = useState<string | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [selectedSpecs, setSelectedSpecs] = useState<string[]>([]);
-  const [selectedSort, setSelectedSort] = useState<string>('created_desc');
+  // Initialize states from URL parameters
+  const [selectedPrice, setSelectedPrice] = useState<[number, number]>(() => {
+    const minPriceParam = searchParams.get('minPrice');
+    const maxPriceParam = searchParams.get('maxPrice');
+    const calculatedMaxPrice =
+      boats.length > 0
+        ? Math.max(...boats.map((boat) => Number(boat.price) || 0))
+        : 1000;
+    return [
+      minPriceParam ? parseFloat(minPriceParam) : 0,
+      maxPriceParam ? parseFloat(maxPriceParam) : calculatedMaxPrice
+    ];
+  });
+  const [selectedModel, setSelectedModel] = useState<string | null>(() =>
+    searchParams.get('model')
+  );
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(() =>
+    searchParams.get('country')
+  );
+  const [selectedSpecs, setSelectedSpecs] = useState<string[]>(() => {
+    const attributes = searchParams.get('attributes');
+    return attributes ? attributes.split(',') : [];
+  });
+  const [selectedSort, setSelectedSort] = useState<string>(
+    () => searchParams.get('sort') || 'created_desc'
+  );
 
-  // Reset les filtres client quand les boats changent (navigation)
+  // Ref to track if we're initializing from URL
+  const isInitializing = useRef(true);
+  // Timer for debouncing URL updates
+  const urlUpdateTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Update URL without triggering navigation/re-render
+  const syncFiltersToURL = () => {
+    if (accountTable) return;
+
+    const params = new URLSearchParams();
+
+    if (selectedModel) params.set('model', selectedModel);
+    if (selectedCountry) params.set('country', selectedCountry);
+    if (selectedPrice[0] > 0)
+      params.set('minPrice', Math.round(selectedPrice[0]).toString());
+    if (selectedPrice[1] < maxPrice)
+      params.set('maxPrice', Math.round(selectedPrice[1]).toString());
+    if (selectedSpecs.length > 0)
+      params.set('attributes', selectedSpecs.join(','));
+    if (selectedSort !== 'created_desc') params.set('sort', selectedSort);
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    // Use replaceState to update URL without triggering re-render
+    window.history.replaceState(null, '', newUrl);
+  };
+
+  // Update URL when filters change (debounced)
   useEffect(() => {
-    setSelectedModel(null);
-    setSelectedCountry(null);
-    setSelectedSpecs([]);
-    setSelectedPrice([0, maxPrice]);
-  }, [boats.length, maxPrice]);
+    if (accountTable) return;
+
+    if (isInitializing.current) {
+      isInitializing.current = false;
+      return;
+    }
+
+    if (urlUpdateTimer.current) {
+      clearTimeout(urlUpdateTimer.current);
+    }
+
+    urlUpdateTimer.current = setTimeout(syncFiltersToURL, 300);
+
+    return () => {
+      if (urlUpdateTimer.current) {
+        clearTimeout(urlUpdateTimer.current);
+      }
+    };
+  }, [
+    selectedModel,
+    selectedCountry,
+    selectedPrice,
+    selectedSpecs,
+    selectedSort,
+    accountTable,
+    maxPrice,
+    pathname
+  ]);
+
   const [deletingBoatId, setDeletingBoatId] = useState<string | null>(null);
   const [imageRetryCount, setImageRetryCount] = useState<
     Record<string, number>
@@ -171,6 +195,37 @@ export default function SpotlightBoats({
     onClose: onCloseDeleteModal
   } = useDisclosure();
   const [boatToDelete, setBoatToDelete] = useState<Boat | null>(null);
+
+  // Upgrade modal state
+  const {
+    isOpen: isUpgradeModalOpen,
+    onOpen: onOpenUpgradeModal,
+    onClose: onCloseUpgradeModal
+  } = useDisclosure();
+  const [boatToUpgrade, setBoatToUpgrade] = useState<Boat | null>(null);
+
+  const openUpgradeModal = (boat: Boat) => {
+    setBoatToUpgrade(boat);
+    onOpenUpgradeModal();
+  };
+
+  const handleUpgradeClick = (boat: Boat, e: React.MouseEvent) => {
+    e.stopPropagation();
+    openUpgradeModal(boat);
+  };
+
+  const getUpgradeOptions = (currentProductId: string | null | undefined) => {
+    // Sort products by price to determine upgrade hierarchy
+    const sortedProducts = [...products].sort((a, b) => {
+      const priceA = a.prices?.[0]?.unit_amount || 0;
+      const priceB = b.prices?.[0]?.unit_amount || 0;
+      return priceA - priceB;
+    });
+
+    const currentIndex = sortedProducts.findIndex((p) => p.id === currentProductId);
+    // Return products that are higher in the hierarchy (more expensive)
+    return sortedProducts.filter((_, index) => index > currentIndex);
+  };
 
   const openDeleteModal = (boat: Boat) => {
     setBoatToDelete(boat);
@@ -362,40 +417,29 @@ export default function SpotlightBoats({
                     })
                   : 'Unknown';
 
-                const expirationDate = boat.createdAt
-                  ? (() => {
-                      const created = new Date(boat.createdAt);
-                      const expiration = new Date(created);
-                      const monthsToAdd =
-                        boat.photos &&
-                        Array.isArray(boat.photos) &&
-                        boat.photos.length > 5
-                          ? 4
-                          : 3;
-                      expiration.setMonth(expiration.getMonth() + monthsToAdd);
-                      return expiration;
-                    })()
+                const expirationDate = (boat as any).expiresAt || (boat as any).expires_at
+                  ? new Date((boat as any).expiresAt || (boat as any).expires_at)
                   : null;
 
                 const formattedExpirationDate = expirationDate
                   ? expirationDate.toLocaleDateString('en-US', {
                       year: 'numeric',
-                      month: 'long',
+                      month: 'short',
                       day: 'numeric'
                     })
-                  : 'Unknown';
+                  : null;
 
                 const now = new Date();
-                const isExpired = expirationDate ? expirationDate < now : false;
                 const daysUntilExpiration = expirationDate
                   ? Math.ceil(
                       (expirationDate.getTime() - now.getTime()) /
                         (1000 * 60 * 60 * 24)
                     )
                   : null;
+                const isExpired = daysUntilExpiration !== null && daysUntilExpiration <= 0;
                 const expiresSoon =
                   daysUntilExpiration !== null &&
-                  daysUntilExpiration <= 7 &&
+                  daysUntilExpiration <= 14 &&
                   daysUntilExpiration > 0;
 
                 return (
@@ -459,19 +503,15 @@ export default function SpotlightBoats({
                     {/* Status */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${
                           isExpired
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-red-50 text-red-700 border-red-200'
                             : expiresSoon
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              : 'bg-green-50 text-green-700 border-green-200'
                         }`}
                       >
-                        {isExpired
-                          ? 'Expired'
-                          : expiresSoon
-                            ? 'Expiring Soon'
-                            : 'Active'}
+                        {isExpired ? 'Expired' : expiresSoon ? 'Expiring Soon' : 'Active'}
                       </span>
                     </td>
 
@@ -481,19 +521,43 @@ export default function SpotlightBoats({
                     </td>
 
                     {/* Expires */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span
-                        className={
-                          isExpired
-                            ? 'text-red-600 font-medium'
-                            : expiresSoon
-                              ? 'text-yellow-600 font-medium'
-                              : ''
-                        }
-                      >
-                        {formattedExpirationDate}
-                        {expiresSoon && ` (${daysUntilExpiration}d)`}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1.5">
+                        {expirationDate ? (
+                          <span
+                            className={`text-sm ${
+                              isExpired
+                                ? 'text-red-600 font-medium'
+                                : expiresSoon
+                                  ? 'text-orange-600 font-medium'
+                                  : 'text-gray-500'
+                            }`}
+                          >
+                            {formattedExpirationDate}
+                            {daysUntilExpiration !== null && !isExpired && (
+                              <span className="ml-1">({daysUntilExpiration}d left)</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
+                        <Link
+                          href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`inline-flex items-center gap-1 w-fit px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                            isExpired
+                              ? 'bg-red-500 text-white hover:bg-red-600'
+                              : expiresSoon
+                                ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
+                          }`}
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          {isExpired ? 'Renew Now' : 'Renew'}
+                        </Link>
+                      </div>
                     </td>
 
                     {/* Plan */}
@@ -513,17 +577,22 @@ export default function SpotlightBoats({
                       {(() => {
                         const productId =
                           (boat as any).productId || (boat as any).product_id;
-                        return productId ? (
+                        const upgradeOptions = getUpgradeOptions(productId);
+                        // Only show upgrade button if there are higher plans available
+                        return upgradeOptions.length > 0 ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log('Upgrade clicked for boat:', boat.id);
+                              router.push(`/upgrade/${boat.id}`);
                             }}
-                            className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-articblue hover:bg-oceanblue transition-colors duration-200"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-articblue hover:bg-oceanblue transition-colors duration-200"
                           >
+                            <ArrowUpCircle size={14} />
                             Upgrade
                           </button>
-                        ) : null;
+                        ) : (
+                          <span className="text-xs text-gray-400">Max plan</span>
+                        );
                       })()}
                     </td>
 
@@ -567,6 +636,10 @@ export default function SpotlightBoats({
                               router.push(`/edit-listing/${boat.id}`);
                               return;
                             }
+                            if (key === 'renew') {
+                              router.push(`/list-boat?preference=Renewal&boatId=${boat.id}`);
+                              return;
+                            }
                             if (key === 'delete') {
                               handleDeleteBoat(boat);
                             }
@@ -589,6 +662,15 @@ export default function SpotlightBoats({
                             }}
                           >
                             Edit Listing
+                          </DropdownItem>
+                          <DropdownItem
+                            key="renew"
+                            startContent={<RefreshCw size={14} />}
+                            classNames={{
+                              base: 'text-articblue data-[hover=true]:bg-articblue/10 data-[hover=true]:text-articblue'
+                            }}
+                          >
+                            Renew Listing
                           </DropdownItem>
                           <DropdownItem
                             key="delete"
@@ -691,6 +773,116 @@ export default function SpotlightBoats({
                 </ModalFooter>
               </>
             )}
+          </ModalContent>
+        </Modal>
+
+        {/* Modal d'upgrade */}
+        <Modal
+          isOpen={isUpgradeModalOpen}
+          onOpenChange={onCloseUpgradeModal}
+          size="lg"
+          hideCloseButton
+        >
+          <ModalContent>
+            {(onClose) => {
+              const currentProductId =
+                (boatToUpgrade as any)?.productId ||
+                (boatToUpgrade as any)?.product_id;
+              const upgradeOptions = getUpgradeOptions(currentProductId);
+
+              return (
+                <>
+                  <ModalHeader className="flex flex-col gap-1 text-center text-oceanblue">
+                    <div className="flex items-center justify-center gap-2">
+                      <ArrowUpCircle className="w-6 h-6 text-articblue" />
+                      <span>Upgrade Your Listing</span>
+                    </div>
+                  </ModalHeader>
+                  <ModalBody>
+                    <div className="flex flex-col gap-4">
+                      {boatToUpgrade && (
+                        <div className="bg-gray-50 rounded-lg p-4 border">
+                          <div className="text-sm text-gray-500 mb-1">
+                            Current listing
+                          </div>
+                          <div className="font-medium text-oceanblue">
+                            {getModelLabel(boatToUpgrade.model)}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Current plan:{' '}
+                            <span className="font-medium">
+                              {getProductLabel(currentProductId, products)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-sm text-gray-600 mb-2">
+                        Select a plan to upgrade to:
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        {upgradeOptions.map((product) => {
+                          const price = product.prices?.[0];
+                          const priceAmount = price?.unit_amount
+                            ? (price.unit_amount / 100).toFixed(2)
+                            : '0.00';
+                          const currency = price?.currency?.toUpperCase() || 'EUR';
+
+                          return (
+                            <button
+                              key={product.id}
+                              onClick={() => {
+                                onClose();
+                                // Navigate to upgrade payment page
+                                router.push(
+                                  `/upgrade/${boatToUpgrade?.id}?plan=${product.id}`
+                                );
+                              }}
+                              className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-articblue hover:bg-articblue/5 transition-all duration-200"
+                            >
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium text-oceanblue">
+                                  {product.name}
+                                </span>
+                                {product.description && (
+                                  <span className="text-sm text-gray-500">
+                                    {product.description}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-articblue">
+                                  {priceAmount} {currency}
+                                </span>
+                                <ArrowUpCircle
+                                  size={18}
+                                  className="text-articblue"
+                                />
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {upgradeOptions.length === 0 && (
+                        <div className="text-center py-4 text-gray-500">
+                          You already have the highest plan available.
+                        </div>
+                      )}
+                    </div>
+                  </ModalBody>
+                  <ModalFooter className="flex flex-row justify-center gap-4">
+                    <Button
+                      onPress={onClose}
+                      className="px-6 bg-fullwhite text-oceanblue border-2 border-oceanblue/10 hover:bg-oceanblue hover:text-fullwhite rounded-lg transition-all duration-200"
+                    >
+                      Cancel
+                    </Button>
+                  </ModalFooter>
+                </>
+              );
+            }}
           </ModalContent>
         </Modal>
       </>

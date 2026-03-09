@@ -2,13 +2,13 @@ import { Metadata } from 'next';
 import { ReactNode, Suspense } from 'react';
 import Footer from '@/components/ui/Footer';
 import Navbar from '@/components/ui/Navbar';
-import SmoothScroll from '@/components/SmoothScroll';
 import { getURL } from '@/utils/helpers';
 import 'styles/main.css';
 import { HeroUIProvider } from '@heroui/system';
 import { LoadingProvider } from '@/components/ui/LoadingProvider';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ReCaptchaProvider } from 'next-recaptcha-v3';
+import NavigationLoader from '@/components/ui/NavigationLoader';
 
 const meta = {
   title: "Dragonfly - The Automated Marketplace You've Been Waiting For",
@@ -160,7 +160,7 @@ export default function RootLayout({ children, className }: LayoutsProps) {
           <LoadingProvider>
             <ToastProvider>
               <ReCaptchaProvider>
-                <SmoothScroll>
+                  <NavigationLoader />
                   <main className="w-full relative min-h-screen">
                     <div className="w-full bg-darkgrey text-center text-fullwhite py-8 text-[12px] flex flex-row justify-center items-center gap-8">
                       <span>
@@ -209,7 +209,6 @@ export default function RootLayout({ children, className }: LayoutsProps) {
                     </div>
                     <Footer />
                   </main>
-                </SmoothScroll>
               </ReCaptchaProvider>
             </ToastProvider>
           </LoadingProvider>

@@ -38,17 +38,12 @@ export async function GET(req: NextRequest, { params }: { params: { filename: st
       }, { status: 400 });
     }
 
-    console.log(`📥 Fetching image: ${imageKey}`);
-
     // Récupérer l'image depuis R2
     const result = await getImageFromR2(imageKey);
 
     if (!result.success || !result.data) {
-      console.log(`❌ Image not found: ${imageKey}`);
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
-
-    console.log(`✅ Image served: ${imageKey}`);
 
     // Déterminer le type de contenu basé sur l'extension si pas fourni
     let contentType = result.contentType || 'image/jpeg';

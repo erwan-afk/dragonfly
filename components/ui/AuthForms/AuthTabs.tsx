@@ -1,16 +1,16 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import PasswordSignIn from './PasswordSignIn';
 import SignUp from './Signup';
 import OauthSignIn from './OauthSignIn';
+import ForgotPassword from './ForgotPassword';
 import { getAuthTypes, getRedirectMethod } from '@/utils/auth-helpers/settings';
 
 interface AuthTabsProps {
   allowOauth?: boolean;
   allowPassword?: boolean;
-  defaultMode?: 'login' | 'signup';
+  defaultMode?: 'login' | 'signup' | 'forgot_password';
 }
 
 export default function AuthTabs({
@@ -18,12 +18,8 @@ export default function AuthTabs({
   allowPassword,
   defaultMode = 'login'
 }: AuthTabsProps) {
-  const [mode, setMode] = React.useState<'login' | 'signup'>(defaultMode);
+  const [mode, setMode] = React.useState<'login' | 'signup' | 'forgot_password'>(defaultMode);
   const redirectMethod = getRedirectMethod();
-
-  const handleModeChange = (newMode: 'login' | 'signup') => {
-    setMode(newMode);
-  };
 
   // Get auth types if not provided
   const authTypes =
@@ -36,12 +32,14 @@ export default function AuthTabs({
       {/* Header */}
       <div className="flex flex-col space-y-1 mb-8 pb-32">
         <h1 className="font-bold text-oceanblue text-40 text-center">
-          {mode === 'signup' ? 'Welcome!' : 'Nice to see you!'}
+          {mode === 'signup' ? 'Welcome!' : mode === 'forgot_password' ? 'Reset Password' : 'Nice to see you!'}
         </h1>
         <p className="text-base text-darkgrey text-center">
           {mode === 'signup'
             ? 'Create your Dragonfly account'
-            : 'Sign in to your account'}
+            : mode === 'forgot_password'
+              ? "Enter your email and we'll send you a reset link"
+              : 'Sign in to your account'}
         </p>
       </div>
 
@@ -49,7 +47,7 @@ export default function AuthTabs({
         <div className="overflow-hidden p-8">
           <div className="flex flex-col gap-4">
             {/* OAuth buttons */}
-            {authTypes.allowOauth && (
+            {authTypes.allowOauth && mode !== 'forgot_password' && (
               <div className="flex flex-col gap-4">
                 <OauthSignIn />
                 <div className="flex items-center gap-3 my-4">
@@ -65,31 +63,38 @@ export default function AuthTabs({
             )}
 
             {/* Form based on mode */}
-            {mode === 'login' ? (
+            {mode === 'login' && (
               <PasswordSignIn key="login" redirectMethod={redirectMethod} />
-            ) : (
+            )}
+            {mode === 'signup' && (
               <SignUp key="signup" redirectMethod={redirectMethod} />
+            )}
+            {mode === 'forgot_password' && (
+              <ForgotPassword
+                key="forgot"
+                redirectMethod={redirectMethod}
+                disableButton={false}
+                onBackToLogin={() => setMode('login')}
+              />
             )}
 
             {mode === 'login' && (
               <div className="text-center space-y-2">
                 <p className="text-16 text-darkgrey">
-                  <Link
-                    href="/signin/forgot_password"
-                    className="text-articblue hover:underline"
+                  <button
+                    type="button"
+                    className="text-articblue cursor-pointer hover:underline bg-transparent border-none p-0"
+                    onClick={() => setMode('forgot_password')}
                   >
                     Forgot your password?
-                  </Link>
+                  </button>
                 </p>
                 <p className="text-16 text-darkgrey">
                   New to Dragonfly?{' '}
                   <button
                     type="button"
                     className="text-articblue cursor-pointer hover:underline bg-transparent border-none p-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleModeChange('signup');
-                    }}
+                    onClick={() => setMode('signup')}
                   >
                     Create an account
                   </button>
@@ -104,10 +109,7 @@ export default function AuthTabs({
                   <button
                     type="button"
                     className="text-articblue cursor-pointer hover:underline bg-transparent border-none p-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setMode('login');
-                    }}
+                    onClick={() => setMode('login')}
                   >
                     Sign in
                   </button>

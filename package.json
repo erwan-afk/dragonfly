@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
     "dev": "next dev --turbo --port 3000",
     "dev-no-turbo": "next dev --port 3002",
     "dev:3001": "next dev --turbo --port 3001",
@@ -44,6 +46,7 @@
     "@aws-sdk/s3-request-presigner": "^3.842.0",
     "@heroui/autocomplete": "^2.3.17",
     "@heroui/avatar": "^2.2.12",
+    "@heroui/button": "^2.2.29",
     "@heroui/checkbox": "^2.3.15",
     "@heroui/dropdown": "^2.3.16",
     "@heroui/input": "^2.4.16",
@@ -80,7 +83,6 @@
     "dompurify": "^3.2.6",
     "dotenv": "^16.5.0",
     "framer-motion": "^12.4.10",
-    "jsdom": "^26.1.0",
     "lenis": "^1.3.16",
     "lucide-react": "0.330.0",
     "mysql2": "^3.15.3",
@@ -106,11 +108,15 @@
     "validator": "^13.15.15"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.11.17",
     "@types/pg": "^8.15.4",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@types/stream-buffers": "^3.0.7",
+    "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
@@ -118,11 +124,13 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-tailwindcss": "^3.14.2",
     "install": "^0.13.0",
+    "jsdom": "^28.1.0",
     "npm": "^10.9.2",
     "postcss": "^8.4.35",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tsx": "^4.19.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }

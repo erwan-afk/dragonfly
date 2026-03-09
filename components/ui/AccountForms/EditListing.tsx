@@ -28,8 +28,9 @@ import {
   dragonflyModels,
   currencies,
   countries,
-  specificationsData
-} from '../BoatListingForm/BoatListingForm'; // Import shared data from BoatListingForm
+  boatConditions
+} from '@/utils/constants';
+import { specificationsData } from '@/utils/specifications';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
@@ -187,6 +188,11 @@ export default function EditListing({
     new Set()
   );
 
+  // Track the original URLs of replaced photos (to delete from R2)
+  const [replacedPhotoUrls, setReplacedPhotoUrls] = useState<Map<number, string>>(
+    new Map()
+  );
+
   // Use the plan determined from payments (passed from the page)
   const [currentPlan, setCurrentPlan] = useState(
     (boat as any).plan || 'start line'
@@ -201,6 +207,12 @@ export default function EditListing({
     typeof durationData === 'object' ? durationData.months : durationData;
 
   const [vatPaid, setVatPaid] = useState(!!(boat as any).vatPaid);
+  const [contactEmail, setContactEmail] = useState(
+    typeof (boat as any).email === 'string' ? (boat as any).email : (boat.user?.email || '')
+  );
+  const [condition, setCondition] = useState(
+    typeof (boat as any).condition === 'string' ? (boat as any).condition : ''
+  );
   const [description, setDescription] = useState(
     typeof boat.description === 'string' ? boat.description : ''
   );
@@ -426,6 +438,12 @@ export default function EditListing({
         // Remplacer une photo existante
         const newPhotoPreview = [...photoPreview];
 
+        // Store the original URL before replacing (to delete from R2 later)
+        const originalUrl = existingPhotos[targetIndex];
+        if (originalUrl && !replacedPhotoUrls.has(targetIndex)) {
+          setReplacedPhotoUrls((prev) => new Map(prev).set(targetIndex, originalUrl));
+        }
+
         // Libérer l'ancienne URL blob si c'était une nouvelle photo
         if (newPhotoPreview[targetIndex].startsWith('blob:')) {
           URL.revokeObjectURL(newPhotoPreview[targetIndex]);
@@ -542,12 +560,23 @@ export default function EditListing({
           );
         }
 
-        // Remove from replaced indices
+        // Remove from replaced indices and URLs
         setReplacedPhotoIndices((prev) => {
           const newSet = new Set(prev);
           newSet.delete(index);
           return newSet;
         });
+        setReplacedPhotoUrls((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(index);
+          return newMap;
+        });
+      } else {
+        // This is an existing photo being removed - track it for deletion
+        const photoUrl = existingPhotos[index];
+        if (photoUrl) {
+          setReplacedPhotoUrls((prev) => new Map(prev).set(index, photoUrl));
+        }
       }
 
       // Remove from existing photos and preview
@@ -637,6 +666,35 @@ export default function EditListing({
     } else {
       // Si on dépose sur une photo existante, la remplacer
       processPhotoFiles(Array.from(files), index);
+    }
+  };
+
+  // Delete replaced images from R2
+  const deleteReplacedImages = async (): Promise<void> => {
+    if (replacedPhotoUrls.size === 0) return;
+
+    console.log(`🗑️ Deleting ${replacedPhotoUrls.size} replaced images from R2...`);
+
+    for (const [index, imageUrl] of replacedPhotoUrls) {
+      try {
+        const response = await fetch('/api/delete-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageUrl,
+            boatId: boat.id
+          })
+        });
+
+        if (response.ok) {
+          console.log(`✅ Deleted replaced image at index ${index}: ${imageUrl}`);
+        } else {
+          const error = await response.json();
+          console.warn(`⚠️ Failed to delete image at index ${index}:`, error);
+        }
+      } catch (error) {
+        console.error(`❌ Error deleting image at index ${index}:`, error);
+      }
     }
   };
 
@@ -764,7 +822,8 @@ export default function EditListing({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           boatId: boat.id,
-          newPlan: selectedUpgradeProductId
+          newPlan: selectedUpgradeProductId,
+          paymentIntentId
         })
       });
 
@@ -836,6 +895,8 @@ export default function EditListing({
       errors.push('Description must be at least 20 characters');
     if (description.length > 2000)
       errors.push('Description must be less than 2000 characters');
+    if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+      errors.push('Please enter a valid contact email');
     if (maxPhotos > 0 && photoFiles.length + existingPhotos.length === 0)
       errors.push('Please add at least one photo');
 
@@ -907,7 +968,8 @@ export default function EditListing({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           boatId: boat.id,
-          newPlan: selectedUpgradeProductId
+          newPlan: selectedUpgradeProductId,
+          paymentIntentId
         })
       });
 
@@ -998,6 +1060,12 @@ export default function EditListing({
         setUploadingPhotos(false);
       }
 
+      // Delete old replaced/removed images from R2
+      if (replacedPhotoUrls.size > 0) {
+        console.log('🗑️ Cleaning up replaced/removed images...');
+        await deleteReplacedImages();
+      }
+
       // Combine existing and new photo URLs, handling replaced photos
       let allPhotoUrls = [...existingPhotos];
 
@@ -1025,6 +1093,8 @@ export default function EditListing({
       formData.append('currency', currency);
       formData.append('specifications', JSON.stringify(specifications));
       formData.append('vat_paid', vatPaid ? 'true' : 'false');
+      formData.append('email', contactEmail);
+      formData.append('condition', condition);
       formData.append('photos', allPhotoUrls.join(','));
 
       // Call the update function
@@ -1477,6 +1547,79 @@ export default function EditListing({
                   shouldPulseInvalid &&
                   (description.length < 20 || description.length > 2000)
                 }
+              />
+            </div>
+          </div>
+
+          {/* Email avec checkbox de validation */}
+          <div className="flex flex-row gap-4 items-center">
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-oceanblue text-md font-medium">Contact Email</label>
+              <input
+                type="email"
+                placeholder="your@email.com"
+                value={contactEmail}
+                onChange={(e) => {
+                  setContactEmail(e.target.value);
+                  setTouched({ ...touched, email: true });
+                }}
+                disabled={isLoading || isProcessingUpgrade}
+                className={`w-full h-[48px] px-3 text-oceanblue bg-fullwhite border-2 rounded-lg outline-none transition-colors placeholder:text-oceanblue/40 ${
+                  touched.email && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+                    ? 'border-red-500'
+                    : 'border-oceanblue/10 hover:border-articblue hover:bg-articblue/10'
+                }`}
+              />
+              {touched.email && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) && (
+                <span className="text-red-500 text-xs">Please enter a valid email</span>
+              )}
+            </div>
+            <div className="pt-6">
+              <ValidationCheckbox
+                isValid={!!contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)}
+                shouldPulse={shouldPulseInvalid && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))}
+              />
+            </div>
+          </div>
+
+          {/* Condition avec checkbox de validation */}
+          <div className="flex flex-row gap-4 items-center">
+            <div className="flex-1">
+              <Select
+                className="text-oceanblue h-[40px]"
+                label="Condition"
+                size="lg"
+                classNames={{
+                  label: '!text-oceanblue text-md font-medium',
+                  trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg`,
+                  value: 'text-oceanblue',
+                  listbox: 'bg-fullwhite',
+                  popoverContent: 'bg-fullwhite'
+                }}
+                labelPlacement="outside"
+                placeholder="Select condition"
+                selectedKeys={condition ? [condition] : []}
+                onChange={(e) => setCondition(e.target.value)}
+                isDisabled={isLoading || isProcessingUpgrade}
+              >
+                {boatConditions.map(({ key, label }) => (
+                  <SelectItem
+                    key={key}
+                    classNames={{
+                      base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                      title: '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                      selectedIcon: '!text-articblue'
+                    }}
+                  >
+                    {label}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
+            <div className="pt-8">
+              <ValidationCheckbox
+                isValid={!!condition}
+                optional
               />
             </div>
           </div>

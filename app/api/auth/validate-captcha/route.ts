@@ -4,8 +4,8 @@ async function validateRecaptcha(token: string): Promise<boolean> {
   try {
     const secret = process.env.RECAPTCHA_SECRET_KEY;
     if (!secret) {
-      console.warn('RECAPTCHA_SECRET_KEY not configured, skipping validation');
-      return true;
+      console.error('RECAPTCHA_SECRET_KEY not configured — rejecting request');
+      return false;
     }
 
     const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
@@ -20,8 +20,7 @@ async function validateRecaptcha(token: string): Promise<boolean> {
     });
 
     const data = await response.json();
-    console.log(`reCAPTCHA v3 score: ${data.score}, success: ${data.success}`);
-    return data.success && data.score >= 0.5;
+    return data.success && data.score >= 0.7;
   } catch (error) {
     console.error('reCAPTCHA validation error:', error);
     return false;

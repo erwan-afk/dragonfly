@@ -139,7 +139,7 @@ export default function PasswordForm() {
             name="newPassword"
             value={formData.newPassword}
             onChange={handleInputChange}
-            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue"
+            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14 font-normal"
             placeholder="Enter your new password (min 8 characters)"
           />
           {errors.newPassword && (
@@ -156,7 +156,7 @@ export default function PasswordForm() {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleInputChange}
-            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue"
+            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14 font-normal"
             placeholder="Confirm your new password"
           />
           {errors.confirmPassword && (

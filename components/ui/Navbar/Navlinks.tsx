@@ -138,10 +138,18 @@ export default function Navlinks({
               <div className="w-[100px] h-[24px] bg-default-200 rounded-lg" />
             </Skeleton>
           ) : user ? (
-            <div className="flex flex-row gap-[10px] hover:underline hover:underline-offset-4 ">
+            <div className="flex flex-row gap-[20px] items-center">
+              {(user.role === 'admin' || user.role === 'superAdmin') && (
+                <Link
+                  href="/admin"
+                  className={`hover:underline hover:underline-offset-4 ${pathname === '/admin' ? 'text-articblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
                 href="/account"
-                className={`${pathname === '/account' ? 'text-articblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
+                className={`hover:underline hover:underline-offset-4 ${pathname === '/account' ? 'text-articblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
               >
                 {pathname === '/account' ? (
                   <AccountButtonFilled className="text-articblue w-[15px] h-[15px]" />

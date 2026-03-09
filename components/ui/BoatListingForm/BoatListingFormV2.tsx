@@ -18,8 +18,9 @@ import {
   dragonflyModels,
   currencies,
   countries,
-  specificationsData
-} from './BoatListingForm';
+  boatConditions
+} from '@/utils/constants';
+import { specificationsData } from '@/utils/specifications';
 import { getModelLabel } from '@/utils/constants';
 import {
   getMaxPhotos,
@@ -168,6 +169,8 @@ export default function BoatListingFormV2({
   const [specifications, setSpecifications] = useState<string[]>([]);
   const [vatPaid, setVatPaid] = useState(false);
   const [description, setDescription] = useState('');
+  const [contactEmail, setContactEmail] = useState(user?.email || '');
+  const [condition, setCondition] = useState<string>('');
 
   // Photo upload state
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
@@ -735,6 +738,8 @@ export default function BoatListingFormV2({
       errors.push('Description must be at least 20 characters');
     if (description.length > 2000)
       errors.push('Description must be less than 2000 characters');
+    if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+      errors.push('Please enter a valid contact email');
     if (maxPhotos > 0 && photoFiles.length === 0)
       errors.push('Please add at least one photo');
 
@@ -744,7 +749,7 @@ export default function BoatListingFormV2({
     };
   };
 
-  const handleBeforePayment = async (): Promise<{
+  const handleBeforePayment = async (onStepChange?: (step: number) => void): Promise<{
     success: boolean;
     boatId?: string;
     error?: string;
@@ -797,6 +802,8 @@ export default function BoatListingFormV2({
 
     try {
       let tempImageKeys: string[] = [];
+
+      onStepChange?.(0); // Step: Uploading images
 
       if (photoFiles.length > 0) {
         console.log(`📸 Uploading ${photoFiles.length} photos...`);
@@ -873,6 +880,7 @@ export default function BoatListingFormV2({
         console.log('ℹ️ No photos to upload');
       }
 
+      onStepChange?.(1); // Step: Creating listing
       console.log('🚤 Creating boat...');
       const boatResponse = await fetch('/api/boats', {
         method: 'POST',
@@ -882,6 +890,8 @@ export default function BoatListingFormV2({
           price: priceBoat,
           country,
           description,
+          email: contactEmail,
+          condition: condition || null,
           photos: tempImageKeys,
           currency,
           specifications,
@@ -944,7 +954,7 @@ export default function BoatListingFormV2({
         const response = await fetch('/api/boats/renew', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ boatId: selectedBoatId })
+          body: JSON.stringify({ boatId: selectedBoatId, paymentIntentId })
         });
 
         const result = await response.json();
@@ -1751,6 +1761,83 @@ export default function BoatListingFormV2({
             </div>
           )}
 
+          {/* Email avec checkbox de validation */}
+          {!isRenewalMode && (
+            <div className="flex flex-row gap-4 items-center">
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-oceanblue text-md font-medium">Contact Email</label>
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={contactEmail}
+                  onChange={(e) => {
+                    setContactEmail(e.target.value);
+                    setTouched({ ...touched, email: true });
+                  }}
+                  disabled={isLoading}
+                  className={`w-full h-[48px] px-3 text-oceanblue bg-fullwhite border-2 rounded-lg outline-none transition-colors placeholder:text-oceanblue/40 ${
+                    touched.email && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+                      ? 'border-red-500'
+                      : 'border-oceanblue/10 hover:border-articblue hover:bg-articblue/10'
+                  }`}
+                />
+                {touched.email && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) && (
+                  <span className="text-red-500 text-xs">Please enter a valid email</span>
+                )}
+              </div>
+              <div className="pt-6">
+                <ValidationCheckbox
+                  isValid={!!contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)}
+                  shouldPulse={shouldPulseInvalid && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Condition avec checkbox de validation */}
+          {!isRenewalMode && (
+            <div className="flex flex-row gap-4 items-center">
+              <div className="flex-1">
+                <Select
+                  className="text-oceanblue h-[40px]"
+                  label="Condition"
+                  size="lg"
+                  classNames={{
+                    label: '!text-oceanblue text-md font-medium',
+                    trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg`,
+                    value: 'text-oceanblue',
+                    listbox: 'bg-fullwhite',
+                    popoverContent: 'bg-fullwhite'
+                  }}
+                  labelPlacement="outside"
+                  placeholder="Select condition"
+                  selectedKeys={condition ? [condition] : []}
+                  onChange={(e) => setCondition(e.target.value)}
+                  isDisabled={isLoading}
+                >
+                  {boatConditions.map(({ key, label }) => (
+                    <SelectItem
+                      key={key}
+                      classNames={{
+                        base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                        title: '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                        selectedIcon: '!text-articblue'
+                      }}
+                    >
+                      {label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="pt-8">
+                <ValidationCheckbox
+                  isValid={!!condition}
+                  optional
+                />
+              </div>
+            </div>
+          )}
+
           {/* Photos avec checkbox de validation */}
           {!isRenewalMode && (
             <>
@@ -1989,6 +2076,7 @@ export default function BoatListingFormV2({
                 amount={Number(selectedPrice.unitAmount)}
                 currency={selectedPrice.currency || 'eur'}
                 priceId={selectedPrice.id}
+                productId={selectedProductId}
                 userId={user.id}
                 paymentIntentId={paymentIntentId}
                 returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account`}

@@ -12,7 +12,7 @@ interface TopLoadingBarProps {
 
 export default function TopLoadingBar({
   height = 3,
-  color = '#3b82f6',
+  color = '#58A4A7',
   speed = 300
 }: TopLoadingBarProps) {
   const { isLoading } = useLoading();
@@ -50,7 +50,7 @@ export default function TopLoadingBar({
     <AnimatePresence>
       {isLoading && (
         <motion.div
-          className="w-full"
+          className="fixed top-0 left-0 w-full z-[9999]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

@@ -43,15 +43,7 @@ export async function DELETE(
     }
 
     // Delete images from R2 first
-    console.log(`🗑️ Deleting images for boat: ${boatId}`);
     const imagesDeleted = await deleteAllBoatImages(boatId);
-    
-    if (imagesDeleted) {
-      console.log(`✅ All images deleted for boat: ${boatId}`);
-    } else {
-      console.log(`⚠️ Some images may not have been deleted for boat: ${boatId}`);
-      // Continue with deletion even if images deletion fails
-    }
 
     // Delete related payments (foreign key constraint)
     await prisma.$executeRaw`
@@ -62,8 +54,6 @@ export async function DELETE(
     await prisma.$executeRaw`
       DELETE FROM boats WHERE id = ${boatId}
     `;
-
-    console.log(`✅ Boat and images deleted: ${boatId} by user: ${userId}`);
 
     // Invalidate cached account data so /account reflects the deletion immediately
     revalidateTag('user-data');

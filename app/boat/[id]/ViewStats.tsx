@@ -22,7 +22,7 @@ export function ViewStats({ boatId, viewCount }: ViewStatsProps) {
     return (
       <div className="flex flex-col gap-2 text-darkgrey text-14">
         <div className="flex items-center gap-1">
-          <span className="text-oceanblue">👁️</span>
+          <svg className="w-4 h-4 text-oceanblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
           <span>{viewCount} vue{viewCount !== 1 ? 's' : ''}</span>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function ViewStats({ boatId, viewCount }: ViewStatsProps) {
     <div className="flex flex-col gap-2 text-darkgrey text-14">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1">
-          <span className="text-oceanblue">👁️</span>
+          <svg className="w-4 h-4 text-oceanblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
           <span>{stats.totalViews} vues totales</span>
         </div>
         {stats.uniqueUserViews > 0 && (

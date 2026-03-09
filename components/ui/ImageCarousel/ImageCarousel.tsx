@@ -5,7 +5,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Modal, ModalContent, ModalBody, ModalHeader } from '@heroui/modal';
 import ArrowButton from '@/components/icons/ArrowButton';
 import ArrowSeemore from '@/components/icons/ArrowSeemore';
-import { dragonflyModels } from '../BoatListingForm/BoatListingForm';
+import { dragonflyModels } from '@/utils/constants';
 
 interface ImageCarouselProps {
   images: string[];

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import { generateTempUploadSignedUrl, generateFinalUploadSignedUrl } from '@/utils/cloudflare/r2';
+import prisma from '@/utils/prisma/client';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'boatId is required for edit mode' },
           { status: 400 }
+        );
+      }
+      // Verify boat ownership in edit mode
+      const boat = await prisma.boat.findFirst({
+        where: { id: boatId, userId: session.user.id },
+        select: { id: true }
+      });
+      if (!boat) {
+        return NextResponse.json(
+          { error: 'Forbidden' },
+          { status: 403 }
         );
       }
     } else {
@@ -104,7 +116,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload-url error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Upload-url failed' },
+      { error: 'Upload-url failed' },
       { status: 500 }
     );
   }

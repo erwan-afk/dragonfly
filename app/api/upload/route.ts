@@ -66,8 +66,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`📤 Uploading ${files.length} file(s) for ${boatId ? `boat ID: ${boatId}` : `session ID: ${sessionId}`}`);
-
     // Upload des fichiers
     const results = [];
 
@@ -96,8 +94,6 @@ export async function POST(req: NextRequest) {
         key: result.key
       });
     }
-
-    console.log(`✅ Successfully uploaded ${results.length} file(s)`);
 
     // Retourner la réponse appropriée selon le nombre de fichiers
     if (results.length === 1) {

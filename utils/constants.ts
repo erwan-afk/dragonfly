@@ -39,6 +39,13 @@ export const countries = [
   { key: 'mexico', label: 'Mexico', flag: 'https://flagcdn.com/mx.svg' }
 ] as const;
 
+export const boatConditions = [
+  { key: 'excellent', label: 'Excellent' },
+  { key: 'good', label: 'Good' },
+  { key: 'fair', label: 'Fair' },
+  { key: 'needs_work', label: 'Needs Work' }
+] as const;
+
 // Fonction utilitaire pour obtenir le nom complet du modèle
 export const getModelLabel = (modelKey: string): string => {
   const model = dragonflyModels.find(m => m.key === modelKey);

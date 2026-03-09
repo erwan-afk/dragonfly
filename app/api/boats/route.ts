@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
+import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+const boatCreateLimiter = createRateLimiter('boat_create', 5, 60);
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,12 +20,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Rate limiting per user
+        const rateLimitResponse = await checkRateLimit(boatCreateLimiter, session.user.id);
+        if (rateLimitResponse) return rateLimitResponse;
+
         const body = await request.json();
         const {
             model,
             price,
             country,
             description,
+            email,
+            condition,
             photos,
             currency,
             specifications,
@@ -46,7 +55,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Créer le bateau avec statut active directement
+        // Create boat with Prisma (standard fields)
         const boat = await prisma.boat.create({
             data: {
                 model,
@@ -58,14 +67,20 @@ export async function POST(request: NextRequest) {
                 specifications: specifications || [],
                 vatPaid: vatPaid || false,
                 productId: productId || null,
-                // Sécurité: une annonce payante doit rester "pending" tant que Stripe
-                // n'a pas confirmé le paiement via webhook.
                 status: 'pending',
                 userId: session.user.id
             }
         });
 
-        console.log('✅ Boat created with pending status:', boat.id);
+        // Update email and condition with raw SQL (new columns not yet in Prisma client)
+        if (email || condition) {
+            await prisma.$executeRaw`
+                UPDATE "boats" SET
+                    email = ${email || null},
+                    "condition" = ${condition || null}
+                WHERE id = ${boat.id}
+            `;
+        }
 
         return NextResponse.json({
             success: true,
@@ -132,8 +147,6 @@ export async function PATCH(request: NextRequest) {
             }
         });
 
-        console.log(`✅ Boat ${boatId} status updated to ${status}`);
-
         return NextResponse.json({
             success: true,
             boat: updatedBoat,
@@ -185,8 +198,6 @@ export async function DELETE(request: NextRequest) {
         await prisma.boat.delete({
             where: { id: boatId }
         });
-
-        console.log(`✅ Boat ${boatId} deleted`);
 
         return NextResponse.json({
             success: true,

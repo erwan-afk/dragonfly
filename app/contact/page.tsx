@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
+import { FloatingPaths } from '@/components/ui/FloatingPaths';
+import Logo from '@/components/icons/Logo';
 
 interface FormData {
   name: string;
@@ -300,29 +302,57 @@ export default function ContactPage() {
   }, [submitStatus]);
 
   return (
-    <div className="w-full bg-fullwhite">
-      <div className="mx-auto max-w-screen-xl">
-        {/* Section droite - Formulaire */}
-        <div className="max-w-xl mx-auto mb-[70px] bg-lightgrey rounded-[12px] p-[50px]">
-          <div className="w-lg">
-            <h1 className="text-oceanblue text-56 mb-8">
-              <span className="text-articblue">Contact</span> our team
+    <div className="relative min-h-[700px] md:overflow-hidden lg:grid lg:grid-cols-2 gap-20 max-w-screen-xl mx-auto mt-[60px] mb-[120px]">
+      {/* Left panel - same style as sign in */}
+      <div className="relative hidden h-full flex-col border-r bg-oceanblue p-10 lg:flex rounded-xl">
+        <div className="z-10 mt-auto">
+          <blockquote className="space-y-2">
+            <p className="text-xl">
+              &ldquo;The Dragonfly team responded quickly and helped me find the
+              perfect trimaran. Excellent support!&rdquo;
+            </p>
+            <footer className="font-mono font-semibold text-sm">
+              ~ Dragonfly User
+            </footer>
+          </blockquote>
+        </div>
+        <div className="absolute inset-0">
+          <FloatingPaths position={1} />
+          <FloatingPaths position={-1} />
+        </div>
+      </div>
+
+      {/* Right panel - Contact form */}
+      <div className="relative flex flex-col justify-center p-4">
+        <div
+          aria-hidden
+          className="-z-10 absolute inset-0 isolate opacity-60 contain-strict"
+        >
+          <div className="-translate-y-87.5 absolute top-0 right-0 h-320 w-140 rounded-full bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,--theme(--color-foreground/.06)_0,hsla(0,0%,55%,.02)_50%,--theme(--color-foreground/.01)_80%)]" />
+          <div className="absolute top-0 right-0 h-320 w-60 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,--theme(--color-foreground/.04)_0,--theme(--color-foreground/.01)_80%,transparent_100%)] [translate:5%_-50%]" />
+          <div className="-translate-y-87.5 absolute top-0 right-0 h-320 w-60 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,--theme(--color-foreground/.04)_0,--theme(--color-foreground/.01)_80%,transparent_100%)]" />
+        </div>
+
+        <div className="mx-auto space-y-4 sm:w-sm w-full px-4 sm:px-0">
+          <Logo className="h-5 lg:hidden" />
+
+          <div className="flex flex-col space-y-1 mb-6">
+            <h1 className="font-bold text-oceanblue text-40 text-center">
+              Get in touch
             </h1>
-            <p className="text-darkgrey text-18 font-light mb-12 leading-relaxed">
-              Si vous avez une question et souhaitez que nous vous contactions,
-              veuillez nous le faire savoir en utilisant le formulaire
-              ci-dessous.
+            <p className="text-base text-darkgrey text-center">
+              We&apos;d love to hear from you. Send us a message.
             </p>
           </div>
 
-          <div className="bg-lightgrey rounded-[12px] p-8">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-oceanblue text-16 font-medium mb-2"
+                  className="block text-oceanblue text-14 font-medium mb-1.5"
                 >
-                  Nom complet *
+                  Full name *
                 </label>
                 <input
                   id="name"
@@ -332,27 +362,27 @@ export default function ContactPage() {
                   onChange={handleInputChange('name')}
                   onBlur={handleBlur('name')}
                   required
-                  placeholder="Votre nom et prénom"
-                  className={`w-full p-3 rounded-md text-oceanblue bg-white border-2 transition-colors ${
+                  placeholder="Your name"
+                  className={`w-full p-3 rounded-md text-oceanblue bg-lightgrey border-2 transition-colors text-14 ${
                     errors.name ? 'border-red-500' : 'border-transparent'
                   }`}
                   maxLength={100}
                 />
                 {errors.name && (
-                  <p className="text-red-600 text-14 mt-1">{errors.name}</p>
+                  <p className="text-red-600 text-12 mt-1">{errors.name}</p>
                 )}
               </div>
 
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-oceanblue text-16 font-medium mb-2"
+                  className="block text-oceanblue text-14 font-medium mb-1.5"
                 >
                   Email *
                 </label>
                 <input
                   id="email"
-                  placeholder="nom@exemple.com"
+                  placeholder="name@example.com"
                   type="email"
                   name="email"
                   value={formData.email}
@@ -362,147 +392,141 @@ export default function ContactPage() {
                   autoComplete="email"
                   autoCorrect="off"
                   required
-                  className={`w-full p-3 rounded-md text-oceanblue bg-white border-2 transition-colors ${
+                  className={`w-full p-3 rounded-md text-oceanblue bg-lightgrey border-2 transition-colors text-14 ${
                     errors.email ? 'border-red-500' : 'border-transparent'
                   }`}
                   maxLength={254}
                 />
                 {errors.email && (
-                  <p className="text-red-600 text-14 mt-1">{errors.email}</p>
+                  <p className="text-red-600 text-12 mt-1">{errors.email}</p>
                 )}
               </div>
+            </div>
 
-              <div>
-                <label
-                  htmlFor="subject"
-                  className="block text-oceanblue text-16 font-medium mb-2"
-                >
-                  Sujet *
-                </label>
-                <input
-                  id="subject"
-                  name="subject"
-                  type="text"
-                  value={formData.subject}
-                  onChange={handleInputChange('subject')}
-                  onBlur={handleBlur('subject')}
-                  required
-                  placeholder="Sujet de votre message"
-                  className={`w-full p-3 rounded-md text-oceanblue bg-white border-2 transition-colors ${
-                    errors.subject ? 'border-red-500' : 'border-transparent'
-                  }`}
-                  maxLength={200}
-                />
-                {errors.subject && (
-                  <p className="text-red-600 text-14 mt-1">{errors.subject}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="message"
-                  className="block text-oceanblue text-16 font-medium mb-2"
-                >
-                  Message *
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleInputChange('message')}
-                  onBlur={handleBlur('message')}
-                  required
-                  placeholder="Votre message..."
-                  rows={6}
-                  className={`w-full px-4 py-3 rounded-[8px] text-16 text-oceanblue placeholder-darkgrey/60 resize-none bg-white border-2 transition-colors ${
-                    errors.message ? 'border-red-500' : 'border-transparent'
-                  }`}
-                  maxLength={5000}
-                />
-                <div className="flex justify-between items-center mt-1">
-                  {errors.message && (
-                    <p className="text-red-600 text-14">{errors.message}</p>
-                  )}
-                  <p className="text-darkgrey text-12 ml-auto">
-                    {formData.message.length}/5000
-                  </p>
-                </div>
-              </div>
-
-              {/* Champ honeypot caché pour détecter les bots */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '-9999px',
-                  visibility: 'hidden'
-                }}
+            <div>
+              <label
+                htmlFor="subject"
+                className="block text-oceanblue text-14 font-medium mb-1.5"
               >
-                <label htmlFor="honeypot">Ne pas remplir ce champ</label>
-                <input
-                  id="honeypot"
-                  name="honeypot"
-                  type="text"
-                  value={formData.honeypot}
-                  onChange={handleInputChange('honeypot')}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-              </div>
-
-              {/* Messages d'erreur généraux */}
-              {errors.general && (
-                <div className="bg-red-50 border border-red-200 rounded-[8px] p-4">
-                  <p className="text-red-800 text-16">✗ {errors.general}</p>
-                </div>
-              )}
-
-              {/* Message de succès */}
-              {submitStatus === 'success' && (
-                <div className="bg-green-50 border border-green-200 rounded-[8px] p-4">
-                  <p className="text-green-800 text-16">
-                    ✓ Votre message a été envoyé avec succès ! Nous vous
-                    répondrons dans les plus brefs délais.
-                  </p>
-                </div>
-              )}
-
-              {/* Message d'erreur */}
-              {submitStatus === 'error' && (
-                <div className="bg-red-50 border border-red-200 rounded-[8px] p-4">
-                  <p className="text-red-800 text-16">
-                    ✗ Une erreur s'est produite lors de l'envoi. Veuillez
-                    réessayer.
-                  </p>
-                </div>
-              )}
-
-              {/* Message de limitation */}
-              {submitStatus === 'rate_limit' && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-[8px] p-4">
-                  <p className="text-yellow-800 text-16">
-                    ⚠ Trop de tentatives d'envoi. Veuillez patienter avant de
-                    réessayer.
-                  </p>
-                </div>
-              )}
-
-              <Button
-                text={
-                  isLoadingCSRF
-                    ? 'Chargement...'
-                    : isSubmitting
-                      ? 'Envoi en cours...'
-                      : 'Envoyer le message'
-                }
-                type="submit"
-                onClick={undefined}
-                bgColor="bg-articblue"
-                textColor="text-fullwhite"
-                fullwidth={true}
-                anim_disabled={isSubmitting || !canSubmit() || isLoadingCSRF}
+                Subject *
+              </label>
+              <input
+                id="subject"
+                name="subject"
+                type="text"
+                value={formData.subject}
+                onChange={handleInputChange('subject')}
+                onBlur={handleBlur('subject')}
+                required
+                placeholder="What is this about?"
+                className={`w-full p-3 rounded-md text-oceanblue bg-lightgrey border-2 transition-colors text-14 ${
+                  errors.subject ? 'border-red-500' : 'border-transparent'
+                }`}
+                maxLength={200}
               />
-            </form>
-          </div>
+              {errors.subject && (
+                <p className="text-red-600 text-12 mt-1">{errors.subject}</p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="message"
+                className="block text-oceanblue text-14 font-medium mb-1.5"
+              >
+                Message *
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                value={formData.message}
+                onChange={handleInputChange('message')}
+                onBlur={handleBlur('message')}
+                required
+                placeholder="Your message..."
+                rows={5}
+                className={`w-full px-4 py-3 rounded-md text-14 text-oceanblue placeholder-darkgrey/60 resize-none bg-lightgrey border-2 transition-colors ${
+                  errors.message ? 'border-red-500' : 'border-transparent'
+                }`}
+                maxLength={5000}
+              />
+              <div className="flex justify-between items-center mt-1">
+                {errors.message && (
+                  <p className="text-red-600 text-12">{errors.message}</p>
+                )}
+                <p className="text-darkgrey text-12 ml-auto">
+                  {formData.message.length}/5000
+                </p>
+              </div>
+            </div>
+
+            {/* Honeypot field */}
+            <div
+              style={{
+                position: 'absolute',
+                left: '-9999px',
+                visibility: 'hidden'
+              }}
+            >
+              <label htmlFor="honeypot">Do not fill this field</label>
+              <input
+                id="honeypot"
+                name="honeypot"
+                type="text"
+                value={formData.honeypot}
+                onChange={handleInputChange('honeypot')}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
+            {errors.general && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-red-800 text-14">{errors.general}</p>
+              </div>
+            )}
+
+            {submitStatus === 'success' && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <p className="text-green-800 text-14">
+                  Your message has been sent successfully! We&apos;ll get back
+                  to you shortly.
+                </p>
+              </div>
+            )}
+
+            {submitStatus === 'error' && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-red-800 text-14">
+                  An error occurred while sending. Please try again.
+                </p>
+              </div>
+            )}
+
+            {submitStatus === 'rate_limit' && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-yellow-800 text-14">
+                  Too many attempts. Please wait before trying again.
+                </p>
+              </div>
+            )}
+
+            <Button
+              text={
+                isLoadingCSRF
+                  ? 'Loading...'
+                  : isSubmitting
+                    ? 'Sending...'
+                    : 'Send message'
+              }
+              type="submit"
+              onClick={undefined}
+              bgColor="bg-articblue"
+              textColor="text-fullwhite"
+              fullwidth={true}
+              anim_disabled={isSubmitting || !canSubmit() || isLoadingCSRF}
+            />
+          </form>
         </div>
       </div>
     </div>

@@ -23,6 +23,8 @@ model account {
   createdAt             DateTime  @map("created_at") @db.Timestamp(6)
   updatedAt             DateTime  @map("updated_at") @db.Timestamp(6)
   user                  user      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId])
 }
 
 model session {
@@ -36,6 +38,8 @@ model session {
   userId         String   @map("user_id")
   impersonatedBy String?  @map("impersonated_by")
   user           user     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId])
 }
 
 model user {
@@ -60,6 +64,7 @@ model user {
   payments        payment[]
   session         session[]
   boat_views      boat_view[]
+  emailLogs       email_log[]
 }
 
 model verification {
@@ -77,6 +82,8 @@ model boat {
   price          Decimal    @db.Decimal
   country        String
   description    String     @db.VarChar(2000)
+  email          String?    @db.VarChar(255)
+  condition      String?    @db.VarChar(50)
   photos         String[]
   userId         String     @map("user_id")
   productId      String?    @map("product_id")
@@ -92,7 +99,12 @@ model boat {
   product        product?   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   payments       payment[]
   views          boat_view[]
+  emailLogs      email_log[]
 
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([status, expiresAt])
   @@map("boats")
 }
 
@@ -106,12 +118,14 @@ model boat_view {
   boat      boat     @relation(fields: [boatId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user      user?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([boatId, viewedAt])
+  @@index([viewedAt])
   @@map("boat_views")
 }
 
 model customer {
   id               String  @id
-  stripeCustomerId String? @map("stripe_customer_id")
+  stripeCustomerId String? @unique @map("stripe_customer_id")
   user             user    @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("customers")
@@ -125,11 +139,13 @@ model payment {
   amount          Decimal   @db.Decimal
   status          String?
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
-  stripeSessionId String?   @map("stripe_session_id")
-  boat            boat?     @relation(fields: [boatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  stripeSessionId String?   @unique @map("stripe_session_id")
+  boat            boat?     @relation(fields: [boatId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user            user?     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product         product?  @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([userId])
+  @@index([boatId])
   @@map("payments")
 }
 
@@ -162,6 +178,22 @@ model price {
   product         product?         @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("prices")
+}
+
+model email_log {
+  id     String   @id @default(cuid())
+  type   String   // "reminder_7d" | "reminder_1d" | "expired" | "password_reset"
+  boatId String?  @map("boat_id")
+  userId String   @map("user_id")
+  email  String
+  sentAt DateTime @default(now()) @map("sent_at") @db.Timestamp(6)
+
+  boat boat? @relation(fields: [boatId], references: [id], onDelete: Cascade)
+  user user  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([type, boatId])
+  @@index([userId])
+  @@map("email_logs")
 }
 
 enum Role {

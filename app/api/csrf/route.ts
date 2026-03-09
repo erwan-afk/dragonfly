@@ -1,24 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { tokenStore } from '@/utils/csrf';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-// Store tokens in memory (in production, use Redis or database)
-const tokenStore = new Map<string, { token: string; timestamp: number; ip: string }>();
-
-// Clean expired tokens every hour
-setInterval(() => {
-  const now = Date.now();
-  const oneHour = 3600000;
-  
-  Array.from(tokenStore.entries()).forEach(([sessionId, data]) => {
-    if (now - data.timestamp > oneHour) {
-      tokenStore.delete(sessionId);
-    }
-  });
-}, 3600000);
 
 export async function GET(request: NextRequest) {
   try {
@@ -110,24 +95,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Export function to validate token (used by other APIs)
-export function validateCSRFToken(sessionId: string, token: string, ip: string): boolean {
-  const stored = tokenStore.get(sessionId);
-  if (!stored) return false;
-
-  // Check token match
-  if (stored.token !== token) return false;
-
-  // Check expiration
-  const now = Date.now();
-  if (now - stored.timestamp > 3600000) {
-    tokenStore.delete(sessionId);
-    return false;
-  }
-
-  // Check IP
-  if (stored.ip !== ip) return false;
-
-  return true;
-} 

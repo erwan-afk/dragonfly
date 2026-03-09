@@ -63,7 +63,7 @@ const nextConfig = {
         ],
     },
     typescript: {
-        ignoreBuildErrors: true,
+        ignoreBuildErrors: false,
     },
     async headers() {
         // Security headers (incl. CSP) for production. In particular, Stripe Payment Element

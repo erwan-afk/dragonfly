@@ -14,7 +14,7 @@ import { signOut } from '@/lib/auth-client';
 import SpotlightBoats from '../SpotlightBoats/SpotlightBoats';
 import Button from '../Button/Button';
 import { useLoadingBar } from '../LoadingProvider';
-import { getModelLabel } from '@/utils/constants';
+import { getModelLabel, getProductLabel } from '@/utils/constants';
 import Link from 'next/link';
 
 interface UserDetails {
@@ -382,6 +382,9 @@ export function AccountClient({
                             Boat
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
+                            Plan
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
                             Amount
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
@@ -389,9 +392,6 @@ export function AccountClient({
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
                             Date
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                            Transaction ID
                           </th>
                         </tr>
                       </thead>
@@ -421,10 +421,18 @@ export function AccountClient({
                                 </div>
                                 <div>
                                   <div className="text-sm font-medium text-gray-900">
-                                    {payment.boat_model || 'Boat Purchase'}
+                                    {getModelLabel(payment.boat_model) ||
+                                      'Boat Purchase'}
                                   </div>
                                 </div>
                               </div>
+                            </td>
+
+                            {/* Plan */}
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-articblue/10 text-articblue">
+                                {payment.product_name || 'Standard'}
+                              </span>
                             </td>
 
                             {/* Amount */}
@@ -466,12 +474,6 @@ export function AccountClient({
                               )}
                             </td>
 
-                            {/* Transaction ID */}
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                                {payment.stripe_session_id?.slice(-8) || 'N/A'}
-                              </span>
-                            </td>
                           </tr>
                         ))}
                       </tbody>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
+import { stripe } from '@/utils/stripe/config';
 import { revalidateTag } from 'next/cache';
 
 // Force dynamic rendering
@@ -10,7 +11,8 @@ export const runtime = 'nodejs';
 
 /**
  * POST /api/boats/renew
- * Renouvelle une annonce en ajoutant 3 mois à sa date de création
+ * Renouvelle une annonce en ajoutant 3 mois à sa date de création.
+ * Requires a valid Stripe PaymentIntent as proof of payment.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +25,35 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { boatId } = body;
+    const { boatId, paymentIntentId } = body;
 
     if (!boatId) {
       return NextResponse.json(
         { error: 'Boat ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!paymentIntentId) {
+      return NextResponse.json(
+        { error: 'Payment verification required' },
+        { status: 402 }
+      );
+    }
+
+    // Verify payment with Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (paymentIntent.status !== 'succeeded') {
+      return NextResponse.json(
+        { error: 'Payment not completed' },
+        { status: 402 }
+      );
+    }
+
+    // Verify the payment was for this boat
+    if (paymentIntent.metadata?.boat_id && paymentIntent.metadata.boat_id !== boatId) {
+      return NextResponse.json(
+        { error: 'Payment does not match this boat' },
         { status: 400 }
       );
     }
@@ -62,14 +88,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log(
-      `✅ Boat ${boatId} renewed: new createdAt is ${newCreatedAt.toISOString()}`
-    );
-
     // Invalider le cache pour forcer le rafraîchissement des données utilisateur
     try {
       revalidateTag('user-data');
-      console.log(`🔄 Cache invalidated for user data`);
     } catch (cacheError) {
       console.error(`⚠️ Error invalidating cache: ${cacheError}`);
     }

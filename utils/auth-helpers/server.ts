@@ -5,6 +5,11 @@ import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getURL, getErrorRedirect, getStatusRedirect } from 'utils/helpers';
 import prisma from '@/utils/prisma/client';
+import { createRateLimiter } from '@/utils/rate-limit';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+
+// 2 name changes per day per user
+const nameLimiter: RateLimiterMemory = createRateLimiter('update-name', 2, 86400);
 
 function isValidEmail(email: string) {
   var regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -310,7 +315,7 @@ export async function updateEmail(formData: FormData) {
 }
 
 export async function updateName(formData: FormData) {
-  const name = String(formData.get('name')).trim();
+  const name = String(formData.get('fullName') || formData.get('name') || '').trim();
   let redirectPath: string;
 
   try {
@@ -324,10 +329,21 @@ export async function updateName(formData: FormData) {
       return redirect(redirectPath);
     }
 
-    // Mettre à jour le nom dans la base de données avec Prisma
+    // Rate limit: 2 per day per user
+    try {
+      await nameLimiter.consume(user.id);
+    } catch {
+      redirectPath = getErrorRedirect(
+        '/account',
+        'Too many requests.',
+        'You can only change your name twice per day.'
+      );
+      return redirect(redirectPath);
+    }
+
     await prisma.user.update({
       where: { id: user.id },
-      data: { name }
+      data: { name, full_name: name }
     });
 
     redirectPath = getStatusRedirect(
@@ -355,6 +371,8 @@ export async function updateListing(formData: FormData): Promise<string> {
   const currency = String(formData.get('currency')).trim();
   const specifications = String(formData.get('specifications')).trim();
   const vat_paid = String(formData.get('vat_paid')).trim();
+  const email = String(formData.get('email') || '').trim();
+  const condition = String(formData.get('condition') || '').trim();
   const photos = String(formData.get('photos')).trim();
 
   try {
@@ -367,21 +385,24 @@ export async function updateListing(formData: FormData): Promise<string> {
       );
     }
 
-    // Update the listing with Prisma
-    await prisma.boat.update({
-      where: { id: id },
-      data: {
-        model,
-        description,
-        country,
-        price: parseFloat(price),
-        currency,
-        specifications: JSON.parse(specifications),
-        vatPaid: vat_paid === 'true',
-        photos: photos.split(',').filter(Boolean),
-        updatedAt: new Date()
-      }
-    });
+    // Update the listing with raw SQL to avoid Prisma client regeneration issues
+    const parsedSpecs = JSON.parse(specifications);
+    const photosArray = photos.split(',').filter(Boolean);
+    await prisma.$executeRaw`
+      UPDATE "boats" SET
+        model = ${model},
+        description = ${description},
+        country = ${country},
+        price = ${parseFloat(price)},
+        currency = ${currency},
+        specifications = ${parsedSpecs},
+        vat_paid = ${vat_paid === 'true'},
+        email = ${email || null},
+        "condition" = ${condition || null},
+        photos = ${photosArray},
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
 
     return getStatusRedirect(
       '/account',

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import prisma from '@/utils/prisma/client';
+import { stripe } from '@/utils/stripe/config';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -18,12 +19,39 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { boatId, newPlan } = body;
+        const { boatId, newPlan, paymentIntentId } = body;
 
         // Validation
         if (!boatId || !newPlan) {
             return NextResponse.json(
                 { error: 'Missing boatId or newPlan' },
+                { status: 400 }
+            );
+        }
+
+        if (!paymentIntentId) {
+            return NextResponse.json(
+                { error: 'Payment verification required' },
+                { status: 402 }
+            );
+        }
+
+        // Verify payment with Stripe
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.status !== 'succeeded') {
+            return NextResponse.json(
+                { error: 'Payment not completed' },
+                { status: 402 }
+            );
+        }
+
+        // Validate that newPlan is a real product in the database
+        const product = await prisma.product.findUnique({
+            where: { id: newPlan }
+        });
+        if (!product) {
+            return NextResponse.json(
+                { error: 'Invalid plan' },
                 { status: 400 }
             );
         }
@@ -46,7 +74,7 @@ export async function POST(request: NextRequest) {
             data: { productId: newPlan }
         });
 
-        console.log('✅ Boat upgrade processed successfully:', existingBoat.id, 'New productId:', newPlan);
+        console.log('✅ Boat upgrade processed:', existingBoat.id, 'New productId:', newPlan);
 
         return NextResponse.json({
             success: true,

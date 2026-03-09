@@ -1,77 +1,18 @@
 #!/usr/bin/env tsx
 
 /**
- * Script pour envoyer des rappels de renouvellement d'annonces
- * Ce script vérifie les annonces qui expirent dans 7 jours et envoie un email de renouvellement
+ * Script d'envoi d'emails de renouvellement d'annonces
+ * 3 types de rappels, chacun envoyé UNE SEULE FOIS grâce à la table email_logs
+ * - reminder_7d : 7 jours avant expiration
+ * - reminder_1d : 1 jour avant expiration
+ * - expired : annonce expirée → notification + passage en inactive
  */
 
 import { PrismaClient } from '@prisma/client';
 import * as nodemailer from 'nodemailer';
 
-/**
- * Script de diagnostic rapide pour vérifier la configuration
- */
-async function quickDiagnostic() {
-  console.log('🔍 DIAGNOSTIC RAPIDE - Vérification de la configuration');
-  console.log('=' .repeat(60));
-
-  // Vérifier les variables d'environnement
-  console.log('📋 Variables d\'environnement:');
-  console.log(`   SMTP_USER: ${process.env.SMTP_USER ? '✅ Défini' : '❌ Manquant'}`);
-  console.log(`   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? '✅ Défini' : '❌ Manquant'}`);
-  console.log(`   NEXT_PUBLIC_SITE_URL: ${process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app'}`);
-  console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✅ Défini' : '❌ Manquant'}`);
-  console.log('');
-
-  // Tester la connexion à la base de données
-  console.log('🗄️ Test de connexion à la base de données:');
-  const prisma = new PrismaClient();
-  try {
-    await prisma.$connect();
-    console.log('   ✅ Connexion réussie');
-
-    const boatCount = await prisma.boat.count({ where: { status: 'active' } });
-    console.log(`   📊 Nombre d'annonces actives: ${boatCount}`);
-
-    await prisma.$disconnect();
-    } catch (error) {
-      console.log('   ❌ Échec de connexion:', error instanceof Error ? error.message : String(error));
-    }
-  console.log('');
-
-  // Tester la configuration SMTP
-  console.log('📧 Test de configuration SMTP:');
-  if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
-    const transporter = nodemailer.createTransport({
-      host: 'mail.infomaniak.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
-
-    try {
-      await transporter.verify();
-      console.log('   ✅ Configuration SMTP valide');
-    } catch (error) {
-      console.log('   ❌ Configuration SMTP invalide:', error instanceof Error ? error.message : String(error));
-    }
-  } else {
-    console.log('   ❌ Variables SMTP manquantes');
-  }
-
-  console.log('=' .repeat(60));
-  console.log('💡 Pour lancer le script complet: npm run tsx scripts/send-renewal-reminders.ts');
-  console.log('💡 Pour mettre à jour les données existantes: npm run tsx scripts/send-renewal-reminders.ts --update-existing');
-  console.log('💡 Pour tester avec une annonce expirant bientôt: npm run tsx scripts/send-renewal-reminders.ts --test-expiring-soon');
-  console.log('💡 Pour tester l\'API: curl -X POST https://dragonfly-livid.vercel.app/api/send-renewal-reminders -H "Authorization: Bearer <TOKEN>"');
-}
-
 const prisma = new PrismaClient();
 
-// Configuration SMTP (même que dans contact/route.ts)
 const transporter = nodemailer.createTransport({
   host: 'mail.infomaniak.com',
   port: 587,
@@ -82,348 +23,338 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app';
 
-/**
- * Vérifie si une date est dans un intervalle de ±12 heures autour d'une date cible
- */
-function isWithinIntervalDays(targetDate: Date, checkDate: Date, days: number): boolean {
-  const targetTime = targetDate.getTime();
-  const checkTime = checkDate.getTime();
-  const intervalMs = days * 24 * 60 * 60 * 1000; // jours en millisecondes
-  const toleranceMs = 12 * 60 * 60 * 1000; // ±12 heures de tolérance
-
-  return Math.abs(targetTime - checkTime) <= (intervalMs + toleranceMs);
-}
-
-/**
- * Formate une date en français
- */
 function formatDateFr(date: Date): string {
   return date.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   });
 }
 
-/**
- * Envoie un email de renouvellement pour une annonce
- */
-async function sendRenewalEmail(boat: any, expiryDate: Date) {
-  const user = boat.user;
-  if (!user?.email) {
-    console.warn(`⚠️  Aucun email trouvé pour l'utilisateur ${user?.name || 'inconnu'} (boat ID: ${boat.id})`);
-    return false;
-  }
+// ─── Email Templates ────────────────────────────────────────────
 
-  const renewalDate = formatDateFr(expiryDate);
-  const daysUntilExpiry = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-  console.log(`📅 Days until expiru: ${daysUntilExpiry}`);
-  const mailOptions = {
-    from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
-    to: user.email,
-    subject: `🔔 Votre annonce "${boat.model}" expire bientôt - Renouvelez-la !`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #1e3a8a; margin: 0;">⏰ Rappel de renouvellement d'annonce</h1>
-        </div>
+function emailWrapper(content: string): string {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      ${content}
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+      <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
+        Cet email a été envoyé automatiquement par Dragonfly Trimarans.
+      </p>
+    </div>
+  `;
+}
 
-        <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin: 20px 0;">
-          <h2 style="color: #1e3a8a; margin-top: 0;">Bonjour ${user.name || 'Cher utilisateur'},</h2>
-
-          <p style="font-size: 16px; line-height: 1.6; margin: 20px 0;">
-            Votre annonce pour le <strong>${boat.model}</strong> arrive bientôt à expiration.
-          </p>
-
-          <div style="background-color: #ffffff; padding: 20px; border-left: 4px solid #f59e0b; margin: 20px 0; border-radius: 4px;">
-            <h3 style="color: #1e3a8a; margin-top: 0;">📅 Détails de l'expiration :</h3>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-              <li><strong>Date d'expiration :</strong> ${renewalDate}</li>
-              <li><strong>Jours restants :</strong> ${daysUntilExpiry} jour${daysUntilExpiry > 1 ? 's' : ''}</li>
-              <li><strong>Prix du bateau :</strong> ${boat.price.toLocaleString('fr-FR')} €</li>
-            </ul>
-          </div>
-
-          <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #065f46; margin-top: 0;">🔄 Renouvelez votre annonce</h3>
-            <p style="margin: 10px 0;">
-              Pour continuer à recevoir des demandes d'informations sur votre bateau,
-              <strong>renouvelez votre annonce dès maintenant</strong> !
-            </p>
-
-            <div style="text-align: center; margin: 25px 0;">
-              <a
-  href="https://dragonfly-livid.vercel.app/list-boat?preference=Renewal"
-  style="background-color: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;"
->
-  🔄 Renouveler mon annonce
-</a>
-
-            </div>
-          </div>
-
-          <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="color: #92400e; font-size: 14px; margin: 0;">
-              💡 <strong>Conseil :</strong> Le renouvellement peut se faire à tout moment avant l'expiration.
-              Votre annonce reste visible jusqu'à la date d'expiration.
-            </p>
-          </div>
-
-          <p style="margin: 30px 0 10px 0;">
-            Cordialement,<br>
-            <strong>L'équipe Dragonfly Trimarans</strong>
-          </p>
-        </div>
-
-        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-
-        <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-          Cet email a été envoyé automatiquement par le système de Dragonfly Trimarans.<br>
-        </p>
+function template7d(userName: string, boatModel: string, expiryDate: Date, daysLeft: number, boatId: string): string {
+  return emailWrapper(`
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #1e3a8a; margin: 0;">📅 Votre annonce expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}</h1>
+    </div>
+    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
+      <p style="font-size: 16px; line-height: 1.6;">
+        Bonjour <strong>${userName}</strong>,
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Votre annonce pour le <strong>${boatModel}</strong> expire le <strong>${formatDateFr(expiryDate)}</strong>.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Pensez à la renouveler pour continuer à recevoir des demandes d'acheteurs potentiels.
+      </p>
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
+           style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          🔄 Renouveler mon annonce
+        </a>
       </div>
-    `,
-  };
+      <p style="color: #6b7280; font-size: 14px;">
+        💡 Le renouvellement peut se faire à tout moment. Votre annonce reste visible jusqu'à expiration.
+      </p>
+    </div>
+  `);
+}
 
+function template1d(userName: string, boatModel: string, expiryDate: Date, boatId: string): string {
+  return emailWrapper(`
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #dc2626; margin: 0;">⚠️ Votre annonce expire demain !</h1>
+    </div>
+    <div style="background-color: #fef2f2; padding: 25px; border-radius: 8px;">
+      <p style="font-size: 16px; line-height: 1.6;">
+        Bonjour <strong>${userName}</strong>,
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        <strong>Dernier rappel :</strong> votre annonce pour le <strong>${boatModel}</strong> expire
+        le <strong>${formatDateFr(expiryDate)}</strong>, soit <strong>demain</strong>.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Après cette date, votre annonce ne sera plus visible par les acheteurs.
+      </p>
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
+           style="background-color: #dc2626; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          🔄 Renouveler maintenant
+        </a>
+      </div>
+    </div>
+  `);
+}
+
+function templateExpired(userName: string, boatModel: string, expiryDate: Date, boatId: string): string {
+  return emailWrapper(`
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #6b7280; margin: 0;">📋 Votre annonce a expiré</h1>
+    </div>
+    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
+      <p style="font-size: 16px; line-height: 1.6;">
+        Bonjour <strong>${userName}</strong>,
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Votre annonce pour le <strong>${boatModel}</strong> a expiré le <strong>${formatDateFr(expiryDate)}</strong>
+        et n'est plus visible sur le site.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Vous pouvez la republier à tout moment si votre bateau est toujours en vente.
+      </p>
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
+           style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          📋 Republier mon annonce
+        </a>
+      </div>
+    </div>
+  `);
+}
+
+// ─── Core Logic ─────────────────────────────────────────────────
+
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Email de renouvellement envoyé à ${user.email} pour l'annonce "${boat.model}" (expire le ${renewalDate})`);
+    await transporter.sendMail({
+      from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
     return true;
   } catch (error) {
-    console.error(`❌ Erreur lors de l'envoi de l'email à ${user.email}:`, error);
+    console.error(`❌ Erreur envoi email à ${to}:`, error);
     return false;
   }
 }
 
-/**
- * Fonction principale qui vérifie et envoie les rappels de renouvellement
- */
+async function logEmail(type: string, boatId: string, userId: string, email: string): Promise<void> {
+  await prisma.email_log.create({
+    data: { type, boatId, userId, email },
+  });
+}
+
+async function getAlreadySentSet(type: string, boatIds: string[]): Promise<Set<string>> {
+  if (boatIds.length === 0) return new Set();
+  const logs = await prisma.email_log.findMany({
+    where: { type, boatId: { in: boatIds } },
+    select: { boatId: true },
+  });
+  return new Set(logs.map(l => l.boatId).filter((id): id is string => id !== null));
+}
+
+async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
+  console.log('\n── Passe 1 : Rappels 7 jours ──');
+  const now = new Date();
+  const in6d = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const in8d = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
+
+  const boats = await prisma.boat.findMany({
+    where: {
+      status: 'active',
+      expiresAt: { gte: in6d, lte: in8d },
+    },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+
+  console.log(`   ${boats.length} annonces expirant dans 6-8 jours`);
+  const alreadySent = await getAlreadySentSet('reminder_7d', boats.map(b => b.id));
+  let sent = 0, skipped = 0;
+
+  for (const boat of boats) {
+    if (!boat.user?.email || !boat.expiresAt) { skipped++; continue; }
+    if (alreadySent.has(boat.id)) {
+      console.log(`   ⏭️  "${boat.model}" — déjà envoyé`);
+      skipped++;
+      continue;
+    }
+
+    const daysLeft = Math.ceil((boat.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const html = template7d(boat.user.name || 'Cher utilisateur', boat.model, boat.expiresAt, daysLeft, boat.id);
+    const ok = await sendEmail(boat.user.email, `📅 Votre annonce "${boat.model}" expire dans ${daysLeft} jours`, html);
+
+    if (ok) {
+      await logEmail('reminder_7d', boat.id, boat.user.id, boat.user.email);
+      console.log(`   ✅ "${boat.model}" → ${boat.user.email}`);
+      sent++;
+    }
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  return { sent, skipped };
+}
+
+async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
+  console.log('\n── Passe 2 : Rappels 1 jour ──');
+  const now = new Date();
+  const in0d = now;
+  const in2d = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+  const boats = await prisma.boat.findMany({
+    where: {
+      status: 'active',
+      expiresAt: { gte: in0d, lte: in2d },
+    },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+
+  console.log(`   ${boats.length} annonces expirant dans 0-2 jours`);
+  const alreadySent = await getAlreadySentSet('reminder_1d', boats.map(b => b.id));
+  let sent = 0, skipped = 0;
+
+  for (const boat of boats) {
+    if (!boat.user?.email || !boat.expiresAt) { skipped++; continue; }
+    if (alreadySent.has(boat.id)) {
+      console.log(`   ⏭️  "${boat.model}" — déjà envoyé`);
+      skipped++;
+      continue;
+    }
+
+    const html = template1d(boat.user.name || 'Cher utilisateur', boat.model, boat.expiresAt, boat.id);
+    const ok = await sendEmail(boat.user.email, `⚠️ Dernière chance : votre annonce "${boat.model}" expire demain !`, html);
+
+    if (ok) {
+      await logEmail('reminder_1d', boat.id, boat.user.id, boat.user.email);
+      console.log(`   ✅ "${boat.model}" → ${boat.user.email}`);
+      sent++;
+    }
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  return { sent, skipped };
+}
+
+async function processExpired(): Promise<{ sent: number; skipped: number; deactivated: number }> {
+  console.log('\n── Passe 3 : Annonces expirées ──');
+  const now = new Date();
+
+  const boats = await prisma.boat.findMany({
+    where: {
+      status: 'active',
+      expiresAt: { lt: now },
+    },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+
+  console.log(`   ${boats.length} annonces expirées encore actives`);
+  const alreadySent = await getAlreadySentSet('expired', boats.map(b => b.id));
+  let sent = 0, skipped = 0, deactivated = 0;
+
+  for (const boat of boats) {
+    // Toujours désactiver le bateau, même si l'email échoue
+    await prisma.boat.update({
+      where: { id: boat.id },
+      data: { status: 'inactive' },
+    });
+    deactivated++;
+    console.log(`   🔒 "${boat.model}" → inactive`);
+
+    if (!boat.user?.email || !boat.expiresAt) { skipped++; continue; }
+    if (alreadySent.has(boat.id)) {
+      console.log(`   ⏭️  "${boat.model}" — email déjà envoyé`);
+      skipped++;
+      continue;
+    }
+
+    const html = templateExpired(boat.user.name || 'Cher utilisateur', boat.model, boat.expiresAt, boat.id);
+    const ok = await sendEmail(boat.user.email, `📋 Votre annonce "${boat.model}" a expiré`, html);
+
+    if (ok) {
+      await logEmail('expired', boat.id, boat.user.id, boat.user.email);
+      console.log(`   ✅ "${boat.model}" → ${boat.user.email}`);
+      sent++;
+    }
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  return { sent, skipped, deactivated };
+}
+
+// ─── Main ───────────────────────────────────────────────────────
+
 async function sendRenewalReminders() {
-  console.log('🚀 Démarrage de la vérification des renouvellements d\'annonces...');
-  console.log(`📅 Date actuelle: ${formatDateFr(new Date())}`);
+  console.log('🚀 Démarrage du script de rappels de renouvellement');
+  console.log(`📅 ${formatDateFr(new Date())}`);
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+    console.error('❌ SMTP_USER ou SMTP_PASSWORD manquant');
+    process.exit(1);
+  }
 
   try {
-    // Vérifier la configuration SMTP
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-      console.error('❌ Configuration SMTP manquante: SMTP_USER ou SMTP_PASSWORD non définis');
-      throw new Error('Configuration SMTP incomplète');
-    }
-    console.log('✅ Configuration SMTP vérifiée');
+    const r7 = await processReminder7d();
+    const r1 = await processReminder1d();
+    const exp = await processExpired();
 
-    // Récupérer toutes les annonces actives avec les informations utilisateur et la date d'expiration
-    console.log('🔍 Recherche des annonces actives...');
-    const activeBoats = await prisma.boat.findMany({
-      where: {
-        status: 'active',
-        expiresAt: {
-          not: null // S'assurer que expiresAt est défini
-        }
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        },
-        payments: {
-          select: {
-            id: true,
-            createdAt: true
-          },
-          orderBy: {
-            createdAt: 'desc'
-          },
-          take: 1 // Prendre le paiement le plus récent
-        }
-      }
-    });
-
-    console.log(`📊 ${activeBoats.length} annonces actives trouvées`);
-
-    if (activeBoats.length === 0) {
-      console.log('ℹ️  Aucune annonce active trouvée - arrêt du processus');
-      return;
-    }
-
-    const today = new Date();
-    let remindersSent = 0;
-    let errors = 0;
-    let boatsChecked = 0;
-
-    for (const boat of activeBoats) {
-      boatsChecked++;
-      console.log(`🔍 Vérification annonce ${boatsChecked}/${activeBoats.length}: "${boat.model}" (ID: ${boat.id})`);
-
-      try {
-        // Utiliser la date d'expiration stockée en base de données
-        if (!boat.expiresAt) {
-          console.warn(`⚠️  Aucune date d'expiration pour l'annonce ${boat.id} - ignorée`);
-          errors++;
-          continue;
-        }
-
-        const expiryDate = boat.expiresAt;
-        console.log(`   ⏰ Date d'expiration (depuis BDD): ${formatDateFr(expiryDate)}`);
-
-        // Calculer les jours restants
-        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        console.log(`   📊 Jours jusqu'à expiration: ${daysUntilExpiry}`);
-
-        // Vérifier si l'annonce expire dans exactement 7 jours (±12 heures de tolérance)
-        const isWithin7Days = isWithinIntervalDays(expiryDate, today, 7);
-        console.log(`   🎯 Dans l'intervalle de 7 jours (±12h): ${isWithin7Days ? 'OUI' : 'NON'}`);
-
-        if (isWithin7Days) {
-          console.log(`🎯 Annonce "${boat.model}" expire le ${formatDateFr(expiryDate)} - envoi du rappel`);
-
-          // Vérifier les informations utilisateur
-          if (!boat.user) {
-            console.warn(`⚠️  Aucun utilisateur associé à l'annonce ${boat.id}`);
-            errors++;
-            continue;
-          }
-
-          if (!boat.user.email) {
-            console.warn(`⚠️  Aucun email pour l'utilisateur ${boat.user.name || 'inconnu'} (annonce ID: ${boat.id})`);
-            errors++;
-            continue;
-          }
-
-          console.log(`📧 Envoi d'email à: ${boat.user.email} (${boat.user.name || 'nom inconnu'})`);
-
-          const success = await sendRenewalEmail(boat, expiryDate);
-          if (success) {
-            remindersSent++;
-            console.log(`✅ Email envoyé avec succès pour "${boat.model}"`);
-          } else {
-            errors++;
-            console.log(`❌ Échec de l'envoi d'email pour "${boat.model}"`);
-          }
-
-          // Petit délai pour éviter de spammer le serveur SMTP
-          console.log('⏳ Pause de 1 seconde...');
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else {
-          console.log(`ℹ️  Annonce "${boat.model}" hors intervalle (expiration dans ${daysUntilExpiry} jours)`);
-        }
-      } catch (error) {
-        console.error(`❌ Erreur lors du traitement de l'annonce ${boat.id}:`, error);
-        errors++;
-      }
-    }
-
-    console.log(`✅ Vérification terminée: ${remindersSent} rappels envoyés, ${errors} erreurs, ${boatsChecked} annonces vérifiées`);
-
+    console.log('\n── Résumé ──');
+    console.log(`   7 jours  : ${r7.sent} envoyés, ${r7.skipped} ignorés`);
+    console.log(`   1 jour   : ${r1.sent} envoyés, ${r1.skipped} ignorés`);
+    console.log(`   Expirés  : ${exp.sent} envoyés, ${exp.skipped} ignorés, ${exp.deactivated} désactivés`);
+    console.log('✅ Terminé');
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification des renouvellements:', error);
+    console.error('❌ Erreur:', error);
     process.exit(1);
   } finally {
-    console.log('🔌 Déconnexion de la base de données');
     await prisma.$disconnect();
   }
 }
 
-/**
- * Met à jour les annonces existantes sans expiresAt
- */
-async function updateExistingBoats() {
-  console.log('🔄 Mise à jour des annonces existantes sans date d\'expiration...');
+// ─── Diagnostic ─────────────────────────────────────────────────
 
-  const prisma = new PrismaClient();
+async function quickDiagnostic() {
+  console.log('🔍 DIAGNOSTIC');
+  console.log(`   SMTP_USER: ${process.env.SMTP_USER ? '✅' : '❌'}`);
+  console.log(`   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? '✅' : '❌'}`);
+  console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✅' : '❌'}`);
+  console.log(`   SITE_URL: ${SITE_URL}`);
+
   try {
-    const now = new Date();
-    const threeMonthsFromNow = new Date(now);
-    threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
-
-    const result = await prisma.boat.updateMany({
-      where: {
-        status: 'active',
-        expiresAt: null
-      },
-      data: {
-        expiresAt: threeMonthsFromNow
-      }
-    });
-
-    console.log(`✅ ${result.count} annonces mises à jour avec expiresAt = ${formatDateFr(threeMonthsFromNow)}`);
-  } catch (error) {
-    console.error('❌ Erreur lors de la mise à jour:', error);
-  } finally {
-    await prisma.$disconnect();
+    await prisma.$connect();
+    const active = await prisma.boat.count({ where: { status: 'active' } });
+    const withExpiry = await prisma.boat.count({ where: { status: 'active', expiresAt: { not: null } } });
+    const logCount = await prisma.email_log.count();
+    console.log(`   DB: ✅ (${active} actifs, ${withExpiry} avec date expiration, ${logCount} emails loggés)`);
+  } catch (e) {
+    console.log(`   DB: ❌ ${e}`);
   }
-}
 
-/**
- * Mode test: définit une annonce pour expirer dans 7 jours pour tester les emails
- */
-async function testExpiringSoon() {
-  console.log('🧪 MODE TEST - Définition d\'une annonce pour expirer dans 7 jours...');
-
-  const prisma = new PrismaClient();
-  try {
-    const now = new Date();
-    const sevenDaysFromNow = new Date(now);
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-    // Prendre la première annonce active
-    const firstBoat = await prisma.boat.findFirst({
-      where: { status: 'active' },
-      select: { id: true, model: true }
-    });
-
-    if (!firstBoat) {
-      console.log('❌ Aucune annonce active trouvée pour le test');
-      return;
+  if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+    try {
+      await transporter.verify();
+      console.log('   SMTP: ✅');
+    } catch (e) {
+      console.log(`   SMTP: ❌ ${e}`);
     }
-
-    await prisma.boat.update({
-      where: { id: firstBoat.id },
-      data: { expiresAt: sevenDaysFromNow }
-    });
-
-    console.log(`✅ Annonce "${firstBoat.model}" (ID: ${firstBoat.id}) définie pour expirer le ${formatDateFr(sevenDaysFromNow)}`);
-    console.log('💡 Relancez le script normal pour tester l\'envoi d\'email');
-  } catch (error) {
-    console.error('❌ Erreur lors du test:', error);
-  } finally {
-    await prisma.$disconnect();
   }
+
+  await prisma.$disconnect();
 }
 
-// Exécuter le script si appelé directement
+// ─── CLI ────────────────────────────────────────────────────────
+
 if (require.main === module) {
   const args = process.argv.slice(2);
 
   if (args.includes('--diagnostic') || args.includes('-d')) {
-    // Mode diagnostic rapide
     quickDiagnostic().catch(console.error);
-  } else if (args.includes('--update-existing') || args.includes('-u')) {
-    // Mode mise à jour des données existantes
-    updateExistingBoats().catch(console.error);
-  } else if (args.includes('--test-expiring-soon') || args.includes('-t')) {
-    // Mode test: définir une annonce pour expirer dans 7 jours
-    testExpiringSoon().catch(console.error);
   } else {
-    // Mode envoi des rappels (par défaut)
-    console.log('🎯 Script lancé directement - mode test/debug activé');
-    console.log('💡 Les logs détaillés sont activés pour diagnostiquer les problèmes');
-    console.log('🔍 Vérifiez la sortie pour identifier où le processus bloque');
-    console.log('💡 Utilisez --diagnostic pour un test rapide de configuration');
-    console.log('');
-
-    sendRenewalReminders()
-      .then(() => {
-        console.log('');
-        console.log('✅ Script terminé avec succès');
-        process.exit(0);
-      })
-      .catch((error) => {
-        console.error('');
-        console.error('❌ Script terminé avec erreur:', error);
-        process.exit(1);
-      });
+    sendRenewalReminders().catch(console.error);
   }
 }
 

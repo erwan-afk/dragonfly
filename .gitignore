@@ -96,6 +96,9 @@ jspm_packages/
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Windows NUL device file (created by accidental > nul redirects)
+nul
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -134,3 +137,4 @@ temp/
 # Secrets (should be in .env)
 secrets/
 .env.dev
+prompt

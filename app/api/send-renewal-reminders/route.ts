@@ -10,13 +10,8 @@ export const maxDuration = 300; // 5 minutes maximum pour les tâches longues
  * Vérifie si la requête est autorisée (token secret partagé)
  */
 function isAuthorized(request: NextRequest): boolean {
-  console.log('🔐 Vérification de l\'autorisation...');
-
   const authHeader = request.headers.get('authorization');
   const expectedToken = process.env.CRON_SECRET_TOKEN;
-
-  console.log('🔍 Headers présents:', Object.keys(Object.fromEntries(request.headers.entries())));
-  console.log('🔍 Header Authorization présent:', !!authHeader);
 
   if (!expectedToken) {
     console.error('❌ CRON_SECRET_TOKEN non configuré dans les variables d\'environnement');
@@ -36,10 +31,6 @@ function isAuthorized(request: NextRequest): boolean {
   const token = authHeader.replace('Bearer ', '');
   const tokenValid = token === expectedToken;
 
-  console.log('🔐 Token fourni:', token ? `${token.substring(0, 8)}...` : 'null');
-  console.log('🔐 Token attendu:', expectedToken ? `${expectedToken.substring(0, 8)}...` : 'null');
-  console.log('🔐 Token valide:', tokenValid);
-
   return tokenValid;
 }
 
@@ -49,31 +40,21 @@ function isAuthorized(request: NextRequest): boolean {
  * Utilisé principalement pour les tests ou déclenchements manuels
  */
 export async function GET(request: NextRequest) {
-  console.log('📨 Requête GET reçue sur /api/send-renewal-reminders');
-  console.log('🌐 User-Agent:', request.headers.get('user-agent'));
-  console.log('🌍 IP:', request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown');
-
   // Vérification de l'autorisation
   if (!isAuthorized(request)) {
-    console.warn('❌ Tentative d\'accès non autorisé à /api/send-renewal-reminders (GET)');
     return NextResponse.json(
       { error: 'Non autorisé' },
       { status: 401 }
     );
   }
 
-  console.log('✅ Autorisation validée pour GET');
-  console.log('🔄 Déclenchement manuel des rappels de renouvellement...');
-
   const startTime = Date.now();
 
   try {
     // Exécuter la fonction de rappel des renouvellements
-    console.log('🚀 Lancement de sendRenewalReminders()...');
     await sendRenewalReminders();
 
     const duration = Date.now() - startTime;
-    console.log(`✅ Rappels traités avec succès en ${duration}ms`);
 
     return NextResponse.json({
       success: true,
@@ -104,31 +85,21 @@ export async function GET(request: NextRequest) {
  * Identique à GET mais avec une méthode POST pour une meilleure sémantique
  */
 export async function POST(request: NextRequest) {
-  console.log('📨 Requête POST reçue sur /api/send-renewal-reminders');
-  console.log('🌐 User-Agent:', request.headers.get('user-agent'));
-  console.log('🌍 IP:', request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown');
-
   // Vérification de l'autorisation
   if (!isAuthorized(request)) {
-    console.warn('❌ Tentative d\'accès non autorisé à /api/send-renewal-reminders (POST)');
     return NextResponse.json(
       { error: 'Non autorisé' },
       { status: 401 }
     );
   }
 
-  console.log('✅ Autorisation validée pour POST');
-  console.log('⏰ Déclenchement automatique des rappels de renouvellement (cron job)...');
-
   const startTime = Date.now();
 
   try {
     // Exécuter la fonction de rappel des renouvellements
-    console.log('🚀 Lancement de sendRenewalReminders()...');
     await sendRenewalReminders();
 
     const duration = Date.now() - startTime;
-    console.log(`✅ Rappels traités avec succès en ${duration}ms`);
 
     return NextResponse.json({
       success: true,

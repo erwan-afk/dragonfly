@@ -4,7 +4,7 @@ import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import validator from 'validator';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { validateCSRFToken } from '../csrf/route';
+import { validateCSRFToken } from '@/utils/csrf';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -123,6 +123,11 @@ function logSuspiciousActivity(ip: string, userAgent: string, reason: string) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!process.env.CONTACT_EMAIL) {
+    console.error('CONTACT_EMAIL environment variable is not set');
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
   try {
     // Récupération des informations de la requête
     const ip = request.ip || 
@@ -215,7 +220,7 @@ export async function POST(request: NextRequest) {
     // Préparation de l'email
     const mailOptions = {
       from: `"Contact Dragonfly" <${process.env.SMTP_USER}>`,
-      to: 'thibauderwan@dragonfly-trimarans.org',
+      to: process.env.CONTACT_EMAIL,
       subject: `[Contact Site] ${sanitizedData.subject}`,
       replyTo: sanitizedData.email,
       html: `

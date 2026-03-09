@@ -3,9 +3,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@heroui/checkbox';
-import { dragonflyModels as BOAT_MODELS } from '@/components/ui/BoatListingForm/BoatListingForm';
-import { countries as COUNTRIES } from '@/components/ui/BoatListingForm/BoatListingForm';
-import { specificationsData as ATTRIBUTES } from '@/components/ui/BoatListingForm/BoatListingForm';
+import { dragonflyModels as BOAT_MODELS, countries as COUNTRIES } from '@/utils/constants';
+import { specificationsData as ATTRIBUTES } from '@/utils/specifications';
 import {
   Dropdown,
   DropdownItem,

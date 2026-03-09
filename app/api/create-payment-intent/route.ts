@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe/config';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
+import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
+const rateLimiter = createRateLimiter('create_payment_intent', 10, 60);
+
 export async function POST(req: NextRequest) {
   try {
-    // Guardrails: in production we prefer explicit env config (instead of failing deep inside Stripe SDK).
     const stripeKey = process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '';
     if (!stripeKey) {
       console.error('❌ [create-payment-intent] STRIPE_SECRET_KEY(_LIVE) is missing');
@@ -27,53 +29,72 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Rate limiting per user
+    const rateLimitResponse = await checkRateLimit(rateLimiter, user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await req.json();
-    const { amount, currency, priceId, metadata } = body;
+    const { priceId, metadata, currentPriceId } = body;
 
-    console.log('💳 [create-payment-intent] request', {
-      userId: user.id,
-      amount,
-      currency,
-      priceId,
-      metadataKeys: metadata ? Object.keys(metadata) : []
-    });
-
-    if (amount == null || !currency || !priceId) {
+    if (!priceId) {
       return NextResponse.json(
-        { error: 'Missing required fields: amount, currency, priceId' },
+        { error: 'Missing required field: priceId' },
         { status: 400 }
       );
     }
 
-    const parsedAmount = Number(amount);
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    // Server-side price lookup — never trust client-provided amount
+    let price;
+    try {
+      price = await stripe.prices.retrieve(priceId);
+    } catch {
       return NextResponse.json(
-        { error: 'Invalid amount' },
+        { error: 'Invalid price ID' },
         { status: 400 }
       );
     }
 
-    // Créer le PaymentIntent avec Stripe
+    if (!price.unit_amount || !price.currency) {
+      return NextResponse.json(
+        { error: 'Price has no amount configured' },
+        { status: 400 }
+      );
+    }
+
+    // For upgrades: calculate the price difference (new - current)
+    let finalAmount = price.unit_amount;
+    if (currentPriceId) {
+      try {
+        const currentPrice = await stripe.prices.retrieve(currentPriceId);
+        if (currentPrice.unit_amount && currentPrice.currency === price.currency) {
+          finalAmount = Math.max(0, price.unit_amount - currentPrice.unit_amount);
+        }
+      } catch {
+        // Could not retrieve current price, charging full amount
+      }
+    }
+
+    // Whitelist allowed metadata keys
+    const allowedMetadataKeys = ['listing_type', 'user_id', 'boat_id', 'product_id'];
+    const safeMetadata: Record<string, string> = {};
+    if (metadata) {
+      for (const key of allowedMetadataKeys) {
+        if (metadata[key]) safeMetadata[key] = String(metadata[key]);
+      }
+    }
+
+    // Create PaymentIntent with server-verified amount
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(parsedAmount), // Amount in cents
-      currency: currency.toLowerCase(),
+      amount: finalAmount,
+      currency: price.currency,
       automatic_payment_methods: {
         enabled: true,
       },
       metadata: {
         userId: user.id,
         priceId,
-        ...metadata
+        ...safeMetadata
       },
-    });
-
-    console.log('✅ [create-payment-intent] PaymentIntent created:', paymentIntent.id);
-
-    console.log('✅ [create-payment-intent] created', {
-      paymentIntentId: paymentIntent.id,
-      amount: paymentIntent.amount,
-      currency: paymentIntent.currency,
-      status: paymentIntent.status
     });
 
     return NextResponse.json({
@@ -82,7 +103,6 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    // Stripe errors are structured; return a clearer status without leaking secrets.
     const maybeStripeError = error as any;
     const code: string | undefined =
       maybeStripeError?.code ?? maybeStripeError?.raw?.code;
@@ -91,27 +111,25 @@ export async function POST(req: NextRequest) {
       code,
       type: maybeStripeError?.type ?? maybeStripeError?.rawType,
       message: maybeStripeError?.message,
-      statusCode: maybeStripeError?.statusCode ?? maybeStripeError?.raw?.statusCode,
     });
 
     if (code === 'api_key_expired') {
       return NextResponse.json(
-        { error: 'Stripe API key expired', code },
+        { error: 'Stripe API key expired' },
         { status: 401 }
       );
     }
 
     if (code === 'invalid_api_key' || code === 'invalid_request_error') {
       return NextResponse.json(
-        { error: 'Stripe authentication failed', code },
+        { error: 'Stripe authentication failed' },
         { status: 401 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Failed to create payment intent', code },
+      { error: 'Failed to create payment intent' },
       { status: 500 }
     );
   }
 }
-
