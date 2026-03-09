@@ -15,8 +15,10 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isProtected || isAdminRoute) {
-    // Better Auth stores the session in a cookie named "better-auth.session_token"
-    const sessionToken = request.cookies.get('better-auth.session_token');
+    // Better Auth uses "__Secure-" prefix on HTTPS (production)
+    const sessionToken =
+      request.cookies.get('better-auth.session_token') ||
+      request.cookies.get('__Secure-better-auth.session_token');
 
     if (!sessionToken) {
       const signInUrl = new URL('/signin', request.url);

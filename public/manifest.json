@@ -1,0 +1,16 @@
+{
+  "name": "Dragonfly Trimarans",
+  "short_name": "Dragonfly",
+  "description": "The Automated Marketplace You've Been Waiting For",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
