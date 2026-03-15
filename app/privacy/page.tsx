@@ -2,11 +2,11 @@ export default async function PrivacyPage() {
   return (
     <div className="w-full flex flex-col">
       <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
-        <div className="mx-auto max-w-screen-xl w-full flex flex-col gap-[56px]">
-          <div className="flex flex-row gap-[56px] items-center justify-between">
-            <h1 className="text-articblue text-56">Privacy policy</h1>
+        <div className="mx-auto max-w-screen-xl w-full flex flex-col gap-32 lg:gap-[56px] px-16 xl:px-0">
+          <div className="flex flex-row gap-32 lg:gap-[56px] items-center justify-between">
+            <h1 className="text-articblue text-32 lg:text-56">Privacy policy</h1>
           </div>
-          <div className="w-full text-oceanblue text-20">
+          <div className="w-full text-oceanblue text-16 lg:text-20">
             <p>
               This policy explains in detail how "DRAGONFLY Trimarans User
               Forum" along with its affiliated companies (hereinafter "we",

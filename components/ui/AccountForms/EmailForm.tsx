@@ -20,7 +20,7 @@ export default function EmailForm({ userEmail }: { userEmail: string | null }) {
     const newEmail = e.currentTarget.newEmail.value.trim();
 
     if (newEmail === userEmail) {
-      setErrorMessage("L'e-mail est identique à l'ancien.");
+      setErrorMessage("The email is the same as the current one.");
       setIsSubmitting(false);
       return;
     }
@@ -29,10 +29,10 @@ export default function EmailForm({ userEmail }: { userEmail: string | null }) {
 
     if (result.success === false) {
       setErrorMessage(
-        result.error || "Erreur lors de la mise à jour de l'e-mail."
+        result.error || "Error updating email."
       );
     } else {
-      console.log('E-mail mis à jour avec succès.');
+      console.log('Email updated successfully.');
       router.refresh();
     }
 
@@ -50,7 +50,7 @@ export default function EmailForm({ userEmail }: { userEmail: string | null }) {
             defaultValue={userEmail ?? ''}
             type="email"
             name="newEmail"
-            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14 font-normal"
+            className="w-full p-2 sm:p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-12 sm:text-14 font-normal"
             placeholder="Your new email..."
           />
         </form>
@@ -65,7 +65,7 @@ export default function EmailForm({ userEmail }: { userEmail: string | null }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`text-fullwhite bg-oceanblue w-fit px-[10px] py-[5px] rounded-full ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`text-fullwhite bg-oceanblue w-fit px-[10px] py-[5px] rounded-full text-12 sm:text-14 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {isSubmitting ? 'Updating...' : 'Update your email'}
         </button>

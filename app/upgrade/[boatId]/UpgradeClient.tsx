@@ -215,7 +215,7 @@ export default function UpgradeClient({
   const currentPlanLabel = getProductLabel(boat.productId, products);
 
   return (
-    <section className="mx-auto max-w-screen-lg py-8 px-4">
+    <section className="mx-auto max-w-screen-lg py-8 px-16 xl:px-4">
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -228,7 +228,7 @@ export default function UpgradeClient({
 
         <div className="flex items-center gap-3 py-16">
           <ArrowUpCircle size={24} className=" text-articblue" />
-          <h1 className="text-3xl font-bold text-articblue">
+          <h1 className="text-xl md:text-3xl font-bold text-articblue">
             Upgrade Your Listing
           </h1>
         </div>
@@ -237,9 +237,9 @@ export default function UpgradeClient({
       {/* Current Listing Info */}
       <div className="bg-gray-50 rounded-xl p-6 mb-8 border">
         <div className="text-sm text-gray-500 mb-2">Current Listing</div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="text-xl font-semibold text-oceanblue">
+            <div className="text-lg md:text-xl font-semibold text-oceanblue">
               {getModelLabel(boat.model)}
             </div>
             <div className="text-gray-600">
@@ -253,7 +253,7 @@ export default function UpgradeClient({
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-64 py-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-24 lg:gap-64 py-16">
         {/* Plan Selection */}
         <div>
           <h2 className="text-xl font-semibold text-oceanblue mb-4">

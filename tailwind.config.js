@@ -11,6 +11,14 @@ module.exports = {
     './node_modules/@heroui/theme/dist/components/(autocomplete|avatar|checkbox|dropdown|input|number-input|select|slider|spinner|button|ripple|form|listbox|divider|popover|scroll-shadow|menu|skeleton).js'
   ],
   theme: {
+    screens: {
+      xs: '360px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px'
+    },
     container: {
       center: true,
       padding: '2rem',

@@ -29,7 +29,7 @@ export default function ForgotPassword({
     const email = String(formData.get('email')).trim();
 
     if (!email || !email.includes('@')) {
-      setMessage({ type: 'error', text: 'Veuillez entrer une adresse email valide.' });
+      setMessage({ type: 'error', text: 'Please enter a valid email address.' });
       setIsSubmitting(false);
       return;
     }
@@ -41,15 +41,15 @@ export default function ForgotPassword({
       });
 
       if (error) {
-        setMessage({ type: 'error', text: error.message || 'Une erreur est survenue.' });
+        setMessage({ type: 'error', text: error.message || 'An error occurred.' });
       } else {
         setMessage({
           type: 'success',
-          text: 'Si un compte existe avec cette adresse, un email de réinitialisation a été envoyé.'
+          text: 'If an account exists with this email, a password reset link has been sent.'
         });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Une erreur est survenue. Veuillez réessayer.' });
+      setMessage({ type: 'error', text: 'An error occurred. Please try again.' });
     }
 
     setIsSubmitting(false);

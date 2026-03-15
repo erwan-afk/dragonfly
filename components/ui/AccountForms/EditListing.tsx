@@ -852,7 +852,7 @@ export default function EditListing({
       setClientSecret('');
       setPaymentIntentId('');
 
-      setSuccessMessage('Votre annonce a été mise à niveau avec succès !');
+      setSuccessMessage('Your listing has been upgraded successfully!');
       setShowSuccessMessage(true);
     } catch (error) {
       console.error('❌ Error processing upgrade:', error);
@@ -988,7 +988,7 @@ export default function EditListing({
           console.error('❌ Error fetching updated plan:', error);
         }
 
-        setSuccessMessage('Votre annonce a été mise à niveau avec succès !');
+        setSuccessMessage('Your listing has been upgraded successfully!');
         setShowSuccessMessage(true);
       } else {
         toast.error(result.error || 'Failed to upgrade listing', {
@@ -1116,7 +1116,7 @@ export default function EditListing({
 
       // Success - show success message
       setSaveCompleted(true);
-      setSuccessMessage('Votre annonce a été mise à jour avec succès !');
+      setSuccessMessage('Your listing has been updated successfully!');
       setShowSuccessMessage(true);
     } catch (error) {
       console.error('❌ Error updating listing:', error);
@@ -1154,14 +1154,14 @@ export default function EditListing({
   const isFormValid = validateForm().isValid;
 
   return (
-    <div className="flex flex-row w-full justify-center gap-[150px] pb-[112px] mx-auto max-w-screen-2xl px-6">
+    <div className="flex flex-col lg:flex-row w-full justify-center gap-8 lg:gap-[150px] pb-[112px] mx-auto max-w-screen-2xl px-16 xl:px-6">
       {/* Formulaire au centre */}
       <form
         id="edit-listing-form"
         onSubmit={handleSubmit}
-        className=" flex-1 max-w-lg  flex flex-col gap-[32px] rounded-[24px]"
+        className="flex-1 max-w-full lg:max-w-lg flex flex-col gap-[32px] rounded-[24px]"
       >
-        <h1 className="text-40 text-oceanblue">
+        <h1 className="text-24 lg:text-40 text-oceanblue">
           <span className="text-articblue">Edit</span> your advert
         </h1>
 
@@ -1647,7 +1647,7 @@ export default function EditListing({
                 />
 
                 {/* Grille de cases de preview */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {Array.from({ length: maxPhotos }).map((_, index) => {
                     const hasPhoto = index < allPhotoPreviews.length;
                     const preview = allPhotoPreviews[index];
@@ -1793,8 +1793,8 @@ export default function EditListing({
       </form>
 
       {/* Payment Element à droite */}
-      <div className="w-full max-w-md border-2 border-oceanblue/10 p-6 gap-[24px] flex flex-col rounded-2xl self-start sticky top-[120px] ">
-        <h1 className="text-24 text-oceanblue">Edit </h1>
+      <div className="w-full lg:max-w-md border-2 border-oceanblue/10 p-4 md:p-6 gap-[24px] flex flex-col rounded-2xl self-start lg:sticky top-[120px]">
+        <h1 className="text-20 lg:text-24 text-oceanblue">Edit </h1>
         <div className="flex flex-col gap-[32px]">
           {/* Plan Summary - Only show when upgrading */}
           {isUpgrading && selectedUpgradeProductId && upgradeProduct && (

@@ -91,12 +91,12 @@ export default function ImageCarousel({
               {/* Conteneur de l'image avec navigation */}
               <div className="flex flex-col items-center justify-center h-full overflow-hidden rounded-[12px]">
                 {/* Image principale */}
-                <div className="grid grid-cols-[56px_1fr_56px] gap-3 w-full items-center h-[70vh]">
+                <div className="grid grid-cols-[40px_1fr_40px] sm:grid-cols-[56px_1fr_56px] gap-2 sm:gap-3 w-full items-center h-[50vh] sm:h-[70vh]">
                   <button
                     type="button"
                     aria-label="Previous image"
                     onClick={goToPrevious}
-                    className="w-[56px] h-[56px] border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full justify-self-start"
+                    className="w-[40px] h-[40px] sm:w-[56px] sm:h-[56px] border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full justify-self-start"
                   >
                     <ArrowSeemore className="rotate-180" size={28} />
                   </button>
@@ -116,7 +116,7 @@ export default function ImageCarousel({
                     type="button"
                     aria-label="Next image"
                     onClick={goToNext}
-                    className="w-[56px] h-[56px] border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full justify-self-end"
+                    className="w-[40px] h-[40px] sm:w-[56px] sm:h-[56px] border-2 border-articblue flex items-center justify-center text-articblue hover:border-oceanblue hover:text-oceanblue transition-colors bg-gray-100 rounded-full justify-self-end"
                   >
                     <ArrowSeemore size={28} />
                   </button>
@@ -128,7 +128,7 @@ export default function ImageCarousel({
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`w-[100px] h-[60px] rounded-[12px] overflow-hidden transition-all p-[2px] border-2 flex-shrink-0 relative ${
+                      className={`w-[60px] h-[40px] sm:w-[100px] sm:h-[60px] rounded-[12px] overflow-hidden transition-all p-[2px] border-2 flex-shrink-0 relative ${
                         index === currentIndex
                           ? 'border-articblue opacity-100 hover:border-oceanblue'
                           : 'border-gray-300 opacity-60 hover:border-oceanblue'

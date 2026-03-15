@@ -15,7 +15,7 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +44 1663 7348 00\nWebsite: www.wallas.fi\nUK: www.kuranda.co.uk',
           description:
-            'Spécialiste des chauffages diesel et cuisinières pour bateaux. Solutions compactes et efficaces pour les espaces restreints des multicoques.'
+            'Specialist in diesel heaters and cookers for boats. Compact and efficient solutions for the tight spaces of multihulls.'
         },
         {
           title: 'Eberspacher',
@@ -28,7 +28,7 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +1 250 478 9631\nWebsite: www.dickinsonmarine.com\nCanada: Victoria, BC',
           description:
-            'Fabricant de poêles et chauffages marins depuis 1932. Solutions robustes et fiables pour la navigation hauturière.'
+            'Manufacturer of marine stoves and heaters since 1932. Robust and reliable solutions for offshore sailing.'
         }
       ]
     },
@@ -48,14 +48,14 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +44 1202 677 939\nWebsite: www.melamine-warehouse.co.uk\nUK: Poole, Dorset',
           description:
-            'Spécialiste de la vaisselle mélamine marine. Large gamme de produits incassables et adaptés à la navigation.'
+            'Specialist in marine melamine tableware. Wide range of unbreakable products suited for sailing.'
         },
         {
           title: 'Marine Tableware',
           contact:
             'Tel: +33 2 97 55 85 15\nWebsite: www.marine-tableware.fr\nFrance: Vannes',
           description:
-            'Fabricant français de vaisselle marine. Produits durables et élégants pour équiper votre carré.'
+            'French manufacturer of marine tableware. Durable and elegant products for your saloon.'
         }
       ]
     },
@@ -129,21 +129,21 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +44 1962 717 001\nWebsite: www.international-pc.com\nUK: Southampton',
           description:
-            'Leader mondial des peintures marines. Antifoulings et systèmes de protection pour tous types de bateaux.'
+            'World leader in marine paints. Antifouling and protection systems for all types of boats.'
         },
         {
           title: 'Sika Marine',
           contact:
             'Tel: +41 58 436 40 40\nWebsite: www.sika.com/marine\nSwitzerland: Baar',
           description:
-            "Spécialiste des mastics et adhésifs marins. Solutions d'étanchéité et de collage haute performance."
+            "Specialist in marine sealants and adhesives. High-performance sealing and bonding solutions."
         },
         {
           title: 'Awlgrip',
           contact:
             'Tel: +1 401 253 4200\nWebsite: www.awlgrip.com\nUSA: Rhode Island',
           description:
-            'Peintures marines haut de gamme. Finitions professionnelles pour yachts et bateaux de prestige.'
+            'Premium marine paints. Professional finishes for yachts and prestige boats.'
         }
       ]
     },
@@ -156,21 +156,21 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +1 336 221 2211\nWebsite: www.sunbrella.com\nUSA: Glen Raven, NC',
           description:
-            'Fabricant de tissus techniques marins. Toiles résistantes aux UV et aux intempéries pour capotes et tauds.'
+            'Manufacturer of technical marine fabrics. UV and weather-resistant canvas for sprayhoods and covers.'
         },
         {
           title: 'Stamoid',
           contact:
             'Tel: +33 4 94 19 10 47\nWebsite: www.stamoid.com\nFrance: Cogolin',
           description:
-            'Spécialiste français des tissus techniques marins. Matériaux haute performance pour sellerie marine.'
+            'French specialist in technical marine fabrics. High-performance materials for marine upholstery.'
         },
         {
           title: 'Oceanair',
           contact:
             'Tel: +44 1329 239 400\nWebsite: www.oceanair.co.uk\nUK: Fareham',
           description:
-            "Fabricant britannique d'équipements de sellerie marine. Capotes, tauds et aménagements intérieurs."
+            "British manufacturer of marine upholstery equipment. Sprayhoods, covers and interior fittings."
         }
       ]
     },
@@ -183,21 +183,21 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +64 9 415 9782\nWebsite: www.trudesign.com\nNew Zealand: Auckland',
           description:
-            'Fabricant néo-zélandais de passe-coques composites. Solutions innovantes et durables pour multicoques.'
+            'New Zealand manufacturer of composite skin fittings. Innovative and durable solutions for multihulls.'
         },
         {
           title: 'Groco',
           contact:
             'Tel: +1 410 604 3800\nWebsite: www.groco.net\nUSA: Annapolis, MD',
           description:
-            'Spécialiste américain des équipements de coque. Passe-coques, vannes et systèmes de refroidissement.'
+            'American specialist in hull equipment. Skin fittings, seacocks and cooling systems.'
         },
         {
           title: 'Seacock Solutions',
           contact:
             'Tel: +44 1489 885 400\nWebsite: www.seacock.co.uk\nUK: Southampton',
           description:
-            'Fabricant britannique de vannes de coque et accessoires. Solutions fiables pour la sécurité nautique.'
+            'British manufacturer of seacocks and accessories. Reliable solutions for marine safety.'
         }
       ]
     },
@@ -209,21 +209,21 @@ export default function UsefulLinkPage() {
           title: 'Jabsco',
           contact: 'Tel: +44 1202 816 000\nWebsite: www.jabsco.com\nUK: Poole',
           description:
-            'Leader mondial des toilettes marines. Systèmes manuels et électriques pour tous types de bateaux.'
+            'World leader in marine toilets. Manual and electric systems for all types of boats.'
         },
         {
           title: 'Raritan',
           contact:
             'Tel: +1 856 825 4900\nWebsite: www.raritaneng.com\nUSA: Millville, NJ',
           description:
-            'Fabricant américain de toilettes et systèmes de traitement des eaux. Solutions écologiques et performantes.'
+            'American manufacturer of toilets and water treatment systems. Eco-friendly and high-performance solutions.'
         },
         {
           title: 'Tecma',
           contact:
             'Tel: +39 0321 956 133\nWebsite: www.tecma.com\nItaly: Novara',
           description:
-            'Spécialiste italien des toilettes marines électriques. Systèmes compacts et silencieux pour yachts.'
+            'Italian specialist in electric marine toilets. Compact and quiet systems for yachts.'
         }
       ]
     },
@@ -236,21 +236,21 @@ export default function UsefulLinkPage() {
           contact:
             'Tel: +44 1489 581 696\nWebsite: www.dyform.com\nUK: Southampton',
           description:
-            'Fabricant britannique de câbles et gréements. Haubans et étais haute performance pour multicoques.'
+            'British manufacturer of cables and rigging. High-performance shrouds and stays for multihulls.'
         },
         {
           title: 'Loos & Co',
           contact:
             'Tel: +1 203 348 2211\nWebsite: www.loosco.com\nUSA: Pomfret, CT',
           description:
-            'Spécialiste américain des câbles inox et accessoires de gréement. Solutions pour gréement dormant et courant.'
+            'American specialist in stainless steel cables and rigging accessories. Solutions for standing and running rigging.'
         },
         {
           title: 'Structural Rigging',
           contact:
             'Tel: +44 1489 570 770\nWebsite: www.structural-rigging.com\nUK: Hamble',
           description:
-            "Expert britannique du gréement sur mesure. Conception et fabrication d'étais et haubans pour multicoques."
+            "British expert in custom rigging. Design and manufacture of stays and shrouds for multihulls."
         }
       ]
     }
@@ -268,19 +268,19 @@ export default function UsefulLinkPage() {
 
   return (
     <div className="w-full bg-fullwhite">
-      <div className="mx-auto max-w-screen-xl flex flex-col gap-[80px] pb-[128px] px-8">
-        <div className="flex flex-row justify-between items-center ">
-          <h1 className="text-oceanblue text-56">
+      <div className="mx-auto max-w-screen-xl flex flex-col gap-40 lg:gap-[80px] pb-64 lg:pb-[128px] px-16 xl:px-0">
+        <div className="flex flex-col md:flex-row gap-16 lg:gap-0 justify-between items-start md:items-center">
+          <h1 className="text-oceanblue text-32 lg:text-56">
             <span className="text-articblue">Spare parts</span> directory
           </h1>
-          <p className="text-darkgrey w-1/2 text-16 font-light">
+          <p className="text-darkgrey w-full md:w-1/2 text-16 font-light">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
             consectetur quis enim ut volutpat. In massa nulla, blandit sit amet
             semper eget, accumsan eget nisl. In facilisis felis nulla.
           </p>
         </div>
 
-        <div className="flex flex-row gap-[80px] relative">
+        <div className="flex flex-col xl:flex-row gap-40 xl:gap-[80px] relative">
           {/* Menu sticky sur la gauche pour grands écrans */}
           <div className="hidden xl:block w-[280px] flex-shrink-0">
             <div className="sticky top-[128px]">
@@ -311,7 +311,7 @@ export default function UsefulLinkPage() {
                   className="flex items-center justify-between w-full text-left"
                 >
                   <span className="text-articblue text-20 font-medium">
-                    Navigation des sections
+                    Browse sections
                   </span>
                   <svg
                     className={`w-5 h-5 text-articblue transition-transform ${
@@ -351,34 +351,34 @@ export default function UsefulLinkPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-[80px]">
+            <div className="flex flex-col gap-40 lg:gap-[80px]">
               {sections.map((section) => (
                 <section
                   key={section.id}
                   id={section.id}
                   className="scroll-mt-[20px] w-full"
                 >
-                  <h2 className="text-oceanblue text-40 font-light mb-8">
+                  <h2 className="text-oceanblue text-24 lg:text-40 font-light mb-8">
                     {section.title}
                   </h2>
 
                   <div
                     className={`gap-6 ${
                       section.cards.length > 3
-                        ? 'flex overflow-x-scroll pb-4 max-w-[900px]'
-                        : 'flex'
+                        ? 'flex flex-col lg:flex-row overflow-x-auto pb-4 max-w-full lg:max-w-[900px]'
+                        : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                     }`}
                   >
                     {section.cards.map((card, index) => (
                       <div
                         key={index}
-                        className={`bg-lightgrey rounded-[12px] p-6 ${
+                        className={`bg-lightgrey rounded-12 p-6 ${
                           section.cards.length > 3
-                            ? 'w-[300px] flex-shrink-0'
-                            : 'min-w-[280px] max-w-[280px]'
+                            ? 'w-full lg:w-[300px] flex-shrink-0'
+                            : 'w-full'
                         }`}
                       >
-                        <h3 className="text-articblue text-32 font-medium mb-4">
+                        <h3 className="text-articblue text-24 lg:text-32 font-medium mb-4">
                           {card.title}
                         </h3>
 

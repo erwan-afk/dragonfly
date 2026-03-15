@@ -11,9 +11,6 @@ import FlagIcon from '@/components/icons/Flag';
 import { normalizeImageUrls } from '@/utils/image-urls';
 
 export default async function BoatPage({ params }: { params: { id: string } }) {
-  // Publicly, we only expose "active" listings.
-  // But right after purchase, the listing can still be "pending" until the Stripe webhook flips it to active.
-  // In that case, allow the owner to view their own listing (with a "processing" banner) to avoid an empty page.
   const session = await auth.api.getSession({ headers: await headers() });
   const viewerUserId = session?.user?.id ?? null;
 
@@ -44,7 +41,6 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
   const isActive = (boat as any).status === 'active';
   const isOwner = !!viewerUserId && (boat as any).userId === viewerUserId;
 
-  // If not active, only the owner can view it.
   if (!isActive && !isOwner) {
     notFound();
   }
@@ -61,10 +57,7 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
       })
     : 'Unknown';
 
-  // Normaliser et valider les URLs d'images R2
   const normalizedPhotos = normalizeImageUrls(boat.photos);
-
-  // Utiliser l'image par défaut si aucune photo valide n'est disponible
   const defaultImage = '/images/ocean.png';
   const allImages =
     normalizedPhotos.length > 0 ? normalizedPhotos : [defaultImage];
@@ -76,11 +69,10 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
   });
 
   return (
-    <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
-      {/* Composant invisible qui enregistre les vues */}
+    <section id="Boats" className="w-full pb-[64px] lg:pb-[128px] bg-fullwhite">
       <ViewTracker boatId={boat.id} />
 
-      <div className="mx-auto max-w-screen-xl flex flex-col gap-[56px]">
+      <div className="mx-auto max-w-screen-xl flex flex-col gap-[32px] lg:gap-[56px]">
         {/* Pending banner for owners */}
         {!isActive && isOwner && (
           <div className="rounded-[12px] border border-orange-200 bg-orange-50 px-4 py-3 text-oceanblue">
@@ -92,11 +84,10 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Galerie d'images avec carousel - Compatible R2 */}
         <BoatImageGallery images={allImages} boatModel={boat.model} />
 
-        <div className="flex flex-row justify-between">
-          <div className="flex-1 flex flex-col gap-48">
+        <div className="flex flex-col lg:flex-row justify-between gap-32">
+          <div className="flex-1 flex flex-col gap-24 lg:gap-48">
             <div className="flex flex-row gap-8 items-center px-2.5 py-1.5 w-fit bg-oceanblue rounded-lg uppercase text-fullwhite">
               {boat.country}{' '}
               {boat.country && (
@@ -108,13 +99,13 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
                 />
               )}
             </div>
-            <div className="gap-32 flex flex-col">
-              <h1 className="text-articblue leading-[100%] text-40">
+            <div className="gap-16 lg:gap-32 flex flex-col">
+              <h1 className="text-articblue leading-[100%] text-32 lg:text-40">
                 {dragonflyModels.find((model) => model.key === boat.model)
                   ?.label || boat.model}
               </h1>
 
-              <h2 className="text-oceanblue leading-[100%] text-32 font-medium">
+              <h2 className="text-oceanblue leading-[100%] text-24 lg:text-32 font-medium">
                 {boat.price.toString()}{' '}
                 {currencies.find((currency) => currency.key === boat.currency)
                   ?.symbol || boat.currency}
@@ -127,16 +118,16 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               )}
             </div>
             <div className="w-full h-[1px] bg-stonegrey"></div>
-            <h1 className="text-oceanblue text-24">Description</h1>
-            <p className="text-darkgrey text-20">{boat.description}</p>
+            <h1 className="text-oceanblue text-20 lg:text-24">Description</h1>
+            <p className="text-darkgrey text-16 lg:text-20">{boat.description}</p>
             <div className="w-full h-[1px] bg-stonegrey"></div>
-            <div className="flex flex-col gap-32">
-              <h1 className="text-oceanblue text-24">Specifications</h1>
-              <div className="flex flex-row gap-16 flex-wrap">
+            <div className="flex flex-col gap-16 lg:gap-32">
+              <h1 className="text-oceanblue text-20 lg:text-24">Specifications</h1>
+              <div className="flex flex-row gap-8 lg:gap-16 flex-wrap">
                 {boat.specifications.map((spec: string, index: number) => (
                   <div
                     key={index}
-                    className="w-fit px-[8px] py-[5px] bg-lightgrey rounded-[6px] text-oceanblue"
+                    className="w-fit px-[8px] py-[5px] bg-lightgrey rounded-[6px] text-oceanblue text-14"
                   >
                     {spec}
                   </div>
@@ -144,33 +135,30 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               </div>
             </div>
           </div>
-          <div className="w-[320px] flex flex-col gap-32">
-            {/* Card du vendeur */}
+
+          {/* Sidebar - seller card + stats */}
+          <div className="w-full lg:w-[320px] flex flex-col gap-32">
             <div className="bg-lightgrey rounded-[12px] p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-4">
-                {/* Avatar */}
                 <div className="w-[46px] h-[46px] rounded-full overflow-hidden bg-white border-2 border-articblue flex items-center justify-center">
-                  <div className="w-full h-full  flex items-center justify-center text-articblue text-18 font-medium">
+                  <div className="w-full h-full flex items-center justify-center text-articblue text-18 font-medium">
                     {boat.user?.name?.charAt(0).toUpperCase() || 'U'}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  {/* Nom */}
-                  <div className="text-articblue text-32 font-medium leading-tight">
+                  <div className="text-articblue text-24 lg:text-32 font-medium leading-tight">
                     {boat.user?.name || 'Anonymous user'}
                   </div>
 
-                  {/* Email */}
                   <div className="text-darkgrey text-14">
                     <span className="font-medium">Mail : </span>
-                    <span>{boat.user?.email || 'Not available'}</span>
+                    <span className="break-all">{boat.user?.email || 'Not available'}</span>
                   </div>
                 </div>
               </div>
             </div>
-            {/* Stats de vues */}
-            <div className="w-full h-[1px]  px-6">
+            <div className="w-full h-[1px] px-6">
               <ViewStats boatId={boat.id} viewCount={row.view_count || 0} />
             </div>
           </div>

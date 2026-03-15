@@ -1012,16 +1012,16 @@ export default function BoatListingFormV2({
   }).format(Number(selectedPrice?.unitAmount || 0) / 100);
 
   if (!products.length || !selectedPrice) {
-    return <div>Erreur: Aucun produit disponible</div>;
+    return <div>Error: No products available</div>;
   }
 
   const isFormValid = validateForm().isValid;
 
   return (
-    <div className="flex flex-row w-full justify-center gap-[150px] pb-[112px]  mx-auto max-w-screen-2xl px-6">
+    <div className="flex flex-col lg:flex-row w-full justify-center gap-8 lg:gap-[150px] pb-[112px] mx-auto max-w-screen-2xl px-4 sm:px-8 lg:px-16 xl:px-6">
       {/* Formulaire au centre */}
-      <div className=" flex-1 max-w-lg  flex flex-col gap-[32px] rounded-[24px]">
-        <h1 className="text-40 text-oceanblue">
+      <div className="flex-1 max-w-full lg:max-w-lg flex flex-col gap-6 sm:gap-[32px] rounded-[24px]">
+        <h1 className="text-20 sm:text-24 lg:text-40 text-oceanblue">
           <span className="text-articblue">
             {isRenewalMode ? 'Renew' : 'Create'}
           </span>{' '}
@@ -1030,11 +1030,11 @@ export default function BoatListingFormV2({
 
         {showTestTools && !isRenewalMode && (
           <div className="flex flex-col gap-2 rounded-xl border border-stonegrey/20 bg-stonegrey/5 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm text-oceanblue">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+              <div className="text-xs sm:text-sm text-oceanblue">
                 <span className="font-medium">Test tools</span> (dev only)
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   disabled={isLoading}
@@ -1179,13 +1179,13 @@ export default function BoatListingFormV2({
             </div>
           </div>
         )}
-        <div className="flex flex-col gap-[32px]">
+        <div className="flex flex-col gap-6 sm:gap-[32px]">
           {/* Listing Type - 4 boutons */}
           <div className="flex flex-col gap-4">
             <label className="text-oceanblue text-md font-medium">
               Listing Type
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {orderedProducts.map((product) => (
                 <button
                   key={product.id}
@@ -1193,7 +1193,7 @@ export default function BoatListingFormV2({
                   onClick={() => handleProductChange(product.id)}
                   disabled={isLoading}
                   className={`
-                    px-6 py-4 rounded-lg border-2 transition-all duration-300
+                    px-3 py-2 sm:px-6 sm:py-4 rounded-lg border-2 transition-all duration-300 text-sm sm:text-base
                     ${
                       selectedProductId === product.id
                         ? 'bg-articblue border-articblue text-white'
@@ -1317,7 +1317,7 @@ export default function BoatListingFormV2({
                             }
                           }}
                           className={`
-                            group flex flex-row overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px] relative
+                            group flex flex-col sm:flex-row overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px] relative
                             ${
                               isSelected
                                 ? 'border-2 border-articblue shadow-lg'
@@ -1361,7 +1361,7 @@ export default function BoatListingFormV2({
                           </div>
 
                           {/* Image avec effet de zoom */}
-                          <div className="w-1/3 flex justify-start items-end overflow-hidden relative">
+                          <div className="w-full sm:w-1/3 h-[150px] sm:h-auto flex justify-start items-end overflow-hidden relative">
                             <div className="absolute z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue">
                               {boat.country}
                             </div>
@@ -1372,22 +1372,22 @@ export default function BoatListingFormV2({
                           </div>
 
                           {/* Contenu */}
-                          <div className="flex flex-col p-32 flex-1 bg-fullwhite justify-around">
+                          <div className="flex flex-col p-3 sm:p-16 md:p-32 flex-1 bg-fullwhite justify-around">
                             <div className="flex flex-col">
-                              <h3 className="text-24 font-medium text-articblue">
+                              <h3 className="text-16 sm:text-24 font-medium text-articblue truncate">
                                 {getModelLabel(boat.model)}
                               </h3>
                             </div>
 
-                            <div className="text-oceanblue flex flex-row text-16">
+                            <div className="text-oceanblue flex flex-row text-14 sm:text-16 flex-wrap">
                               Price:
-                              <span className="text-oceanblue font-medium text-16 pl-2">
+                              <span className="text-oceanblue font-medium text-14 sm:text-16 pl-2">
                                 {formatPrice(Number(boat.price))}{' '}
                                 {boat.currency}
                               </span>
                             </div>
                             <div className="flex flex-col gap-1 mt-2">
-                              <p className="text-oceanblue text-16">
+                              <p className="text-oceanblue text-14 sm:text-16">
                                 Expires:{' '}
                                 <span
                                   className={`font-medium ${
@@ -1402,12 +1402,12 @@ export default function BoatListingFormV2({
                                 </span>
                               </p>
                               {isExpired && (
-                                <p className="text-red-500 text-16 font-medium">
+                                <p className="text-red-500 text-14 sm:text-16 font-medium">
                                   Expired
                                 </p>
                               )}
                               {!isExpired && (
-                                <p className="text-orange-500 text-16 font-medium">
+                                <p className="text-orange-500 text-14 sm:text-16 font-medium">
                                   Expires in {daysUntilExpiration} day
                                   {daysUntilExpiration !== 1 ? 's' : ''}
                                 </p>
@@ -1547,7 +1547,7 @@ export default function BoatListingFormV2({
                 ref={priceFieldRef}
                 className="flex flex-row gap-4 items-center"
               >
-                <div className="flex-1 flex flex-row gap-24 items-center justify-center">
+                <div className="flex-1 flex flex-row gap-3 sm:gap-6 items-center justify-center">
                   <NumberInput
                     className="text-oceanblue placeholder:text-oceanblue max-h-[48px] h-[48px] w-full "
                     label="Price"
@@ -1630,9 +1630,9 @@ export default function BoatListingFormV2({
                 isPriceOverLimit &&
                 priceLimit &&
                 upgradePlan && (
-                  <div className=" min-w-full mt-3 flex flex-row items-center justify-between max-w-[420px] rounded-lg border border-red-300 bg-red-50 p-3">
-                    <div className="flex flex-row items-center justify-between gap-3 w-full">
-                      <div className="text-sm text-red-800">
+                  <div className=" min-w-full mt-3 flex flex-row items-center justify-between max-w-[420px] rounded-lg border border-red-300 bg-red-50 p-2 sm:p-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 w-full">
+                      <div className="text-xs sm:text-sm text-red-800">
                         <p className="font-semibold">
                           Price too high for {selectedProduct?.name}
                         </p>
@@ -1863,7 +1863,7 @@ export default function BoatListingFormV2({
                     />
 
                     {/* Grille de cases de preview */}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                       {Array.from({ length: maxPhotos }).map((_, index) => {
                         const hasPhoto = index < photoPreview.length;
                         const preview = photoPreview[index];
@@ -1905,11 +1905,11 @@ export default function BoatListingFormV2({
                                       e.stopPropagation();
                                       removePhoto(index);
                                     }}
-                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                                    className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white rounded-full w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
                                     aria-label="Remove photo"
                                   >
                                     <svg
-                                      className="w-4 h-4"
+                                      className="w-3 h-3 sm:w-4 sm:h-4"
                                       fill="none"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
@@ -1921,7 +1921,7 @@ export default function BoatListingFormV2({
                                     </svg>
                                   </button>
                                 )}
-                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2 text-center">
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] sm:text-xs py-0.5 sm:py-1 px-1 sm:px-2 text-center">
                                   Photo {index + 1}
                                 </div>
                               </>
@@ -1936,7 +1936,7 @@ export default function BoatListingFormV2({
                                 {dragOverIndex === index ? (
                                   <>
                                     <svg
-                                      className="w-12 h-12 mb-2 animate-pulse"
+                                      className="w-8 h-8 sm:w-12 sm:h-12 mb-1 sm:mb-2 animate-pulse"
                                       fill="none"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
@@ -1946,14 +1946,14 @@ export default function BoatListingFormV2({
                                     >
                                       <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
-                                    <span className="text-sm font-semibold">
+                                    <span className="text-xs sm:text-sm font-semibold">
                                       Drop photo here
                                     </span>
                                   </>
                                 ) : (
                                   <>
                                     <svg
-                                      className="w-10 h-10 mb-2"
+                                      className="w-6 h-6 sm:w-10 sm:h-10 mb-1 sm:mb-2"
                                       fill="none"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
@@ -2011,10 +2011,10 @@ export default function BoatListingFormV2({
       </div>
 
       {/* Payment Element à droite */}
-      <div className="w-full max-w-md border-2 border-oceanblue/10 p-6 gap-[24px] flex flex-col rounded-2xl self-start sticky top-[120px] ">
-        <h1 className="text-24 text-oceanblue">Order summary</h1>
-        <div className="flex flex-col gap-[32px]">
-          <div className="flex flex-col gap-[24px] px-[20px] border-2 border-articblue rounded-lg p-4 text-oceanblue ">
+      <div className="w-full lg:max-w-md border-2 border-oceanblue/10 p-3 sm:p-4 md:p-6 gap-4 sm:gap-[24px] flex flex-col rounded-2xl self-start lg:sticky top-[120px]">
+        <h1 className="text-18 sm:text-20 lg:text-24 text-oceanblue">Order summary</h1>
+        <div className="flex flex-col gap-6 sm:gap-[32px]">
+          <div className="flex flex-col gap-4 sm:gap-[24px] px-3 sm:px-[20px] border-2 border-articblue rounded-lg p-3 sm:p-4 text-oceanblue text-sm sm:text-base">
             {/* Limite de prix */}
             <div className="flex flex-col gap-[12px]">
               <div className="text-oceanblue text-20 font-medium">
@@ -2101,12 +2101,12 @@ export default function BoatListingFormV2({
           )}
 
           <div className="flex flex-col justify-center">
-            <div className="flex flex-row justify-center items-center text-articblue">
+            <div className="flex flex-row justify-center items-center text-articblue gap-1">
               <Lock />
-              <p className="text-darkgrey">Secure Checkout - SSL Encrypted</p>
+              <p className="text-darkgrey text-xs sm:text-base">Secure Checkout - SSL Encrypted</p>
             </div>
             <div className="flex flex-row justify-center items-center gap-[10px]">
-              <p className="flex flex-col justify-center text-stonegrey text-[12px]">
+              <p className="flex flex-col justify-center text-stonegrey text-[10px] sm:text-[12px]">
                 Ensuring your financial and personal details are secure during
                 every transaction.
               </p>

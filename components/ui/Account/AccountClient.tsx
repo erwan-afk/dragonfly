@@ -191,7 +191,7 @@ export function AccountClient({
   // Attendre que les données soient chargées avant d'afficher
   if (!userDetails || !boats) {
     return (
-      <section className="mx-auto max-w-screen-xl rounded-16 mb-[120px] h-fit flex flex-row gap-48 justify-between items-start">
+      <section className="mx-auto max-w-screen-xl rounded-16 mb-[120px] h-fit flex flex-col lg:flex-row gap-24 lg:gap-48 justify-between items-start px-8 sm:px-16 xl:px-0">
         <div className="flex-1 flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-articblue mx-auto mb-4"></div>
@@ -203,24 +203,24 @@ export function AccountClient({
   }
 
   return (
-    <section className="mx-auto max-w-screen-xl rounded-16 mb-[120px] h-fit flex flex-row gap-48 justify-between items-start">
+    <section className="mx-auto max-w-screen-xl rounded-16 mb-[120px] h-fit flex flex-col lg:flex-row gap-24 lg:gap-48 justify-between items-start px-8 sm:px-16 xl:px-0">
       {isLoading ? (
         <>
           <Skeleton
-            className="w-[200px] h-[600px] rounded-[24px] bg-gray-200"
+            className="w-full lg:w-[200px] h-[200px] lg:h-[600px] rounded-[24px] bg-gray-200"
             isLoaded={false}
           />
           <Skeleton
-            className="flex-1 h-[600px] rounded-[24px] bg-gray-200"
+            className="flex-1 w-full h-[400px] lg:h-[600px] rounded-[24px] bg-gray-200"
             isLoaded={false}
           />
         </>
       ) : (
         <>
           {/* Contenu de droite qui peut avoir n'importe quelle hauteur */}
-          <div className="w-full rounded-[24px] flex flex-col gap-48 ">
+          <div className="w-full rounded-[24px] flex flex-col gap-24 lg:gap-48">
             <>
-              <h1 className=" text-56 text-articblue">My ads</h1>
+              <h1 className="text-24 sm:text-32 lg:text-56 text-articblue">My ads</h1>
 
               {/* Status message banner */}
               {statusMessage && (
@@ -237,10 +237,10 @@ export function AccountClient({
 
               {/* Pending banner */}
               {hasPendingBoats && (
-                <div className="bg-articblue/10 border border-articblue/30 text-articblue px-4 py-3 rounded-md mb-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-4 w-4 rounded-full border-2 border-articblue border-t-transparent animate-spin" />
-                    <div className="text-sm">
+                <div className="bg-articblue/10 border border-articblue/30 text-articblue px-3 sm:px-4 py-3 rounded-md mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-articblue border-t-transparent animate-spin" />
+                    <div className="text-xs sm:text-sm min-w-0">
                       Payment is being confirmed…{' '}
                       <span className="font-medium">
                         {pendingBoatsCount} pending ad(s)
@@ -251,7 +251,7 @@ export function AccountClient({
                   <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="text-sm px-3 py-2 rounded-md bg-articblue text-white hover:bg-articblue/90 transition-colors"
+                    className="text-xs sm:text-sm px-3 py-2 rounded-md bg-articblue text-white hover:bg-articblue/90 transition-colors flex-shrink-0 w-fit"
                   >
                     Refresh
                   </button>
@@ -260,13 +260,13 @@ export function AccountClient({
 
               {activeBoats.length === 0 && pendingBoats.length === 0 ? (
                 <div className="flex flex-col gap-[20px] w-full items-center justify-center">
-                  <p className="text-oceanblue text-18 text-center">
-                    Vous n'avez pas encore d'annonces.{' '}
+                  <p className="text-oceanblue text-14 sm:text-18 text-center">
+                    You don't have any listings yet.{' '}
                     <Link
                       href="/list-boat"
                       className="text-articblue font-medium hover:underline"
                     >
-                      Commencez dès maintenant !
+                      Get started now!
                     </Link>
                   </p>
                   <Button
@@ -287,18 +287,18 @@ export function AccountClient({
                         {pendingBoats.map((boat: any) => (
                           <div
                             key={boat.id}
-                            className="rounded-xl border border-articblue/30 bg-articblue/5 p-4 flex items-center justify-between gap-4"
+                            className="rounded-xl border border-articblue/30 bg-articblue/5 p-3 sm:p-4 flex items-center justify-between gap-3"
                           >
-                            <div className="flex flex-col">
-                              <div className="text-articblue font-semibold">
+                            <div className="flex flex-col min-w-0">
+                              <div className="text-articblue font-semibold text-sm sm:text-base truncate">
                                 {getModelLabel(boat.model)}
                               </div>
-                              <div className="text-sm text-oceanblue">
+                              <div className="text-xs sm:text-sm text-oceanblue">
                                 This ad is pending confirmation and will become
                                 clickable once active.
                               </div>
                             </div>
-                            <div className="h-4 w-4 rounded-full border-2 border-articblue border-t-transparent animate-spin" />
+                            <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-articblue border-t-transparent animate-spin" />
                           </div>
                         ))}
                       </div>
@@ -349,10 +349,10 @@ export function AccountClient({
                 </div>
               )}
 
-              <h1 className="text-40 text-articblue">My details</h1>
-              <div className="flex flex-row gap-48">
+              <h1 className="text-24 sm:text-32 lg:text-56 text-articblue">My details</h1>
+              <div className="flex flex-col md:flex-row gap-24 md:gap-48">
                 <div className="flex flex-col w-full">
-                  <h3 className="text-20 text-articblue font-medium mb-4">
+                  <h3 className="text-16 sm:text-18 md:text-20 text-articblue font-medium mb-4">
                     Change personal informations
                   </h3>
                   <div className="flex flex-col gap-4 w-full">
@@ -360,9 +360,10 @@ export function AccountClient({
                     <NameForm userName={userDetails.full_name} />
                   </div>
                 </div>
-                <div className="max-h-full w-[1px] bg-darkgrey/30"></div>
+                <div className="hidden md:block max-h-full w-[1px] bg-darkgrey/30"></div>
+                <div className="w-full h-[1px] bg-darkgrey/30 md:hidden"></div>
                 <div className="flex flex-col w-full">
-                  <h3 className="text-20 text-articblue font-medium mb-4">
+                  <h3 className="text-16 sm:text-18 md:text-20 text-articblue font-medium mb-4">
                     Change Password
                   </h3>
                   <PasswordForm />
@@ -370,11 +371,12 @@ export function AccountClient({
               </div>
 
               {/* Section des achats */}
-              <h1 className="text-40 text-articblue">My purchases</h1>
+              <h1 className="text-24 sm:text-32 lg:text-56 text-articblue">My purchases</h1>
 
               {payments && payments.length > 0 ? (
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                  <div className="overflow-x-auto">
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gradient-to-r from-articblue to-oceanblue border-b border-gray-200">
                         <tr>
@@ -401,7 +403,6 @@ export function AccountClient({
                             key={payment.id}
                             className="hover:bg-gray-50 transition-colors"
                           >
-                            {/* Boat */}
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
@@ -427,15 +428,11 @@ export function AccountClient({
                                 </div>
                               </div>
                             </td>
-
-                            {/* Plan */}
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-articblue/10 text-articblue">
                                 {payment.product_name || 'Standard'}
                               </span>
                             </td>
-
-                            {/* Amount */}
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-semibold text-gray-900">
                                 €
@@ -444,8 +441,6 @@ export function AccountClient({
                                 )}
                               </div>
                             </td>
-
-                            {/* Status */}
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -461,8 +456,6 @@ export function AccountClient({
                                   : payment.status}
                               </span>
                             </td>
-
-                            {/* Date */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(payment.created_at).toLocaleDateString(
                                 'en-US',
@@ -473,15 +466,77 @@ export function AccountClient({
                                 }
                               )}
                             </td>
-
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
 
+                  {/* Mobile cards */}
+                  <div className="md:hidden divide-y divide-gray-200">
+                    {payments.map((payment: any) => (
+                      <div key={payment.id} className="p-3 sm:p-4 flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <svg
+                                className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                />
+                              </svg>
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate min-w-0">
+                              {getModelLabel(payment.boat_model) ||
+                                'Boat Purchase'}
+                            </div>
+                          </div>
+                          <span
+                            className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full flex-shrink-0 ${
+                              payment.status === 'succeeded' ||
+                              payment.status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {payment.status === 'succeeded' ||
+                            payment.status === 'completed'
+                              ? 'Completed'
+                              : payment.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-xs sm:text-sm">
+                          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                            <span className="inline-flex px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full bg-articblue/10 text-articblue">
+                              {payment.product_name || 'Standard'}
+                            </span>
+                            <span className="text-gray-500 text-[10px] sm:text-xs">
+                              {new Date(
+                                payment.created_at
+                              ).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          <div className="font-semibold text-gray-900 text-xs sm:text-sm">
+                            €{parseFloat(payment.amount.toString()).toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   {/* Summary Footer */}
-                  <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                  <div className="bg-gray-50 px-4 md:px-6 py-4 border-t border-gray-200">
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-600">
                         <span className="font-medium">{payments.length}</span>{' '}

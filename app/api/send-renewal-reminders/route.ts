@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   // Vérification de l'autorisation
   if (!isAuthorized(request)) {
     return NextResponse.json(
-      { error: 'Non autorisé' },
+      { error: 'Unauthorized' },
       { status: 401 }
     );
   }
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Rappels de renouvellement traités avec succès',
+      message: 'Renewal reminders processed successfully',
       timestamp: new Date().toISOString(),
       duration: `${duration}ms`
     });
@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: 'Erreur interne du serveur',
-        message: 'Une erreur est survenue lors du traitement des rappels',
+        error: 'Internal server error',
+        message: 'An error occurred while processing renewal reminders',
         timestamp: new Date().toISOString(),
         duration: `${duration}ms`
       },
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   // Vérification de l'autorisation
   if (!isAuthorized(request)) {
     return NextResponse.json(
-      { error: 'Non autorisé' },
+      { error: 'Unauthorized' },
       { status: 401 }
     );
   }
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Rappels de renouvellement traités avec succès',
+      message: 'Renewal reminders processed successfully',
       timestamp: new Date().toISOString(),
       duration: `${duration}ms`
     });
@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: 'Erreur interne du serveur',
-        message: 'Une erreur est survenue lors du traitement des rappels',
+        error: 'Internal server error',
+        message: 'An error occurred while processing renewal reminders',
         timestamp: new Date().toISOString(),
         duration: `${duration}ms`
       },
@@ -126,9 +126,9 @@ export async function POST(request: NextRequest) {
 
 // Bloquer les autres méthodes HTTP
 export async function PUT() {
-  return NextResponse.json({ error: 'Méthode non autorisée' }, { status: 405 });
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
 
 export async function DELETE() {
-  return NextResponse.json({ error: 'Méthode non autorisée' }, { status: 405 });
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }

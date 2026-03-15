@@ -15,7 +15,6 @@ import ArrowDropdown from '@/components/icons/ArrowDropdown';
 import Link from 'next/link';
 import FlagIcon from './icons/Flag';
 
-// Liste des prix maximums prédéfinis
 const PRICE_OPTIONS = [
   { value: 0, label: 'Tout' },
   { value: 2000, label: '2 000 €' },
@@ -54,18 +53,16 @@ export default function SearchBar() {
   const [selectedAttributes, setSelectedAttributes] = useState<Set<string>>(
     new Set()
   );
-  const [maxPrice, setMaxPrice] = useState<number>(0); // 0 = Tout
+  const [maxPrice, setMaxPrice] = useState<number>(0);
   const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
   const [isAttributeDropdownOpen, setIsAttributeDropdownOpen] = useState(false);
 
-  // Mémoiser la liste plate des attributs
   const flatAttributes = useMemo(
     () => ATTRIBUTES.flatMap((section: any) => section.items),
     []
   );
 
   const handleSearch = () => {
-    // Construire les paramètres de recherche
     const params = new URLSearchParams();
 
     if (selectedModel) {
@@ -80,12 +77,10 @@ export default function SearchBar() {
       params.append('maxPrice', maxPrice.toString());
     }
 
-    // Ajouter les attributs sélectionnés
     if (selectedAttributes.size > 0) {
       params.append('attributes', Array.from(selectedAttributes).join(','));
     }
 
-    // Rediriger vers la page forsale avec les paramètres
     router.push(`/forsale?${params.toString()}`);
   };
 
@@ -102,8 +97,8 @@ export default function SearchBar() {
   }, []);
 
   return (
-    <div className="bg-fullwhite rounded-16 p-6  flex flex-col gap-4 items-center">
-      <div className="flex flex-row w-full text-black text-16 gap-4">
+    <div className="bg-fullwhite rounded-16 p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 items-center w-full md:w-auto md:min-w-[340px]">
+      <div className="flex flex-row w-full text-black text-14 sm:text-16 gap-4">
         <div className="cursor-pointer w-full text-articblue font-medium text-center border-b-2 border-articblue pb-2">
           Buy
         </div>
@@ -115,19 +110,19 @@ export default function SearchBar() {
         </Link>
       </div>
       {/* Première ligne : Model + Prix max */}
-      <div className="flex flex-row w-full gap-4">
+      <div className="grid grid-cols-2 w-full gap-2 sm:gap-4">
         {/* Dropdown Model */}
         <div className="w-full">
           <Dropdown>
             <DropdownTrigger>
-              <button className="w-full rounded-full px-5 h-10 flex flex-row gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
-                <div className="font-medium text-14 truncate flex-1">
+              <button className="w-full rounded-full px-3 sm:px-5 h-7 sm:h-10 flex flex-row gap-1 sm:gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
+                <div className="font-medium text-[12px] sm:text-14 truncate flex-1">
                   {selectedModel
                     ? BOAT_MODELS.find((m) => m.key === selectedModel)?.label ||
                       'Model'
                     : 'Model'}
                 </div>
-                <ArrowDropdown className="flex-shrink-0" />
+                <ArrowDropdown className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </DropdownTrigger>
             <DropdownMenu
@@ -140,7 +135,7 @@ export default function SearchBar() {
                 setSelectedModel(key as string);
               }}
             >
-              {[{ key: '', label: 'Tous les modèles' }, ...BOAT_MODELS].map(
+              {[{ key: '', label: 'All models' }, ...BOAT_MODELS].map(
                 (model) => (
                   <DropdownItem
                     key={model.key}
@@ -166,14 +161,14 @@ export default function SearchBar() {
             onOpenChange={setIsPriceDropdownOpen}
           >
             <DropdownTrigger>
-              <button className="w-full rounded-full px-5 h-10 flex flex-row gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
-                <div className="font-medium text-14 truncate flex-1">
+              <button className="w-full rounded-full px-3 sm:px-5 h-7 sm:h-10 flex flex-row gap-1 sm:gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
+                <div className="font-medium text-[12px] sm:text-14 truncate flex-1">
                   {maxPrice === 0
                     ? 'Price max'
                     : PRICE_OPTIONS.find((p) => p.value === maxPrice)?.label ||
                       'Price max'}
                 </div>
-                <ArrowDropdown className="flex-shrink-0" />
+                <ArrowDropdown className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </DropdownTrigger>
             <DropdownMenu
@@ -206,21 +201,21 @@ export default function SearchBar() {
       </div>
 
       {/* Deuxième ligne : Attributs + Localisation */}
-      <div className="flex flex-row w-full gap-4">
+      <div className="grid grid-cols-2 w-full gap-2 sm:gap-4">
         {/* Dropdown Attributs */}
-        <div className="w-full min-w-[150px]">
+        <div className="w-full">
           <Dropdown
             isOpen={isAttributeDropdownOpen}
             onOpenChange={setIsAttributeDropdownOpen}
           >
             <DropdownTrigger>
-              <button className="w-full rounded-full px-5 h-10 flex flex-row gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
-                <div className="font-medium text-14 truncate flex-1">
+              <button className="w-full rounded-full px-3 sm:px-5 h-7 sm:h-10 flex flex-row gap-1 sm:gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
+                <div className="font-medium text-[12px] sm:text-14 truncate flex-1">
                   {selectedAttributes.size === 0
                     ? 'Attributes'
                     : `${selectedAttributes.size} selected`}
                 </div>
-                <ArrowDropdown className="flex-shrink-0" />
+                <ArrowDropdown className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </DropdownTrigger>
             <DropdownMenu
@@ -257,11 +252,11 @@ export default function SearchBar() {
         </div>
 
         {/* Dropdown Localisation */}
-        <div className="w-full min-w-[150px]">
+        <div className="w-full">
           <Dropdown>
             <DropdownTrigger>
-              <button className="w-full rounded-full px-5 h-10 flex flex-row gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
-                <div className="font-medium text-14 truncate flex-1">
+              <button className="w-full rounded-full px-3 sm:px-5 h-7 sm:h-10 flex flex-row gap-1 sm:gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
+                <div className="font-medium text-[12px] sm:text-14 truncate flex-1">
                   {selectedCountry
                     ? COUNTRIES.find((c) => c.key === selectedCountry)?.label ||
                       'Location'
@@ -278,7 +273,7 @@ export default function SearchBar() {
                   ''
                 )}
 
-                <ArrowDropdown className="flex-shrink-0" />
+                <ArrowDropdown className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </DropdownTrigger>
             <DropdownMenu
@@ -318,7 +313,7 @@ export default function SearchBar() {
       {/* Bouton Search */}
       <button
         onClick={handleSearch}
-        className="bg-articblue w-full text-center text-16 text-fullwhite px-8 py-1 rounded-full font-medium hover:bg-oceanblue transition-colors whitespace-nowrap"
+        className="bg-articblue w-full text-center text-14 sm:text-16 text-fullwhite px-8 py-1 rounded-full font-medium hover:bg-oceanblue transition-colors whitespace-nowrap"
       >
         Search
       </button>

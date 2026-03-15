@@ -221,11 +221,16 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
 
     return (
       <div className="w-full flex flex-col">
-        <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
+        <section
+          id="Boats"
+          className="w-full pb-[64px] lg:pb-[128px] bg-fullwhite px-16 md:px-0"
+        >
           <div className="mx-auto max-w-screen-xl w-full flex flex-col gap-[56px]">
-            <div className="flex flex-row items-center justify-between">
-              <h1 className="text-articblue text-56">Advertisements</h1>
-              <p className="text-darkgrey w-1/2 text-16 font-light">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-16">
+              <h1 className="text-articblue text-32 lg:text-56">
+                Advertisements
+              </h1>
+              <p className="text-darkgrey w-full md:w-1/2 text-14 lg:text-16 font-light">
                 Browse all available Dragonfly boats for sale. Use the filters
                 below to narrow down your search by model, location, and price
                 range.
@@ -246,11 +251,16 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     console.error('Error fetching boats:', error);
     return (
       <div className="w-full flex flex-col">
-        <section id="Boats" className="w-full pb-[128px] bg-fullwhite">
+        <section
+          id="Boats"
+          className="w-full pb-[64px] lg:pb-[128px] bg-fullwhite"
+        >
           <div className="mx-auto max-w-screen-xl w-full flex flex-col gap-[56px]">
-            <div className="flex flex-row items-center justify-between">
-              <h1 className="text-articblue text-56">Advertisements</h1>
-              <p className="text-darkgrey w-1/2 text-16 font-light">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-16">
+              <h1 className="text-articblue text-32 lg:text-56">
+                Advertisements
+              </h1>
+              <p className="text-darkgrey w-full md:w-1/2 text-14 lg:text-16 font-light">
                 Error loading advertisements. Please try again later.
               </p>
             </div>

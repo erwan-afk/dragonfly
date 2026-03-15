@@ -53,29 +53,29 @@ function validateContactData(data: any): { isValid: boolean; errors: ValidationE
   
   // Validation des champs requis
   if (!data.name || typeof data.name !== 'string') {
-    errors.push({ field: 'name', message: 'Le nom est requis' });
+    errors.push({ field: 'name', message: 'Name is required' });
   } else if (data.name.length < 2 || data.name.length > 100) {
-    errors.push({ field: 'name', message: 'Le nom doit contenir entre 2 et 100 caractères' });
+    errors.push({ field: 'name', message: 'Name must be between 2 and 100 characters' });
   }
 
   if (!data.email || typeof data.email !== 'string') {
-    errors.push({ field: 'email', message: 'L\'email est requis' });
+    errors.push({ field: 'email', message: 'Email is required' });
   } else if (!validator.isEmail(data.email)) {
-    errors.push({ field: 'email', message: 'Format d\'email invalide' });
+    errors.push({ field: 'email', message: 'Invalid email format' });
   } else if (data.email.length > 254) {
-    errors.push({ field: 'email', message: 'L\'email est trop long' });
+    errors.push({ field: 'email', message: 'Email is too long' });
   }
 
   if (!data.subject || typeof data.subject !== 'string') {
-    errors.push({ field: 'subject', message: 'Le sujet est requis' });
+    errors.push({ field: 'subject', message: 'Subject is required' });
   } else if (data.subject.length < 5 || data.subject.length > 200) {
-    errors.push({ field: 'subject', message: 'Le sujet doit contenir entre 5 et 200 caractères' });
+    errors.push({ field: 'subject', message: 'Subject must be between 5 and 200 characters' });
   }
 
   if (!data.message || typeof data.message !== 'string') {
-    errors.push({ field: 'message', message: 'Le message est requis' });
+    errors.push({ field: 'message', message: 'Message is required' });
   } else if (data.message.length < 10 || data.message.length > 5000) {
-    errors.push({ field: 'message', message: 'Le message doit contenir entre 10 et 5000 caractères' });
+    errors.push({ field: 'message', message: 'Message must be between 10 and 5000 characters' });
   }
 
   return { isValid: errors.length === 0, errors };
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     } catch (rateLimiterRes) {
       logSuspiciousActivity(ip, userAgent, 'Rate limit exceeded');
       return NextResponse.json(
-        { error: 'Trop de tentatives. Veuillez réessayer dans une heure.' },
+        { error: 'Too many attempts. Please try again in one hour.' },
         { status: 429 }
       );
     }
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       logSuspiciousActivity(ip, userAgent, 'Invalid JSON');
       return NextResponse.json(
-        { error: 'Données invalides' },
+        { error: 'Invalid data' },
         { status: 400 }
       );
     }
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
     if (!data.csrfToken || !data.sessionId) {
       logSuspiciousActivity(ip, userAgent, 'Missing CSRF token');
       return NextResponse.json(
-        { error: 'Token de sécurité manquant' },
+        { error: 'Security token missing' },
         { status: 400 }
       );
     }
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
     if (!await validateCSRFToken(data.sessionId, data.csrfToken)) {
       logSuspiciousActivity(ip, userAgent, 'Invalid CSRF token');
       return NextResponse.json(
-        { error: 'Token de sécurité invalide' },
+        { error: 'Invalid security token' },
         { status: 401 }
       );
     }
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
     if (data.honeypot && data.honeypot.trim() !== '') {
       logSuspiciousActivity(ip, userAgent, 'Honeypot triggered');
       return NextResponse.json(
-        { error: 'Bot détecté' },
+        { error: 'Bot detected' },
         { status: 400 }
       );
     }
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     const { isValid, errors } = validateContactData(data);
     if (!isValid) {
       return NextResponse.json(
-        { error: 'Données invalides', details: errors },
+        { error: 'Invalid data', details: errors },
         { status: 400 }
       );
     }
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
     if (detectSpam(sanitizedData)) {
       logSuspiciousActivity(ip, userAgent, 'Spam detected');
       return NextResponse.json(
-        { error: 'Message détecté comme spam' },
+        { error: 'Message detected as spam' },
         { status: 400 }
       );
     }
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
     console.log(`[SUCCESS] Contact form submitted from IP: ${ip}`);
 
     return NextResponse.json(
-      { message: 'Email envoyé avec succès' },
+      { message: 'Email sent successfully' },
       { status: 200 }
     );
 
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
     
     // Ne pas exposer les détails de l'erreur
     return NextResponse.json(
-      { error: 'Une erreur technique est survenue. Veuillez réessayer plus tard.' },
+      { error: 'A technical error occurred. Please try again later.' },
       { status: 500 }
     );
   }

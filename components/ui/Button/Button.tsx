@@ -54,7 +54,7 @@ export default function Button({
   const TextWrapper = anim_disabled ? 'span' : motion.span;
   const IconWrapper = anim_disabled ? 'span' : motion.span;
 
-  const buttonClasses = `relative flex items-center py-1 pl-[12px] font-medium ${bgColor} ${iconColor} ${fullwidth ? `w-full justify-center` : 'w-fit'} text-16 rounded-[100px] overflow-hidden
+  const buttonClasses = `relative flex items-center py-1 pl-[12px] font-medium ${bgColor} ${iconColor} ${fullwidth ? `w-full justify-center` : 'w-fit'} ${textsize} rounded-[100px] overflow-hidden
     ${outline ? `border-2 ${outline}` : ''}
     ${lowercase ? 'pr-[12px]' : 'uppercase pr-[8px]'}
     ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`;

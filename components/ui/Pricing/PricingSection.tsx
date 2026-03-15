@@ -58,14 +58,14 @@ export default function PricingSection({
     <section
       className={`w-full ${pathname === '/pricing' ? '' : 'pb-[100px]'}  `}
     >
-      <div className="mx-auto max-w-screen-xl flex flex-col gap-32">
+      <div className="mx-auto max-w-screen-xl flex flex-col gap-32 px-16 xs:px-16 xl:px-0">
         {pathname !== '/pricing' && (
           <h1 className="text-oceanblue text-32">
             <span className="text-articblue">Pricing</span> for ads
           </h1>
         )}
 
-        <div className="flex flex-row gap-16 justify-center items-stretch">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 xl:flex xl:flex-row gap-16 justify-center items-stretch">
           {sortedProducts.map((product, index) => {
             const price = product?.prices?.[0];
             const productName = product.name ?? 'No title';

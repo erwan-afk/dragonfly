@@ -68,7 +68,7 @@ export default function NameForm({ userName }: { userName: string | null }) {
       </div>
 
       <input
-        className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14"
+        className="w-full p-2 sm:p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-12 sm:text-14"
         name="fullName"
         placeholder="Enter your new name"
         value={inputValue}

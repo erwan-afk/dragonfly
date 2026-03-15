@@ -23,12 +23,12 @@ export default function ResetPasswordPage() {
     setMessage(null);
 
     if (password.length < 8) {
-      setMessage({ type: 'error', text: 'Le mot de passe doit contenir au moins 8 caractères.' });
+      setMessage({ type: 'error', text: 'Password must be at least 8 characters.' });
       return;
     }
 
     if (password !== confirmPassword) {
-      setMessage({ type: 'error', text: 'Les mots de passe ne correspondent pas.' });
+      setMessage({ type: 'error', text: 'Passwords do not match.' });
       return;
     }
 
@@ -41,13 +41,13 @@ export default function ResetPasswordPage() {
       });
 
       if (error) {
-        setMessage({ type: 'error', text: error.message || 'Une erreur est survenue.' });
+        setMessage({ type: 'error', text: error.message || 'An error occurred.' });
       } else {
-        setMessage({ type: 'success', text: 'Mot de passe réinitialisé avec succès ! Redirection...' });
+        setMessage({ type: 'success', text: 'Password reset successfully! Redirecting...' });
         setTimeout(() => router.push('/signin'), 2000);
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Une erreur est survenue. Le lien a peut-être expiré.' });
+      setMessage({ type: 'error', text: 'An error occurred. The link may have expired.' });
     }
 
     setIsSubmitting(false);
@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
     <SignInWrapper>
       <div className="flex flex-col w-full">
         <div className="flex flex-col space-y-1 mb-8 pb-32">
-          <h1 className="font-bold text-oceanblue text-40 text-center">
+          <h1 className="font-bold text-oceanblue text-24 lg:text-40 text-center">
             {token ? 'New Password' : 'Invalid Link'}
           </h1>
           <p className="text-base text-darkgrey text-center">
@@ -67,7 +67,7 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        <div className="max-w-full w-[420px] overflow-hidden">
+        <div className="w-full sm:w-[420px] max-w-full overflow-hidden">
           <div className="overflow-hidden p-8">
             {!token ? (
               <div className="text-center">

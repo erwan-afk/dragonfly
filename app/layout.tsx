@@ -155,16 +155,19 @@ export default function RootLayout({ children, className }: LayoutsProps) {
           }}
         />
       </head>
-      <body className="w-full relative bg-fullwhite">
+      <body className="w-full relative bg-fullwhite overflow-x-hidden">
         <HeroUIProvider>
           <LoadingProvider>
             <ToastProvider>
               <ReCaptchaProvider>
                   <NavigationLoader />
                   <main className="w-full relative min-h-screen">
-                    <div className="w-full bg-darkgrey text-center text-fullwhite py-8 text-[12px] flex flex-row justify-center items-center gap-8">
-                      <span>
+                    <div className="w-full bg-darkgrey text-center text-fullwhite py-8 text-[10px] xs:text-[12px] flex flex-row justify-center items-center gap-4 xs:gap-8 px-8 xs:px-16">
+                      <span className="hidden sm:inline">
                         The Automated Marketplace You've Been Waiting For
+                      </span>
+                      <span className="sm:hidden">
+                        Automated Marketplace
                       </span>
                       <svg
                         width="13"
@@ -198,7 +201,7 @@ export default function RootLayout({ children, className }: LayoutsProps) {
                     </div>
 
                     <Navbar />
-                    <div className="w-full xl:gap-75 gap-50 p-25 transition-all ease-in-out duration-200 min-h-[60vh]">
+                    <div className="w-full xl:gap-75 gap-50  xs:px-16 md:p-25 transition-all ease-in-out duration-200 min-h-[60vh]">
                       <Suspense
                         fallback={
                           <div className="w-full min-h-[60vh] bg-fullwhite" />

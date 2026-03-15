@@ -6,7 +6,7 @@ interface BoatGridProps {
 
 export default function BoatGrid({ boats }: BoatGridProps) {
   return (
-    <section id="Boats" className="w-full  pt-[60px]">
+    <section id="Boats" className="w-full pt-[60px] px-16 md:px-0">
       <div className="mx-auto max-w-screen-xl flex flex-col gap-32">
         <div className="flex flex-row items-center justify-between">
           <h1 className="text-oceanblue text-32">

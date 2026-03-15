@@ -64,9 +64,9 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-fullwhite py-40 px-32 gap-32 w-full h-full rounded-16 border-2 transition-colors ${getBorderClass()}`}
+      className={`flex flex-col bg-fullwhite py-24 px-16  lg:py-40 lg:px-32 gap-24 lg:gap-32 w-full h-full rounded-16 border-2 transition-colors overflow-hidden ${getBorderClass()}`}
     >
-      <div className="w-full flex flex-row justify-between items-center">
+      <div className="w-full flex flex-row justify-center sm:justify-between items-center">
         <h2
           className={`${renewal ? 'text-darkgrey' : ' text-oceanblue'} flex items-center  leading-[60%] h-[25px] text-24`}
         >
@@ -74,7 +74,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         </h2>
         {popular && ( // Condition d'affichage
           <div
-            className={`border-2 border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
+            className={`border-2 hidden sm:block border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
           >
             <motion.div
               key={isHovered ? 'hovered' : 'not-hovered'} // Force re-render on hover
@@ -101,10 +101,41 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         )}
       </div>
 
-      <h1 className="font-medium text-32 text-oceanblue">{price}</h1>
+      {popular && ( // Condition d'affichage
+        <div className="flex flex-row justify-center">
+        <div
+          className={`border-2 sm:hidden w-fit border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
+        >
+          <motion.div
+            key={isHovered ? 'hovered' : 'not-hovered'} // Force re-render on hover
+            initial={{ rotate: 0, scale: 1 }}
+            animate={
+              isHovered
+                ? {
+                    rotate: [0, 15, -15, 0],
+                    scale: [1, 1.4, 1.4, 1]
+                  }
+                : { rotate: 0, scale: 1 }
+            }
+            transition={{
+              duration: 0.8,
+              ease: 'easeInOut'
+            }}
+          >
+            <Star />
+          </motion.div>
+          <div className="uppercase font-medium text-oceanblue leading-[80%] text-[12px]">
+            Popular
+          </div>
+        </div>
+        </div>
+      )}
 
+      <h1 className="font-medium text-24 xs:text-32 text-oceanblue break-words text-center sm:text-left">{price}</h1>
+
+      <div className="flex justify-center sm:justify-start">
       <Button
-        text={`Start with ${title}`}
+        text={title}
         href="/pricing"
         bgColor={popular ? 'bg-oceanblue' : 'bg-articblue'}
         textColor="text-fullwhite"
@@ -117,6 +148,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           window.location.href = `/list-boat?${queryString}`;
         }}
       />
+      </div>
       <div className="h-[1px] w-full bg-smokygrey"></div>
       <div className="flex flex-col gap-24">
         <div className="text-oceanblue flex flex-col font-medium">Features</div>

@@ -506,8 +506,17 @@ export default function AdminClient({
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (status: string, expiresAt?: string | null) => {
+    // If DB says active but expiresAt is in the past, show as Expired
+    if (status?.toLowerCase() === 'active' && expiresAt && new Date(expiresAt) < new Date()) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+          <Clock size={12} />
+          Expired
+        </span>
+      );
+    }
+    switch (status?.toLowerCase()) {
       case 'active':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -544,12 +553,12 @@ export default function AdminClient({
   };
 
   return (
-    <section className="mx-auto max-w-screen-xl py-8 px-4">
+    <section className="mx-auto max-w-screen-xl py-8 px-16 xl:px-0">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Shield size={24} className=" text-articblue" />
-          <h1 className="text-3xl font-bold text-articblue">Admin Dashboard</h1>
+          <h1 className="text-xl md:text-3xl font-bold text-articblue">Admin Dashboard</h1>
         </div>
         <p className="text-gray-600">
           Manage users, boats, and payments. You are logged in as{' '}
@@ -562,7 +571,7 @@ export default function AdminClient({
 
       {/* Stats Cards */}
       <div
-        className={`grid grid-cols-1 gap-6 mb-8 ${currentUserRole === 'superAdmin' ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 ${currentUserRole === 'superAdmin' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
       >
         <div className="bg-white rounded-xl border p-6">
           <div className="flex items-center gap-4">
@@ -621,8 +630,8 @@ export default function AdminClient({
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex gap-4">
+      <div className="border-b border-gray-200 mb-6 overflow-x-auto">
+        <nav className="flex gap-2 md:gap-4 min-w-max">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -645,8 +654,8 @@ export default function AdminClient({
 
       {/* Users Tab */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl border overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
@@ -805,8 +814,8 @@ export default function AdminClient({
 
       {/* Boats Tab */}
       {activeTab === 'boats' && (
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl border overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
@@ -853,14 +862,14 @@ export default function AdminClient({
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     {boat.price.toLocaleString()} {boat.currency}
                   </td>
-                  <td className="px-6 py-4">{getStatusBadge(boat.status)}</td>
+                  <td className="px-6 py-4">{getStatusBadge(boat.status, boat.expiresAt)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {new Date(boat.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <select
-                        value={boat.status}
+                        value={boat.status?.toLowerCase()}
                         onChange={(e) =>
                           handleUpdateBoatStatus(boat.id, e.target.value)
                         }
@@ -905,8 +914,8 @@ export default function AdminClient({
 
       {/* Payments Tab */}
       {activeTab === 'payments' && (
-        <div className="bg-white rounded-xl border overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl border overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[500px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
@@ -968,7 +977,7 @@ export default function AdminClient({
         <div className="space-y-6">
           {/* Storage Stats */}
           {r2Stats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl border p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -1029,8 +1038,8 @@ export default function AdminClient({
           )}
 
           {/* Actions Bar */}
-          <div className="flex items-center justify-between bg-white rounded-xl border p-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-xl border p-4">
+            <div className="flex items-center gap-2 flex-wrap">
               {currentPath && (
                 <button
                   onClick={() => {
@@ -1047,7 +1056,7 @@ export default function AdminClient({
                 {currentPath ? `Viewing: ${currentPath}` : 'Folder Overview'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => handleCleanupTempImages(2)}
                 disabled={r2Loading}
@@ -1085,7 +1094,7 @@ export default function AdminClient({
           {/* Folders or Files View */}
           {!currentPath ? (
             /* Folders List */
-            <div className="bg-white rounded-xl border overflow-hidden">
+            <div className="bg-white rounded-xl border overflow-hidden overflow-x-auto">
               <div className="px-6 py-4 border-b bg-gray-50">
                 <h3 className="font-semibold text-gray-900">
                   Folder Structure
@@ -1218,7 +1227,7 @@ export default function AdminClient({
             </div>
           ) : (
             /* Files List */
-            <div className="bg-white rounded-xl border overflow-hidden">
+            <div className="bg-white rounded-xl border overflow-hidden overflow-x-auto">
               <div className="px-6 py-4 border-b bg-gray-50">
                 <h3 className="font-semibold text-gray-900">
                   Files in {currentPath}

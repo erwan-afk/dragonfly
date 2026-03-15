@@ -34,13 +34,13 @@ export default function BoatImageGallery({
   // Si aucune image valide, afficher un message
   if (validImages.length === 0) {
     return (
-      <div className="flex flex-row w-full gap-16 max-h-[384px]">
-        <div className="w-full h-[384px] rounded-12 overflow-hidden relative bg-gray-100 flex items-center justify-center">
+      <div className="flex flex-col sm:flex-row w-full gap-8 sm:gap-16 max-h-none sm:max-h-[384px]">
+        <div className="w-full h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative bg-gray-100 flex items-center justify-center">
           <div className="text-center">
             <div className="text-gray-400 text-lg mb-2">📸</div>
-            <p className="text-gray-500 text-sm">Aucune image disponible</p>
+            <p className="text-gray-500 text-sm">No images available</p>
             <p className="text-gray-400 text-xs">
-              Les images seront affichées après validation
+              Images will be displayed after validation
             </p>
           </div>
         </div>
@@ -56,10 +56,10 @@ export default function BoatImageGallery({
 
   return (
     <>
-      <div className="flex flex-row w-full gap-16 max-h-[384px]">
+      <div className="flex flex-col sm:flex-row w-full gap-8 sm:gap-16 max-h-none sm:max-h-[384px]">
         {/* Image principale */}
         <div
-          className={`h-[384px] rounded-12 overflow-hidden relative ${
+          className={`h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative ${
             total === 1
               ? 'w-full'
               : total === 2
@@ -81,7 +81,7 @@ export default function BoatImageGallery({
         {galleryImages.length > 0 && (
           <>
             {total === 2 && (
-              <div className="w-1/3 h-[384px] rounded-12 overflow-hidden relative">
+              <div className="w-full sm:w-1/3 h-[200px] sm:h-[384px] rounded-12 overflow-hidden relative">
                 <BoatImage
                   src={galleryImages[0]}
                   alt={`${boatModel} view 1`}
@@ -92,11 +92,11 @@ export default function BoatImageGallery({
             )}
 
             {total === 3 && (
-              <div className="w-2/5 flex flex-col gap-16">
+              <div className="w-full sm:w-2/5 flex flex-row sm:flex-col gap-8 sm:gap-16">
                 {galleryImages.slice(0, 2).map((img, index) => (
                   <div
                     key={`right-${index}`}
-                    className="h-[184px] rounded-12 overflow-hidden relative"
+                    className="h-[120px] sm:h-[184px] w-1/2 sm:w-full rounded-12 overflow-hidden relative"
                   >
                     <BoatImage
                       src={img}
@@ -110,13 +110,13 @@ export default function BoatImageGallery({
             )}
 
             {total >= 4 && (
-              <div className="w-1/2 flex flex-row gap-16">
+              <div className="w-full sm:w-1/2 flex flex-row gap-8 sm:gap-16">
                 {/* Colonne 1 */}
-                <div className="flex flex-col gap-16 w-1/2">
+                <div className="flex flex-col gap-8 sm:gap-16 w-1/2">
                   {galleryImages.slice(0, 2).map((img, index) => (
                     <div
                       key={`col1-${index}`}
-                      className="h-[184px] rounded-12 overflow-hidden relative"
+                      className="h-[100px] sm:h-[184px] rounded-12 overflow-hidden relative"
                     >
                       <BoatImage
                         src={img}
@@ -129,11 +129,11 @@ export default function BoatImageGallery({
                 </div>
 
                 {/* Colonne 2 */}
-                <div className="flex flex-col gap-16 w-1/2">
+                <div className="flex flex-col gap-8 sm:gap-16 w-1/2">
                   {galleryImages.slice(2, 4).map((img, index) => (
                     <div
                       key={`col2-${index}`}
-                      className="h-[184px] rounded-12 overflow-hidden relative"
+                      className="h-[100px] sm:h-[184px] rounded-12 overflow-hidden relative"
                     >
                       <BoatImage
                         src={img}

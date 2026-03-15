@@ -66,7 +66,7 @@ export default async function SignIn({
   }
 
   return (
-    <div className="relative h-[700px] md:overflow-hidden lg:grid lg:grid-cols-2 max-w-screen-xl mx-auto">
+    <div className="relative h-[700px] md:overflow-hidden lg:grid lg:grid-cols-2 max-w-screen-xl mx-auto px-16 xl:px-0">
       <div className="relative hidden h-full flex-col border-r bg-oceanblue p-10 lg:flex rounded-xl">
         <div className="z-10 mt-auto">
           <blockquote className="space-y-2">
@@ -94,7 +94,7 @@ export default async function SignIn({
           <div className="-translate-y-87.5 absolute top-0 right-0 h-320 w-60 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,--theme(--color-foreground/.04)_0,--theme(--color-foreground/.01)_80%,transparent_100%)]" />
         </div>
 
-        <div className="mx-auto space-y-4 sm:w-sm">
+        <div className="mx-auto space-y-4 w-full px-4 sm:px-0 sm:w-sm">
           <Logo className="h-5  lg:hidden" />
 
           <div className="space-y-2">
@@ -102,7 +102,7 @@ export default async function SignIn({
 
             {/* Keep individual forms for other views - with consistent styling */}
             {viewProp === 'email_signin' && (
-              <div className="max-w-full w-[420px] shadow-xl bg-white rounded-xl border-2 border-oceanblue/20 overflow-hidden">
+              <div className="w-full sm:w-[420px] shadow-xl bg-white rounded-xl border-2 border-oceanblue/20 overflow-hidden">
                 <div className="overflow-hidden p-8">
                   <EmailSignIn
                     allowPassword={allowPassword}
@@ -113,7 +113,7 @@ export default async function SignIn({
               </div>
             )}
             {viewProp === 'forgot_password' && (
-              <div className="max-w-full w-[420px] shadow-xl bg-white rounded-xl border-2 border-oceanblue/20 overflow-hidden">
+              <div className="w-full sm:w-[420px] shadow-xl bg-white rounded-xl border-2 border-oceanblue/20 overflow-hidden">
                 <div className="overflow-hidden p-8">
                   <ForgotPassword
                     redirectMethod={redirectMethod}
@@ -123,7 +123,7 @@ export default async function SignIn({
               </div>
             )}
             {viewProp === 'update_password' && (
-              <div className="max-w-full w-[420px] shadow-xl bg-white rounded-xl border-2 border-oceanblue/20 overflow-hidden">
+              <div className="w-full sm:w-[420px] shadow-xl bg-white rounded-xl border-2 border-oceanblue/20 overflow-hidden">
                 <div className="overflow-hidden p-8">
                   <UpdatePassword redirectMethod={redirectMethod} />
                 </div>

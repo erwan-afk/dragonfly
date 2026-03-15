@@ -26,10 +26,10 @@ export default async function PricingPage() {
     const products = await getProductsFromDatabase();
 
     return (
-      <div className="min-h-screen py-16 gap-64 flex flex-col">
-        <div className="flex flex-row justify-between items-center w-full max-w-screen-xl mx-auto ">
-          <h1 className="text-oceanblue text-56">Advertising Plans</h1>
-          <p className="text-darkgrey w-1/2 text-16 font-light">
+      <div className="min-h-screen py-16 gap-32 lg:gap-64 flex flex-col">
+        <div className="flex flex-col md:flex-row gap-16 lg:gap-0 justify-between items-start md:items-center w-full max-w-screen-xl mx-auto px-16 xl:px-0">
+          <h1 className="text-oceanblue text-32 lg:text-56">Advertising Plans</h1>
+          <p className="text-darkgrey w-full md:w-1/2 text-16 font-light">
             Choose the perfect plan to showcase your Dragonfly trimaran. Our
             flexible advertising options ensure maximum visibility and help you
             reach potential buyers effectively.
@@ -49,13 +49,13 @@ export default async function PricingPage() {
         </Suspense>
 
         {/* Tableau comparatif des fonctionnalités */}
-        <section className="mx-auto max-w-screen-xl w-full my-64">
-          <h2 className="text-32 text-articblue text-center mb-12">
+        <section className="mx-auto max-w-screen-xl w-full my-32 lg:my-64 px-16 xl:px-0">
+          <h2 className="text-24 lg:text-32 text-articblue text-center mb-12">
             Compare Features
           </h2>
 
-          <div className=" border-1 border-stonegrey/20 rounded-16 min-w-full">
-            <table className="w-full border-collapse bg-fullwhite rounded-16 overflow-hidden shadow-sm">
+          <div className="border-1 border-stonegrey/20 rounded-16 w-full overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse bg-fullwhite rounded-16 overflow-hidden shadow-sm">
               {/* En-tête */}
               <thead>
                 <tr className="bg-gradient-to-r from-articblue to-oceanblue">

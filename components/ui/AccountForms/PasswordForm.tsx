@@ -120,7 +120,7 @@ export default function PasswordForm() {
             name="currentPassword"
             value={formData.currentPassword}
             onChange={handleInputChange}
-            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14 font-normal"
+            className="w-full p-2 sm:p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-12 sm:text-14 font-normal"
             placeholder="Enter your current password"
           />
           {errors.currentPassword && (
@@ -139,7 +139,7 @@ export default function PasswordForm() {
             name="newPassword"
             value={formData.newPassword}
             onChange={handleInputChange}
-            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14 font-normal"
+            className="w-full p-2 sm:p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-12 sm:text-14 font-normal"
             placeholder="Enter your new password (min 8 characters)"
           />
           {errors.newPassword && (
@@ -156,7 +156,7 @@ export default function PasswordForm() {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleInputChange}
-            className="w-full p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-14 font-normal"
+            className="w-full p-2 sm:p-3 border border-lightgrey rounded-lg focus:outline-none focus:border-articblue text-oceanblue text-12 sm:text-14 font-normal"
             placeholder="Confirm your new password"
           />
           {errors.confirmPassword && (
@@ -170,7 +170,7 @@ export default function PasswordForm() {
           <button
             type="submit"
             disabled={isChanging}
-            className={`text-fullwhite bg-oceanblue w-fit px-[10px] py-[5px] rounded-full ${isChanging ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`text-fullwhite bg-oceanblue w-fit px-[10px] py-[5px] rounded-full text-12 sm:text-14 ${isChanging ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isChanging ? 'Changing...' : 'Change password'}
           </button>

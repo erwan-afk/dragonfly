@@ -22,8 +22,13 @@ interface CharProps {
 }
 
 // Composant pour animer le paragraphe
-const AnimatedParagraph = ({ text, className }: AnimatedParagraphProps) => {
+const AnimatedParagraph = ({
+  text,
+  className,
+  shouldBreak = false
+}: AnimatedParagraphProps) => {
   const container = useRef(null);
+
   const { scrollYProgress } = useScroll({
     target: container,
     offset: ['start 0.9', 'start 0.5']
@@ -45,7 +50,7 @@ const AnimatedParagraph = ({ text, className }: AnimatedParagraphProps) => {
             <Word progress={scrollYProgress} range={[start, end]}>
               {word}
             </Word>
-            {shouldBreakAfter && <br />}
+            {shouldBreakAfter && <br className="hidden sm:block" />}
           </React.Fragment>
         );
       })}
@@ -75,7 +80,7 @@ const Word = ({ children, progress, range }: WordProps) => {
 
   return (
     <span
-      className={`relative mr-3 mt-3 inline-block ${getWordColor(children)}`}
+      className={`relative mr-2 lg:mr-3 mt-2 lg:mt-3 inline-block ${getWordColor(children)}`}
     >
       {children.split('').map((char: string, i: number) => {
         const start = range[0] + i * step;
@@ -103,7 +108,7 @@ const Char = ({ children, progress, range }: CharProps) => {
 
 export default function FeatureSection() {
   return (
-    <section className="mx-auto max-w-screen-xl flex flex-col justify-center items-center gap-40 py-[120px]">
+    <section className="mx-auto max-w-screen-xl flex flex-col justify-center items-center gap-24 lg:gap-40 py-[60px] lg:py-[120px] px-8 xs:px-16 xl:px-0">
       <motion.div
         className="text-oceanblue italic flex justify-center"
         initial={{ opacity: 0, y: 20 }}
@@ -113,10 +118,10 @@ export default function FeatureSection() {
         Our performance
       </motion.div>
 
-      <div className="flex flex-col max-w-5xl">
+      <div className="flex flex-col max-w-5xl px-16">
         <AnimatedParagraph
           text="84% of our boats are sold in less than a month."
-          className="text-48 text-oceanblue text-center flex-wrap leading-tight"
+          className="text-24 xs:text-32 sm:text-32 lg:text-48 text-oceanblue text-center flex-wrap leading-tight"
         />
       </div>
 

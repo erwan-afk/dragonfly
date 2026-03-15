@@ -1,13 +1,14 @@
 interface LogoProps extends React.SVGProps<SVGSVGElement> {
   className?: string;
   footer?: boolean;
+  small?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ className, footer, ...props }) => (
+const Logo: React.FC<LogoProps> = ({ className, footer, small, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width={footer ? '120px' : '80px'}
-    height={footer ? '56px' : '37px'}
+    width={footer ? '120px' : small ? '60px' : '80px'}
+    height={footer ? '56px' : small ? '28px' : '37px'}
     viewBox="0 0 81 37"
     fill="currentColor"
     className={className}

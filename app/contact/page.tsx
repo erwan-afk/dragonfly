@@ -58,36 +58,36 @@ export default function ContactPage() {
   ): string | undefined => {
     switch (name) {
       case 'name':
-        if (!value.trim()) return 'Le nom est requis';
+        if (!value.trim()) return 'Name is required';
         if (value.length < 2)
-          return 'Le nom doit contenir au moins 2 caractères';
+          return 'Name must be at least 2 characters';
         if (value.length > 100)
-          return 'Le nom ne peut pas dépasser 100 caractères';
+          return 'Name cannot exceed 100 characters';
         if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(value))
-          return 'Le nom contient des caractères invalides';
+          return 'Name contains invalid characters';
         break;
 
       case 'email':
-        if (!value.trim()) return "L'email est requis";
-        if (value.length > 254) return "L'email est trop long";
+        if (!value.trim()) return "Email is required";
+        if (value.length > 254) return "Email is too long";
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return "Format d'email invalide";
+        if (!emailRegex.test(value)) return "Invalid email format";
         break;
 
       case 'subject':
-        if (!value.trim()) return 'Le sujet est requis';
+        if (!value.trim()) return 'Subject is required';
         if (value.length < 5)
-          return 'Le sujet doit contenir au moins 5 caractères';
+          return 'Subject must be at least 5 characters';
         if (value.length > 200)
-          return 'Le sujet ne peut pas dépasser 200 caractères';
+          return 'Subject cannot exceed 200 characters';
         break;
 
       case 'message':
-        if (!value.trim()) return 'Le message est requis';
+        if (!value.trim()) return 'Message is required';
         if (value.length < 10)
-          return 'Le message doit contenir au moins 10 caractères';
+          return 'Message must be at least 10 characters';
         if (value.length > 5000)
-          return 'Le message ne peut pas dépasser 5000 caractères';
+          return 'Message cannot exceed 5000 characters';
         break;
     }
     return undefined;
@@ -117,7 +117,7 @@ export default function ContactPage() {
 
     const urlCount = (content.match(suspiciousPatterns[0]) || []).length;
     if (urlCount > 2) {
-      newErrors.general = 'Trop de liens détectés dans le message';
+      newErrors.general = 'Too many links detected in the message';
     }
 
     return {
@@ -188,7 +188,7 @@ export default function ContactPage() {
     // Vérification du token CSRF
     if (!csrfData) {
       setErrors({
-        general: 'Token de sécurité manquant. Veuillez recharger la page.'
+        general: 'Security token missing. Please reload the page.'
       });
       return;
     }
@@ -196,7 +196,7 @@ export default function ContactPage() {
     // Vérification de l'expiration du token
     if (Date.now() > csrfData.expiresAt) {
       setErrors({
-        general: 'Token de sécurité expiré. Veuillez recharger la page.'
+        general: 'Security token expired. Please reload the page.'
       });
       return;
     }
@@ -260,10 +260,10 @@ export default function ContactPage() {
         }
       }
     } catch (error) {
-      console.error('Erreur réseau:', error);
+      console.error('Network error:', error);
       setSubmitStatus('error');
       setErrors({
-        general: 'Erreur de connexion. Vérifiez votre connexion internet.'
+        general: 'Connection error. Check your internet connection.'
       });
     } finally {
       setIsSubmitting(false);
@@ -302,7 +302,7 @@ export default function ContactPage() {
   }, [submitStatus]);
 
   return (
-    <div className="relative min-h-[700px] md:overflow-hidden lg:grid lg:grid-cols-2 gap-20 max-w-screen-xl mx-auto mt-[60px] mb-[120px]">
+    <div className="relative min-h-[500px] lg:min-h-[700px] overflow-hidden lg:grid lg:grid-cols-2 gap-20 max-w-screen-xl mx-auto mt-[30px] lg:mt-[60px] mb-[60px] lg:mb-[120px]">
       {/* Left panel - same style as sign in */}
       <div className="relative hidden h-full flex-col border-r bg-oceanblue p-10 lg:flex rounded-xl">
         <div className="z-10 mt-auto">

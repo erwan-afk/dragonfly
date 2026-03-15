@@ -51,6 +51,7 @@ export default async function AdminPage() {
         country: true,
         status: true,
         createdAt: true,
+        expiresAt: true,
         user: {
           select: { name: true, email: true }
         }
@@ -83,7 +84,8 @@ export default async function AdminPage() {
   const serializedBoats = boats.map((b) => ({
     ...b,
     price: parseFloat(b.price.toString()),
-    createdAt: b.createdAt.toISOString()
+    createdAt: b.createdAt.toISOString(),
+    expiresAt: b.expiresAt?.toISOString() || null
   }));
 
   const serializedPayments = payments.map((p) => ({
