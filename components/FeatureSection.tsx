@@ -7,6 +7,7 @@ import React, { useRef } from 'react';
 interface AnimatedParagraphProps {
   text: string;
   className: string;
+  shouldBreak?: boolean;
 }
 
 interface WordProps {
