@@ -65,7 +65,7 @@ export default function PricingSection({
           </h1>
         )}
 
-        <div className="flex flex-col sm:grid sm:grid-cols-2 xl:flex xl:flex-row gap-16 justify-center items-stretch">
+        <div className="flex flex-col sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-16 justify-center items-stretch">
           {sortedProducts.map((product, index) => {
             const price = product?.prices?.[0];
             const productName = product.name ?? 'No title';

@@ -229,7 +229,9 @@ export default function SpotlightBoats({
       return priceA - priceB;
     });
 
-    const currentIndex = sortedProducts.findIndex((p) => p.id === currentProductId);
+    const currentIndex = sortedProducts.findIndex(
+      (p) => p.id === currentProductId
+    );
     // Return products that are higher in the hierarchy (more expensive)
     return sortedProducts.filter((_, index) => index > currentIndex);
   };
@@ -389,9 +391,10 @@ export default function SpotlightBoats({
           })
         : 'Unknown';
 
-      const expirationDate = (boat as any).expiresAt || (boat as any).expires_at
-        ? new Date((boat as any).expiresAt || (boat as any).expires_at)
-        : null;
+      const expirationDate =
+        (boat as any).expiresAt || (boat as any).expires_at
+          ? new Date((boat as any).expiresAt || (boat as any).expires_at)
+          : null;
 
       const formattedExpirationDate = expirationDate
         ? expirationDate.toLocaleDateString('en-US', {
@@ -404,11 +407,11 @@ export default function SpotlightBoats({
       const now = new Date();
       const daysUntilExpiration = expirationDate
         ? Math.ceil(
-            (expirationDate.getTime() - now.getTime()) /
-              (1000 * 60 * 60 * 24)
+            (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
           )
         : null;
-      const isExpired = daysUntilExpiration !== null && daysUntilExpiration <= 0;
+      const isExpired =
+        daysUntilExpiration !== null && daysUntilExpiration <= 0;
       const expiresSoon =
         daysUntilExpiration !== null &&
         daysUntilExpiration <= 14 &&
@@ -462,10 +465,7 @@ export default function SpotlightBoats({
               return;
             }
             if (key === 'edit') {
-              sessionStorage.setItem(
-                `boat-${boat.id}`,
-                JSON.stringify(boat)
-              );
+              sessionStorage.setItem(`boat-${boat.id}`, JSON.stringify(boat));
               router.push(`/edit-listing/${boat.id}`);
               return;
             }
@@ -562,7 +562,9 @@ export default function SpotlightBoats({
                     <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                       {getModelLabel(boat.model)}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-500 truncate">{boat.country}</div>
+                    <div className="text-xs sm:text-sm text-gray-500 truncate">
+                      {boat.country}
+                    </div>
                     <div className="text-xs sm:text-sm font-medium text-gray-900 mt-0.5">
                       {formatPrice(Number(boat.price))} {boat.currency}
                     </div>
@@ -584,7 +586,11 @@ export default function SpotlightBoats({
                             : 'bg-green-50 text-green-700 border-green-200'
                       }`}
                     >
-                      {d.isExpired ? 'Expired' : d.expiresSoon ? 'Expiring' : 'Active'}
+                      {d.isExpired
+                        ? 'Expired'
+                        : d.expiresSoon
+                          ? 'Expiring'
+                          : 'Active'}
                     </span>
                     <span className="font-medium text-gray-700">
                       {getProductLabel(d.productId, products)}
@@ -630,7 +636,10 @@ export default function SpotlightBoats({
                         }}
                         className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md text-white bg-articblue hover:bg-oceanblue transition-colors"
                       >
-                        <ArrowUpCircle size={8} className="sm:w-[10px] sm:h-[10px]" />
+                        <ArrowUpCircle
+                          size={8}
+                          className="sm:w-[10px] sm:h-[10px]"
+                        />
                         Upgrade
                       </button>
                     )}
@@ -698,7 +707,11 @@ export default function SpotlightBoats({
                             className="w-full h-full object-cover"
                             loading="lazy"
                             onLoad={() =>
-                              logImageEvent('load', boat.id, d.imageUrl as string)
+                              logImageEvent(
+                                'load',
+                                boat.id,
+                                d.imageUrl as string
+                              )
                             }
                             onError={(e) => {
                               handleImageError(
@@ -748,7 +761,11 @@ export default function SpotlightBoats({
                               : 'bg-green-50 text-green-700 border-green-200'
                         }`}
                       >
-                        {d.isExpired ? 'Expired' : d.expiresSoon ? 'Expiring Soon' : 'Active'}
+                        {d.isExpired
+                          ? 'Expired'
+                          : d.expiresSoon
+                            ? 'Expiring Soon'
+                            : 'Active'}
                       </span>
                     </td>
 
@@ -772,7 +789,9 @@ export default function SpotlightBoats({
                           >
                             {d.formattedExpirationDate}
                             {d.daysUntilExpiration !== null && !d.isExpired && (
-                              <span className="ml-1">({d.daysUntilExpiration}d left)</span>
+                              <span className="ml-1">
+                                ({d.daysUntilExpiration}d left)
+                              </span>
                             )}
                           </span>
                         ) : (
@@ -789,8 +808,18 @@ export default function SpotlightBoats({
                                 : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
                           }`}
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
                           </svg>
                           {d.isExpired ? 'Renew Now' : 'Renew'}
                         </Link>
@@ -822,7 +851,9 @@ export default function SpotlightBoats({
                             Upgrade
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">Max plan</span>
+                          <span className="text-xs text-gray-400">
+                            Max plan
+                          </span>
                         );
                       })()}
                     </td>
@@ -974,7 +1005,8 @@ export default function SpotlightBoats({
                           const priceAmount = price?.unit_amount
                             ? (price.unit_amount / 100).toFixed(2)
                             : '0.00';
-                          const currency = price?.currency?.toUpperCase() || 'EUR';
+                          const currency =
+                            price?.currency?.toUpperCase() || 'EUR';
 
                           return (
                             <button
@@ -1085,12 +1117,16 @@ export default function SpotlightBoats({
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
             {/* Price Filter */}
             <div>
-              <h3 className="text-16 font-medium text-oceanblue mb-3">Price Range</h3>
+              <h3 className="text-16 font-medium text-oceanblue mb-3">
+                Price Range
+              </h3>
               <Slider
                 classNames={{ labelWrapper: 'flex flex-row gap-6' }}
                 className="max-w-full text-oceanblue"
                 defaultValue={selectedPrice}
-                onChange={(value) => setSelectedPrice(value as [number, number])}
+                onChange={(value) =>
+                  setSelectedPrice(value as [number, number])
+                }
                 formatOptions={{ style: 'currency', currency: 'EUR' }}
                 label="Price"
                 maxValue={maxPrice}
@@ -1116,7 +1152,11 @@ export default function SpotlightBoats({
                 {dragonflyModels.map((model) => (
                   <button
                     key={model.key}
-                    onClick={() => setSelectedModel(selectedModel === model.key ? null : model.key)}
+                    onClick={() =>
+                      setSelectedModel(
+                        selectedModel === model.key ? null : model.key
+                      )
+                    }
                     className={`px-4 py-2 rounded-full text-14 font-medium transition-colors ${
                       selectedModel === model.key
                         ? 'bg-articblue text-fullwhite'
@@ -1131,7 +1171,9 @@ export default function SpotlightBoats({
 
             {/* Country Filter */}
             <div>
-              <h3 className="text-16 font-medium text-oceanblue mb-3">Country</h3>
+              <h3 className="text-16 font-medium text-oceanblue mb-3">
+                Country
+              </h3>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedCountry(null)}
@@ -1146,7 +1188,11 @@ export default function SpotlightBoats({
                 {countries.map((country) => (
                   <button
                     key={country.key}
-                    onClick={() => setSelectedCountry(selectedCountry === country.key ? null : country.key)}
+                    onClick={() =>
+                      setSelectedCountry(
+                        selectedCountry === country.key ? null : country.key
+                      )
+                    }
                     className={`px-4 py-2 rounded-full text-14 font-medium transition-colors flex items-center gap-1 ${
                       selectedCountry === country.key
                         ? 'bg-articblue text-fullwhite'
@@ -1162,7 +1208,9 @@ export default function SpotlightBoats({
 
             {/* Specifications Filter */}
             <div>
-              <h3 className="text-16 font-medium text-oceanblue mb-3">Specifications</h3>
+              <h3 className="text-16 font-medium text-oceanblue mb-3">
+                Specifications
+              </h3>
               <div className="space-y-2">
                 {specificationsData.flatMap((section) =>
                   section.items.map((item) => (
@@ -1213,7 +1261,8 @@ export default function SpotlightBoats({
               onClick={() => setIsMobileFilterOpen(false)}
               className="flex-1 py-3 rounded-xl bg-articblue text-fullwhite font-medium text-16"
             >
-              Show {filteredBoats.length} result{filteredBoats.length !== 1 ? 's' : ''}
+              Show {filteredBoats.length} result
+              {filteredBoats.length !== 1 ? 's' : ''}
             </button>
           </div>
         </div>
@@ -1236,12 +1285,36 @@ export default function SpotlightBoats({
           {/* Sort Options */}
           <div className="flex-1 overflow-y-auto px-4 py-2">
             {[
-              { key: 'created_desc', label: 'Newest First', desc: 'Most recent listings' },
-              { key: 'created_asc', label: 'Oldest First', desc: 'Oldest listings' },
-              { key: 'price_asc', label: 'Price: Low to High', desc: 'Cheapest first' },
-              { key: 'price_desc', label: 'Price: High to Low', desc: 'Most expensive first' },
-              { key: 'model_asc', label: 'Model: A-Z', desc: 'Alphabetical order' },
-              { key: 'model_desc', label: 'Model: Z-A', desc: 'Reverse alphabetical' }
+              {
+                key: 'created_desc',
+                label: 'Newest First',
+                desc: 'Most recent listings'
+              },
+              {
+                key: 'created_asc',
+                label: 'Oldest First',
+                desc: 'Oldest listings'
+              },
+              {
+                key: 'price_asc',
+                label: 'Price: Low to High',
+                desc: 'Cheapest first'
+              },
+              {
+                key: 'price_desc',
+                label: 'Price: High to Low',
+                desc: 'Most expensive first'
+              },
+              {
+                key: 'model_asc',
+                label: 'Model: A-Z',
+                desc: 'Alphabetical order'
+              },
+              {
+                key: 'model_desc',
+                label: 'Model: Z-A',
+                desc: 'Reverse alphabetical'
+              }
             ].map((option) => (
               <button
                 key={option.key}
@@ -1254,7 +1327,9 @@ export default function SpotlightBoats({
                 }`}
               >
                 <div>
-                  <div className="text-16 font-medium text-oceanblue">{option.label}</div>
+                  <div className="text-16 font-medium text-oceanblue">
+                    {option.label}
+                  </div>
                   <div className="text-14 text-darkgrey">{option.desc}</div>
                 </div>
                 {selectedSort === option.key && (
@@ -1936,15 +2011,15 @@ export default function SpotlightBoats({
               : 'Unknown';
 
             return (
-              <Link href={`/boat/${boat.id}`} key={boat.id}>
+              <Link href={`/boat/${boat.id}`} key={boat.id} className="h-full block">
                 <div
-                  className={`group border-stonegrey border-2 hover:border-articblue flex flex-col sm:flex-row overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px]`}
+                  className={`group border-stonegrey border-2 hover:border-articblue flex flex-col sm:flex-row overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px] h-full`}
                   style={{
                     boxShadow: '0px 1px 20px 0px #00000014'
                   }}
                 >
                   {/* Image */}
-                  <div className="w-full sm:w-1/3 relative overflow-hidden min-h-[180px]">
+                  <div className="w-full sm:w-1/3 relative overflow-hidden min-h-[180px] sm:self-stretch">
                     <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
                       {countries.find((country) => country.key === boat.country)
                         ?.label || ''}
@@ -2036,15 +2111,32 @@ export default function SpotlightBoats({
                           </h3>
                         </div>
 
+                        {/* Specifications */}
+                        {boat.specifications &&
+                          boat.specifications.length > 0 && (
+                            <div className="flex flex-row items-center gap-2 flex-wrap">
+                              {boat.specifications.map((specification) => (
+                                <span
+                                  className="text-oceanblue bg-lightgrey px-2 py-1 rounded-[6px] text-[12px]"
+                                  key={specification}
+                                >
+                                  {specification}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
                         {/* Section centrale : Prix */}
-                        <div className="flex-1 flex items-center">
-                          <div className="text-oceanblue text-18">
-                            <span className="text-oceanblue/70">Price: </span>
+                        <div className="flex items-center">
+                          <div className="text-oceanblue text-24">
                             <span className="font-semibold text-oceanblue">
                               {formatPrice(Number(boat.price))} {boat.currency}
                             </span>
                           </div>
                         </div>
+
+                        {/* Spacer to push views to bottom */}
+                        <div className="flex-1" />
 
                         {/* Section inférieure : Statistiques */}
                         <div className="flex items-center justify-between">

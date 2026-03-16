@@ -66,15 +66,15 @@ export const PricingCard: React.FC<PricingCardProps> = ({
     <div
       className={`flex flex-col bg-fullwhite py-24 px-16  lg:py-40 lg:px-32 gap-24 lg:gap-32 w-full h-full rounded-16 border-2 transition-colors overflow-hidden ${getBorderClass()}`}
     >
-      <div className="w-full flex flex-row justify-center sm:justify-between items-center">
+      <div className="w-full flex flex-row justify-center sm:justify-between items-center gap-8">
         <h2
-          className={`${renewal ? 'text-darkgrey' : ' text-oceanblue'} flex items-center  leading-[60%] h-[25px] text-24`}
+          className={`${renewal ? 'text-darkgrey' : ' text-oceanblue'} flex items-center leading-[60%] h-[25px] text-24 whitespace-nowrap`}
         >
           {title}
         </h2>
         {popular && ( // Condition d'affichage
           <div
-            className={`border-2 hidden sm:block border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
+            className={`border-2 hidden sm:flex shrink-0 border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex-row items-center rounded-[100px] whitespace-nowrap`}
           >
             <motion.div
               key={isHovered ? 'hovered' : 'not-hovered'} // Force re-render on hover

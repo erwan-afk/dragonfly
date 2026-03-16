@@ -56,17 +56,17 @@ export default function BoatImageGallery({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row w-full gap-8 sm:gap-16 max-h-none sm:max-h-[384px]">
-        {/* Image principale */}
+      <div className="flex flex-col sm:flex-row w-full gap-4 sm:gap-16 sm:max-h-[384px]">
+        {/* Image principale — toujours full width sur mobile */}
         <div
-          className={`h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative ${
+          className={`w-full h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative ${
             total === 1
-              ? 'w-full'
+              ? 'sm:w-full'
               : total === 2
-                ? 'w-2/3'
+                ? 'sm:w-2/3'
                 : total === 3
-                  ? 'w-3/5'
-                  : 'w-1/2'
+                  ? 'sm:w-3/5'
+                  : 'sm:w-1/2'
           }`}
         >
           <BoatImage
@@ -77,11 +77,11 @@ export default function BoatImageGallery({
           />
         </div>
 
-        {/* Right side thumbnails */}
+        {/* Thumbnails — row horizontale scrollable sur mobile, layout desktop inchangé */}
         {galleryImages.length > 0 && (
           <>
             {total === 2 && (
-              <div className="w-full sm:w-1/3 h-[200px] sm:h-[384px] rounded-12 overflow-hidden relative">
+              <div className="w-full sm:w-1/3 h-[160px] sm:h-[384px] rounded-12 overflow-hidden relative">
                 <BoatImage
                   src={galleryImages[0]}
                   alt={`${boatModel} view 1`}
@@ -92,7 +92,7 @@ export default function BoatImageGallery({
             )}
 
             {total === 3 && (
-              <div className="w-full sm:w-2/5 flex flex-row sm:flex-col gap-8 sm:gap-16">
+              <div className="w-full sm:w-2/5 flex flex-row sm:flex-col gap-4 sm:gap-16">
                 {galleryImages.slice(0, 2).map((img, index) => (
                   <div
                     key={`right-${index}`}
@@ -110,40 +110,20 @@ export default function BoatImageGallery({
             )}
 
             {total >= 4 && (
-              <div className="w-full sm:w-1/2 flex flex-row gap-8 sm:gap-16">
-                {/* Colonne 1 */}
-                <div className="flex flex-col gap-8 sm:gap-16 w-1/2">
-                  {galleryImages.slice(0, 2).map((img, index) => (
-                    <div
-                      key={`col1-${index}`}
-                      className="h-[100px] sm:h-[184px] rounded-12 overflow-hidden relative"
-                    >
-                      <BoatImage
-                        src={img}
-                        alt={`${boatModel} view ${index + 1}`}
-                        className="w-full h-full object-cover object-center"
-                        onClick={() => openCarousel(index + 1)}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Colonne 2 */}
-                <div className="flex flex-col gap-8 sm:gap-16 w-1/2">
-                  {galleryImages.slice(2, 4).map((img, index) => (
-                    <div
-                      key={`col2-${index}`}
-                      className="h-[100px] sm:h-[184px] rounded-12 overflow-hidden relative"
-                    >
-                      <BoatImage
-                        src={img}
-                        alt={`${boatModel} view ${index + 3}`}
-                        className="w-full h-full object-cover object-center"
-                        onClick={() => openCarousel(index + 3)}
-                      />
-                    </div>
-                  ))}
-                </div>
+              <div className="w-full sm:w-1/2 grid grid-cols-4 sm:grid-cols-2 gap-4 sm:gap-16">
+                {galleryImages.map((img, index) => (
+                  <div
+                    key={`thumb-${index}`}
+                    className="h-[80px] sm:h-[184px] rounded-12 overflow-hidden relative"
+                  >
+                    <BoatImage
+                      src={img}
+                      alt={`${boatModel} view ${index + 1}`}
+                      className="w-full h-full object-cover object-center"
+                      onClick={() => openCarousel(index + 1)}
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </>
