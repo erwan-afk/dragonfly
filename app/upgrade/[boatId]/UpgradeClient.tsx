@@ -10,6 +10,7 @@ import {
   useElements
 } from '@stripe/react-stripe-js';
 import { getModelLabel, getProductLabel } from '@/utils/constants';
+import { getMaxPhotos, getDuration, getProductFeatures } from '@/lib/product-features';
 import { ArrowUpCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -272,7 +273,12 @@ export default function UpgradeClient({
               return (
                 <button
                   key={product.id}
-                  onClick={() => setSelectedPlan(product)}
+                  onClick={() => {
+                    setSelectedPlan(product);
+                    setTimeout(() => {
+                      document.getElementById('upgrade-info')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                  }}
                   className={`w-full flex items-center justify-between p-4 border-2 rounded-xl transition-all duration-200 ${
                     isSelected
                       ? 'border-articblue bg-articblue/5'
@@ -309,6 +315,43 @@ export default function UpgradeClient({
               );
             })}
           </div>
+
+          {/* Texte informatif sur les avantages */}
+          {selectedPlan && (() => {
+            const currentPlanName = getProductLabel(boat.productId, products);
+            const currentPhotos = getMaxPhotos(currentPlanName);
+            const newPhotos = getMaxPhotos(selectedPlan.name);
+            const extraPhotos = newPhotos - currentPhotos;
+            const isPodium = selectedPlan.name.toLowerCase().includes('podium');
+            const dur = getDuration(selectedPlan.name);
+            const durationMonths = typeof dur === 'object' ? dur.months : dur;
+
+            return (
+              <div id="upgrade-info" className="mt-6 bg-articblue/5 border border-articblue/20 rounded-xl p-5">
+                <p className="text-oceanblue text-sm leading-relaxed mb-3">
+                  En passant au forfait <strong>{selectedPlan.name}</strong>, vous bénéficiez immédiatement de :
+                </p>
+                <ul className="text-sm text-oceanblue space-y-2">
+                  {extraPhotos > 0 && (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
+                      <span><strong>{extraPhotos} photo{extraPhotos > 1 ? 's' : ''} supplémentaire{extraPhotos > 1 ? 's' : ''}</strong> pour sublimer votre annonce.</span>
+                    </li>
+                  )}
+                  {isPodium && (
+                    <li className="flex items-start gap-2">
+                      <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
+                      <span>Une <strong>visibilité accrue</strong> auprès des acheteurs.</span>
+                    </li>
+                  )}
+                  <li className="flex items-start gap-2">
+                    <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
+                    <span>Un nouveau départ : la durée de parution de votre annonce est réinitialisée à <strong>{durationMonths} mois</strong> à partir d&apos;aujourd&apos;hui.</span>
+                  </li>
+                </ul>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Payment Form */}

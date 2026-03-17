@@ -28,9 +28,11 @@ import {
   dragonflyModels,
   currencies,
   countries,
-  boatConditions
+  boatConditions,
+  getModelLabel
 } from '@/utils/constants';
 import { specificationsData } from '@/utils/specifications';
+import { CheckCircle, ArrowUpCircle } from 'lucide-react';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
@@ -228,19 +230,38 @@ export default function EditListing({
     return currencyData ? currencyData.symbol : currency.toUpperCase();
   };
 
-  // Upgrade product logic
-  const upgradeProduct = useMemo(() => {
-    if (!upgradePlan) return null;
-    const planName = upgradePlan.toLowerCase();
-    return products.find((p) => {
-      const productName = p.name?.toLowerCase() || '';
-      return (
-        productName.includes(planName) ||
-        productName.includes(planName.replace('-', '')) ||
-        productName.includes(planName.replace('-', ' '))
-      );
+  // Upgrade product logic — all plans above current
+  const upgradeProducts = useMemo(() => {
+    const sorted = [...products]
+      .filter((p) => !p.name?.toLowerCase().includes('renewal'))
+      .sort((a, b) => {
+        const priceA = a.prices?.[0]?.unitAmount || a.prices?.[0]?.unit_amount || 0;
+        const priceB = b.prices?.[0]?.unitAmount || b.prices?.[0]?.unit_amount || 0;
+        return priceA - priceB;
+      });
+    const currentIndex = sorted.findIndex((p) => {
+      const name = p.name?.toLowerCase() || '';
+      const plan = currentPlan.toLowerCase();
+      return name.includes(plan) || name.includes(plan.replace('-', ' ')) || name.includes(plan.replace('-', ''));
     });
-  }, [products, upgradePlan]);
+    return sorted.filter((_, index) => index > currentIndex);
+  }, [products, currentPlan]);
+
+  // Current plan price (in cents) and priceId for difference calculation
+  const currentPlanProduct = useMemo(() => {
+    return products.find((p) => {
+      const name = p.name?.toLowerCase() || '';
+      const plan = currentPlan.toLowerCase();
+      return name.includes(plan) || name.includes(plan.replace('-', ' ')) || name.includes(plan.replace('-', ''));
+    });
+  }, [products, currentPlan]);
+  const currentPlanPrice = currentPlanProduct?.prices?.[0]?.unitAmount || currentPlanProduct?.prices?.[0]?.unit_amount || 0;
+  const currentPriceId = currentPlanProduct?.prices?.[0]?.id || null;
+
+  // Keep upgradeProduct as the selected one (or first available) for backward compat
+  const upgradeProduct = upgradeProducts.length > 0
+    ? (upgradeProducts.find((p) => p.id === selectedUpgradeProductId) || upgradeProducts[0])
+    : null;
 
   // Price limit effect with upgrade toast
   useEffect(() => {
@@ -334,14 +355,13 @@ export default function EditListing({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: Number(upgradePrice.unitAmount),
-            currency: upgradePrice.currency || 'eur',
             priceId: upgradePrice.id,
+            currentPriceId,
             metadata: {
               listing_type: 'upgrade',
               boat_id: boat.id,
               user_id: boat.userId,
-              product_id: selectedUpgradeProductId // Passer directement le product ID
+              product_id: selectedUpgradeProductId
             }
           })
         });
@@ -762,6 +782,11 @@ export default function EditListing({
     setClientSecret(''); // Reset client secret to trigger new payment intent
     setPaymentIntentId('');
     console.log('Selected product for upgrade:', productId);
+
+    // Scroll to upgrade info section on mobile/tablet
+    setTimeout(() => {
+      document.getElementById('upgrade-info')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const waitForBoatUpgrade = async (
@@ -1154,16 +1179,232 @@ export default function EditListing({
   const isFormValid = validateForm().isValid;
 
   return (
-    <div className="flex flex-col lg:flex-row w-full justify-center gap-8 lg:gap-[150px] pb-[112px] mx-auto max-w-screen-2xl px-16 xl:px-6">
-      {/* Formulaire au centre */}
-      <form
-        id="edit-listing-form"
-        onSubmit={handleSubmit}
-        className="flex-1 max-w-full lg:max-w-lg flex flex-col gap-[32px] rounded-[24px]"
-      >
-        <h1 className="text-24 lg:text-40 text-oceanblue">
-          <span className="text-articblue">Edit</span> your advert
-        </h1>
+    <div className="flex flex-col w-full pb-[112px] mx-auto max-w-screen-lg px-16 xl:px-4">
+      {/* Back button */}
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => router.push('/account')}
+          className="inline-flex items-center gap-2 text-oceanblue hover:text-articblue transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Back to My Account
+        </button>
+      </div>
+
+      <h1 className="text-xl md:text-3xl font-bold text-articblue mb-6">
+        Edit Your Listing
+      </h1>
+
+      {/* Upgrade accordéon */}
+      {upgradeProducts.length > 0 && (
+        <details className="bg-gray-50 rounded-xl border w-full mb-8 group">
+          <summary className="p-4 cursor-pointer flex items-center justify-between list-none">
+            <div className="flex items-center gap-3">
+              <ArrowUpCircle size={18} className="text-articblue" />
+              <span className="text-sm font-medium text-oceanblue">
+                Upgrade your plan
+              </span>
+              <span className="text-xs text-gray-400 capitalize">
+                (current: {currentPlan.replace('-', ' ')})
+              </span>
+            </div>
+            <svg className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="px-4 pb-4 border-t border-gray-200 pt-4 overflow-hidden">
+            <div className={`grid grid-cols-1 ${upgradeProducts.length > 1 ? 'md:grid-cols-2' : ''} gap-4`}>
+              {upgradeProducts.map((product) => {
+                const newPhotos = getMaxPhotos(product.name);
+                const currentPhotos = getMaxPhotos(currentPlan);
+                const extraPhotos = newPhotos - currentPhotos;
+                const isPodium = product.name?.toLowerCase().includes('podium');
+                const dur = getDuration(product.name);
+                const durationMonths = typeof dur === 'object' ? dur.months : dur;
+                const price = product.prices?.[0];
+                const fullPrice = price?.unitAmount || price?.unit_amount || 0;
+                const differenceAmount = Math.max(0, fullPrice - currentPlanPrice);
+                const priceAmount = (differenceAmount / 100).toFixed(2);
+                const priceCurrency = price?.currency?.toUpperCase() || 'EUR';
+
+                return (
+                  <div key={product.id} className="bg-white rounded-lg border border-gray-200 p-4 min-w-0">
+                    <p className="text-oceanblue text-sm leading-relaxed mb-2">
+                      En passant au forfait <strong>{product.name}</strong> :
+                    </p>
+                    <ul className="text-xs text-oceanblue space-y-1 mb-3">
+                      {extraPhotos > 0 && (
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
+                          <span><strong>+{extraPhotos} photo{extraPhotos > 1 ? 's' : ''}</strong></span>
+                        </li>
+                      )}
+                      {isPodium && (
+                        <li className="flex items-start gap-1.5">
+                          <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
+                          <span><strong>Visibilité accrue</strong></span>
+                        </li>
+                      )}
+                      <li className="flex items-start gap-1.5">
+                        <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
+                        <span>Durée réinitialisée à <strong>{durationMonths} mois</strong></span>
+                      </li>
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => handleProductChange(product.id)}
+                      className="w-full py-2 px-3 bg-articblue text-white rounded-lg hover:bg-oceanblue transition-colors text-xs font-medium flex items-center justify-center gap-1.5 truncate"
+                    >
+                      <ArrowUpCircle size={14} className="shrink-0" />
+                      <span className="truncate">{product.name} — {priceAmount} {priceCurrency}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </details>
+      )}
+
+      {/* Section Payment — apparaît uniquement quand un upgrade est sélectionné */}
+      {isUpgrading && upgradeProduct && (
+        <div id="upgrade-info" className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 border-2 border-articblue/20 rounded-xl bg-white">
+          {/* Texte informatif */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-semibold text-oceanblue">Upgrade to {upgradeProduct.name}</h2>
+            {(() => {
+              const newPhotos = getMaxPhotos(upgradeProduct.name);
+              const currentPhotos = getMaxPhotos(currentPlan);
+              const extraPhotos = newPhotos - currentPhotos;
+              const isPodium = upgradeProduct.name.toLowerCase().includes('podium');
+              const dur = getDuration(upgradeProduct.name);
+              const durationMonths = typeof dur === 'object' ? dur.months : dur;
+
+              return (
+                <div className="bg-articblue/5 border border-articblue/20 rounded-xl p-5">
+                  <p className="text-oceanblue text-sm leading-relaxed mb-3">
+                    En passant au forfait <strong>{upgradeProduct.name}</strong>, vous bénéficiez immédiatement de :
+                  </p>
+                  <ul className="text-sm text-oceanblue space-y-2">
+                    {extraPhotos > 0 && (
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
+                        <span><strong>{extraPhotos} photo{extraPhotos > 1 ? 's' : ''} supplémentaire{extraPhotos > 1 ? 's' : ''}</strong> pour sublimer votre annonce.</span>
+                      </li>
+                    )}
+                    {isPodium && (
+                      <li className="flex items-start gap-2">
+                        <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
+                        <span>Une <strong>visibilité accrue</strong> auprès des acheteurs.</span>
+                      </li>
+                    )}
+                    <li className="flex items-start gap-2">
+                      <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
+                      <span>Un nouveau départ : la durée de parution de votre annonce est réinitialisée à <strong>{durationMonths} mois</strong> à partir d&apos;aujourd&apos;hui.</span>
+                    </li>
+                  </ul>
+                </div>
+              );
+            })()}
+            <button
+              type="button"
+              onClick={() => { setIsUpgrading(false); setSelectedUpgradeProductId(''); setClientSecret(''); }}
+              className="text-sm text-gray-500 hover:text-oceanblue transition-colors self-start"
+            >
+              ← Annuler l&apos;upgrade
+            </button>
+          </div>
+
+          {/* Payment */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-semibold text-oceanblue">Payment</h2>
+            {(() => {
+              const fullPrice = upgradeProduct.prices[0]?.unitAmount || 0;
+              const difference = Math.max(0, fullPrice - currentPlanPrice);
+              const cur = upgradeProduct.prices[0]?.currency?.toUpperCase() || 'EUR';
+              return (
+                <div className="bg-white rounded-xl p-4 border">
+                  <div className="flex flex-col gap-1 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Upgrading to:</span>
+                      <span className="font-semibold text-oceanblue">{upgradeProduct.name}</span>
+                    </div>
+                    {currentPlanPrice > 0 && (
+                      <>
+                        <div className="flex justify-between items-center mt-2 text-gray-500">
+                          <span>Full price:</span>
+                          <span>{(fullPrice / 100).toFixed(2)} {cur}</span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1 text-gray-500">
+                          <span>Current plan:</span>
+                          <span>-{(currentPlanPrice / 100).toFixed(2)} {cur}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-dashed">
+                      <span className="text-gray-600 font-medium">Upgrade difference:</span>
+                      <span className="font-bold text-articblue text-lg">{(difference / 100).toFixed(2)} {cur}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {clientSecret ? (
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret: clientSecret,
+                  appearance: { theme: 'stripe', variables: { colorPrimary: '#6cacaf' } }
+                }}
+              >
+                <StripePaymentForm
+                  onSuccess={handleUpgradePaymentSuccess}
+                  onError={handleUpgradePaymentError}
+                  onBeforePayment={() => Promise.resolve({ success: true })}
+                  amount={upgradeProduct?.prices[0]?.unitAmount || 0}
+                  currency={upgradeProduct?.prices[0]?.currency || 'eur'}
+                  priceId={upgradeProduct?.prices[0]?.id || ''}
+                  userId={boat.userId}
+                  paymentIntentId={paymentIntentId}
+                  returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account`}
+                />
+              </Elements>
+            ) : isProcessingUpgrade ? (
+              <div className="flex flex-col items-center justify-center gap-4 p-6 bg-articblue/5 rounded-lg border border-articblue/20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-articblue"></div>
+                <div className="text-center">
+                  <p className="text-oceanblue font-medium">Processing your upgrade...</p>
+                  <p className="text-stonegrey text-sm mt-1">Please wait while we update your listing plan</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center p-6">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-articblue"></div>
+              </div>
+            )}
+
+            <div className="flex flex-col justify-center">
+              <div className="flex flex-row justify-center items-center text-articblue">
+                <Lock />
+                <p className="text-darkgrey text-sm">Secure Checkout - SSL Encrypted</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Formulaire d'édition — centré */}
+      <div className="max-w-lg mx-auto w-full">
+        <form
+          id="edit-listing-form"
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-[32px]"
+        >
+          <h2 className="text-24 lg:text-32 text-oceanblue">
+            <span className="text-articblue">Edit</span> your advert
+          </h2>
 
         {/* Success message */}
         {showSuccessMessage && (
@@ -1202,45 +1443,6 @@ export default function EditListing({
           </div>
         )}
 
-        {/* Current Plan Information */}
-        <div className="flex flex-col gap-[24px] px-[20px] border-2 border-articblue rounded-lg p-4 text-oceanblue bg-articblue/5">
-          <div className="flex flex-col gap-[12px]">
-            <div className="flex flex-row items-center gap-3">
-              <div className="text-oceanblue text-20 font-medium capitalize">
-                {currentPlan.replace('-', ' ')} Plan
-              </div>
-            </div>
-            <div className="flex flex-row gap-[10px] items-center text-oceanblue">
-              <Valide />
-              <p>
-                {getPriceLimitSummaryText(
-                  currentPlan,
-                  getCurrencySymbol(currency)
-                )}
-              </p>
-            </div>
-            <div className="flex flex-row gap-[10px] items-center text-oceanblue">
-              <Valide />
-              <p>
-                {maxPhotos > 0
-                  ? `Includes ${maxPhotos} photo${maxPhotos > 1 ? 's' : ''}`
-                  : 'No photos included'}
-              </p>
-            </div>
-            <div className="flex flex-row gap-[10px] items-center text-oceanblue">
-              <Valide />
-              <p>Duration of {durationData.text || `${duration} months`}</p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => handleProductChange(upgradeProduct.id)}
-            className="shrink-0 px-3 py-2 bg-articblue text-white rounded-lg hover:bg-articblue/90 transition-colors text-sm font-medium"
-          >
-            Upgrade
-          </button>
-        </div>
 
         <div className="flex flex-col gap-[32px]">
           {/* Model avec checkbox de validation */}
@@ -1792,137 +1994,24 @@ export default function EditListing({
         </div>
       </form>
 
-      {/* Payment Element à droite */}
-      <div className="w-full lg:max-w-md border-2 border-oceanblue/10 p-4 md:p-6 gap-[24px] flex flex-col rounded-2xl self-start lg:sticky top-[120px]">
-        <h1 className="text-20 lg:text-24 text-oceanblue">Edit </h1>
-        <div className="flex flex-col gap-[32px]">
-          {/* Plan Summary - Only show when upgrading */}
-          {isUpgrading && selectedUpgradeProductId && upgradeProduct && (
-            <div className="flex flex-col gap-[24px] px-[20px] border-2 border-orange-300 rounded-lg p-4 text-oceanblue bg-orange-50">
-              <div className="flex flex-col gap-[12px]">
-                <h3 className="text-lg font-semibold text-orange-800">
-                  Upgrade to {upgradeProduct.name}
-                </h3>
-                <div className="flex flex-row gap-[10px] items-center text-orange-700">
-                  <Valide />
-                  <p>
-                    {getPriceLimitSummaryText(
-                      upgradeProduct.name,
-                      getCurrencySymbol(currency)
-                    )}
-                  </p>
-                </div>
-                <div className="flex flex-row gap-[10px] items-center text-orange-700">
-                  <Valide />
-                  <p>Includes {getMaxPhotos(upgradeProduct.name)} photos</p>
-                </div>
-                <div className="flex flex-row gap-[10px] items-center text-orange-700">
-                  <Valide />
-                  <p>
-                    Duration of{' '}
-                    {(() => {
-                      const dur = getDuration(upgradeProduct.name);
-                      return typeof dur === 'object'
-                        ? dur.text
-                        : `${dur} months`;
-                    })()}
-                  </p>
-                </div>
-                <div className="w-full h-[1px] bg-orange-300"></div>
-                <div className="flex flex-row gap-[10px] text-18 justify-between text-darkgrey font-semibold">
-                  <p>Total</p>
-                  <p>
-                    {upgradeProduct.prices[0]?.unitAmount
-                      ? `$${(upgradeProduct.prices[0].unitAmount / 100).toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Element or Action Buttons */}
-          {isUpgrading && clientSecret ? (
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret: clientSecret,
-                appearance: {
-                  theme: 'stripe',
-                  variables: {
-                    colorPrimary: '#6cacaf'
-                  }
-                }
-              }}
-            >
-              <StripePaymentForm
-                onSuccess={handleUpgradePaymentSuccess}
-                onError={handleUpgradePaymentError}
-                onBeforePayment={() => Promise.resolve({ success: true })}
-                amount={upgradeProduct?.prices[0]?.unitAmount || 0}
-                currency={upgradeProduct?.prices[0]?.currency || 'eur'}
-                priceId={upgradeProduct?.prices[0]?.id || ''}
-                userId={boat.userId}
-                paymentIntentId={paymentIntentId}
-                returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/account`}
-              />
-            </Elements>
-          ) : isProcessingUpgrade ? (
-            <div className="flex flex-col items-center justify-center gap-4 p-6 bg-articblue/5 rounded-lg border border-articblue/20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-articblue"></div>
-              <div className="text-center">
-                <p className="text-oceanblue font-medium">
-                  Processing your upgrade...
-                </p>
-                <p className="text-stonegrey text-sm mt-1">
-                  Please wait while we update your listing plan
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <button
-                type="submit"
-                form="edit-listing-form"
-                className="bg-articblue text-white font-medium px-6 py-4 rounded-lg hover:bg-articblue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isSaving || uploadingPhotos || isProcessingUpgrade}
-              >
-                {uploadingPhotos
-                  ? 'Uploading photos...'
-                  : saveCompleted
-                    ? 'Changes saved!'
-                    : isSaving
-                      ? 'Saving changes...'
-                      : 'Save Changes'}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="bg-fullwhite border-2 border-oceanblue text-oceanblue font-medium px-6 py-4 rounded-lg hover:border-oceanblue hover:bg-oceanblue hover:text-fullwhite transition-colors"
-                disabled={isProcessingUpgrade}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {/* Security notice - only show when upgrading */}
-          {isUpgrading && (
-            <div className="flex flex-col justify-center">
-              <div className="flex flex-row justify-center items-center text-articblue">
-                <Lock />
-                <p className="text-darkgrey">Secure Checkout - SSL Encrypted</p>
-              </div>
-              <div className="flex flex-row justify-center items-center gap-[10px]">
-                <p className="flex flex-col justify-center text-stonegrey text-[12px]">
-                  Ensuring your financial and personal details are secure during
-                  every transaction.
-                </p>
-              </div>
-            </div>
-          )}
+        {/* Save / Cancel */}
+        <div className="flex flex-col gap-4 mt-8">
+          <button
+            type="submit"
+            form="edit-listing-form"
+            className="bg-articblue text-white font-medium px-6 py-4 rounded-lg hover:bg-articblue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSaving || uploadingPhotos || isProcessingUpgrade}
+          >
+            {uploadingPhotos
+              ? 'Uploading photos...'
+              : saveCompleted
+                ? 'Changes saved!'
+                : isSaving
+                  ? 'Saving changes...'
+                  : 'Save Changes'}
+          </button>
         </div>
-      </div>
+      </div>{/* fin max-w-lg */}
     </div>
   );
 }
