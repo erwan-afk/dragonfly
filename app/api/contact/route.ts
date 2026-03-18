@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
+import DOMPurify from 'isomorphic-dompurify';
 import validator from 'validator';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { validateCSRFToken } from '@/utils/csrf';
@@ -28,9 +27,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Configuration DOMPurify pour l'environnement Node.js
-const window = new JSDOM('').window;
-const purify = DOMPurify(window);
+const purify = DOMPurify;
 
 interface ContactFormData {
   name: string;

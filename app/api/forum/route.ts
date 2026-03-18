@@ -43,7 +43,7 @@ function sanitizeForumData(data: any[]): any[] {
 export async function GET(request: NextRequest) {
   try {
     // Fetch data from your phpBB API
-    const response = await fetch('https://www.dragonfly-trimarans.org/phpBB/api/forums.php', {
+    const response = await fetch('https://forum.dragonfly-trimarans.org/api/forums.php', {
       next: { revalidate: 60 }, // Cache for 1 minute
       headers: {
         'Accept': 'application/json',

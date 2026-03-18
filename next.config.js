@@ -65,6 +65,16 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: false,
     },
+    async redirects() {
+        return [
+            {
+                source: '/:path*',
+                has: [{ type: 'host', value: 'www.dragonfly-trimarans.org' }],
+                destination: 'https://dragonfly-trimarans.org/:path*',
+                permanent: true,
+            },
+        ];
+    },
     async headers() {
         // Security headers (incl. CSP) for production. In particular, Stripe Payment Element
         // requires connections to Stripe domains + iframes/scripts from js.stripe.com.
@@ -83,7 +93,7 @@ const nextConfig = {
             // Stripe elements run in iframes.
             "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com",
             // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT) + reCAPTCHA.
-            "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com",
+            "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://forum.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com",
             "font-src 'self' data: https:",
             "object-src 'none'",
             "base-uri 'self'",

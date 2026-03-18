@@ -158,7 +158,7 @@ export default function ForumSection() {
   const renderForumItem = (forum: ForumData) => (
     <a
       key={forum.forum_id}
-      href={`https://www.dragonfly-trimarans.org/phpBB/viewforum.php?f=${forum.forum_id}`}
+      href={`https://forum.dragonfly-trimarans.org/viewforum.php?f=${forum.forum_id}`}
       target="_blank"
       rel="noopener noreferrer"
       className="flex flex-row justify-between items-center gap-8 sm:gap-16 border-t-1 last:border-b-2 py-4 sm:py-6 border-stonegrey group cursor-pointer"
@@ -258,7 +258,7 @@ export default function ForumSection() {
                   icon="link"
                   bgColor="bg-oceanblue"
                   iconColor="text-fullwhite"
-                  href="https://www.dragonfly-trimarans.org/phpBB"
+                  href="https://forum.dragonfly-trimarans.org"
                 />
               </div>
             </div>

@@ -11,7 +11,7 @@ export default async function PrivacyPage() {
               This policy explains in detail how “DRAGONFLY Trimarans User
               Forum” along with its affiliated companies (hereinafter “we”,
               “us”, “our”, “DRAGONFLY Trimarans User Forum”,
-              “https://www.dragonfly-trimarans.org/phpBB”) and phpBB
+              “https://forum.dragonfly-trimarans.org”) and phpBB
               (hereinafter “they”, “them”, “their”, “phpBB software”,
               “www.phpbb.com”, “phpBB Limited”, “phpBB Teams”) use any
               information collected during any session of usage by you

@@ -10,7 +10,7 @@ export default async function TermsPage() {
             <p>
               By accessing “DRAGONFLY Trimarans User Forum” (hereinafter “we”,
               “us”, “our”, “DRAGONFLY Trimarans User Forum”,
-              “https://www.dragonfly-trimarans.org/phpBB”), you agree to be
+              “https://forum.dragonfly-trimarans.org”), you agree to be
               legally bound by the following terms. If you do not agree to be
               legally bound by all of the following terms then please do not
               access and/or use “DRAGONFLY Trimarans User Forum”. We may change
