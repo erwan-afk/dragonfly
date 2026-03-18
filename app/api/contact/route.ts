@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import DOMPurify from 'isomorphic-dompurify';
 import validator from 'validator';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { validateCSRFToken } from '@/utils/csrf';
@@ -27,7 +26,15 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const purify = DOMPurify;
+// Simple HTML escaper for server-side sanitization (no jsdom needed)
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 interface ContactFormData {
   name: string;
@@ -81,10 +88,10 @@ function validateContactData(data: any): { isValid: boolean; errors: ValidationE
 // Fonction de sanitisation des données
 function sanitizeData(data: ContactFormData): ContactFormData {
   return {
-    name: purify.sanitize(data.name.trim()),
+    name: escapeHtml(data.name.trim()),
     email: validator.normalizeEmail(data.email.trim().toLowerCase()) || '',
-    subject: purify.sanitize(data.subject.trim()),
-    message: purify.sanitize(data.message.trim()),
+    subject: escapeHtml(data.subject.trim()),
+    message: escapeHtml(data.message.trim()),
     csrfToken: data.csrfToken,
     sessionId: data.sessionId,
     honeypot: data.honeypot || '',
