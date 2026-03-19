@@ -860,7 +860,7 @@ export default function AdminClient({
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {boat.price.toLocaleString()} {boat.currency}
+                    {boat.price.toLocaleString('en-US')} {boat.currency}
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(boat.status, boat.expiresAt)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">

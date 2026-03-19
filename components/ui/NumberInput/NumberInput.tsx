@@ -35,7 +35,7 @@ export default function NumberInput({
 
   const formatter = useMemo(
     () =>
-      new Intl.NumberFormat(undefined, {
+      new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 0
       }),
     []

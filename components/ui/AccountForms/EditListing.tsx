@@ -276,7 +276,7 @@ export default function EditListing({
               This price exceeds the{' '}
               <strong>{currentPlan.replace('-', ' ')}</strong> limit (
               {getCurrencySymbol(currency)}
-              {priceLimit.toLocaleString()}). Upgrade to{' '}
+              {priceLimit.toLocaleString('en-US')}). Upgrade to{' '}
               <strong>{upgradePlan}</strong> to list boats at this price.
             </p>
             <button
@@ -913,7 +913,7 @@ export default function EditListing({
     if (priceBoat <= 0) errors.push('Please enter a valid price');
     if (priceLimit && priceBoat > priceLimit) {
       errors.push(
-        `This price exceeds your plan limit (${getCurrencySymbol(currency)}${priceLimit.toLocaleString()}). Please upgrade your plan.`
+        `This price exceeds your plan limit (${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}). Please upgrade your plan.`
       );
     }
     if (description.length < 20)
@@ -1575,7 +1575,7 @@ export default function EditListing({
                   labelPlacement="outside"
                   placeholder={
                     priceLimit
-                      ? `Up to ${getCurrencySymbol(currency)}${priceLimit.toLocaleString()}`
+                      ? `Up to ${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}`
                       : 'Enter price (no limit)'
                   }
                   value={priceBoat}
@@ -1644,7 +1644,7 @@ export default function EditListing({
                     </p>
                     <p className="mt-1">
                       Limit: {getCurrencySymbol(currency)}
-                      {priceLimit?.toLocaleString()}. Upgrade to{' '}
+                      {priceLimit?.toLocaleString('en-US')}. Upgrade to{' '}
                       <strong>{upgradePlan}</strong> to list at this price.
                     </p>
                   </div>

@@ -272,7 +272,7 @@ export default function SpotlightBoats({
   };
 
   const formatPrice = (price: number): string => {
-    return price.toLocaleString('us-US');
+    return price.toLocaleString('en-US');
   };
 
   const handleImageError = (

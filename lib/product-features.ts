@@ -148,7 +148,7 @@ export function getPriceLimitSummaryText(
   const symbol = currencySymbol || '€';
 
   if (features.priceLimit) {
-    return `Boats up to ${symbol}${features.priceLimit.toLocaleString()}`;
+    return `Boats up to ${symbol}${features.priceLimit.toLocaleString('en-US')}`;
   }
 
   // Pour les produits sans limite, utiliser le texte de la configuration

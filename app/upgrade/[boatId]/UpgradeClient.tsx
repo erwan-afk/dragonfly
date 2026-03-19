@@ -244,7 +244,7 @@ export default function UpgradeClient({
               {getModelLabel(boat.model)}
             </div>
             <div className="text-gray-600">
-              {boat.price.toLocaleString()} {boat.currency} - {boat.country}
+              {boat.price.toLocaleString('en-US')} {boat.currency} - {boat.country}
             </div>
           </div>
           <div className="text-right">
