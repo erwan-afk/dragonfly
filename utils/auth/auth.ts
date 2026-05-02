@@ -60,6 +60,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    resetPasswordTokenExpiresIn: 60 * 60 * 24 * 7, // 7 days — covers invited users who don't check email immediately
     sendResetPassword: async ({ user, url }: any) => {
       if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
         console.error('❌ SMTP non configuré — email non envoyé');
@@ -101,7 +102,7 @@ export const auth = betterAuth({
                 </a>
               </div>
               <p style="color: #6b7280; font-size: 14px;">
-                This link expires in 1 hour.
+                This link expires in 7 days.
               </p>
             </div>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
@@ -127,7 +128,7 @@ export const auth = betterAuth({
                 </a>
               </div>
               <p style="color: #6b7280; font-size: 14px;">
-                This link expires in 1 hour. If you did not request this, please ignore this email.
+                This link expires in 7 days. If you did not request this, please ignore this email.
               </p>
             </div>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
@@ -138,8 +139,8 @@ export const auth = betterAuth({
         `;
 
       const text = isInvited
-        ? `Hello ${user.name || user.email},\n\nYour listing has been published on Dragonfly Trimarans.\n\nCreate your password to access your account:\n${url}\n\nThis link expires in 1 hour.\n\nDragonfly Trimarans`
-        : `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 1 hour. If you did not request this, please ignore this email.\n\nDragonfly Trimarans`;
+        ? `Hello ${user.name || user.email},\n\nYour listing has been published on Dragonfly Trimarans.\n\nCreate your password to access your account:\n${url}\n\nThis link expires in 7 days.\n\nDragonfly Trimarans`
+        : `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\nDragonfly Trimarans`;
 
       try {
         await transporter.sendMail({
