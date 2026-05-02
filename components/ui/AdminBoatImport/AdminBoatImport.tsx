@@ -5,6 +5,22 @@ import { Plus, Trash2, Upload, CheckCircle, XCircle, Loader2, X, ImageIcon } fro
 import { specificationsData } from '@/utils/specifications';
 import { countries, boatConditions, dragonflyModels, currencies as currencyList } from '@/utils/constants';
 
+const PLAN_OPTIONS = [
+  { key: 'start-line',  label: 'Start line',  months: 3 },
+  { key: 'mid-course',  label: 'Mid-course',  months: 3 },
+  { key: 'podium',      label: 'Podium',      months: 4 },
+] as const;
+
+function planToMonths(raw: string): string {
+  const lower = raw.toLowerCase().trim();
+  const match = PLAN_OPTIONS.find(
+    (p) => p.key === lower || p.label.toLowerCase() === lower || lower.includes(p.key) || lower.includes(p.label.toLowerCase())
+  );
+  if (match) return String(match.months);
+  const num = parseInt(raw);
+  return isNaN(num) ? '3' : String(num);
+}
+
 interface BoatRow {
   id: string;
   model: string;
@@ -107,7 +123,7 @@ function parseCSV(text: string): BoatRow[] {
       ownerEmail: get('owneremail') || get('owner_email'),
       photoUrls: get('photos').replace(/\|/g, ','),
       specifications: get('specifications').replace(/\|/g, ','),
-      expiresMonths: get('expires_months') || get('expiresmonths') || '3'
+      expiresMonths: planToMonths(get('expires_months') || get('expiresmonths') || get('plan') || '3')
     };
   });
 }
@@ -450,16 +466,18 @@ export default function AdminBoatImport() {
                 <p className="text-xs text-gray-400 mt-0.5">Crée le compte automatiquement si inexistant et envoie une invitation.</p>
               </div>
               <div>
-                <label className={labelCls}>Durée d'expiration (mois)</label>
-                <input
+                <label className={labelCls}>Offre</label>
+                <select
                   className={inputCls}
-                  type="number"
-                  min="1"
-                  max="24"
-                  placeholder="3"
                   value={quick.expiresMonths}
                   onChange={(e) => setQuick((q) => ({ ...q, expiresMonths: e.target.value }))}
-                />
+                >
+                  {PLAN_OPTIONS.map((p) => (
+                    <option key={p.key} value={String(p.months)}>
+                      {p.label} — {p.months} mois
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-2 mt-5">
                 <input
@@ -716,19 +734,18 @@ export default function AdminBoatImport() {
                   <input className={inputCls} placeholder="URLs photos…" value={row.photoUrls} onChange={(e) => updateRow(row.id, 'photoUrls', e.target.value)} />
                   <input className={inputCls} type="email" placeholder="Email contact" value={row.email} onChange={(e) => updateRow(row.id, 'email', e.target.value)} />
                   <input className={inputCls} type="email" placeholder="Email propriétaire" value={row.ownerEmail} onChange={(e) => updateRow(row.id, 'ownerEmail', e.target.value)} title="Crée le compte et envoie une invitation si inexistant" />
-                  <div className="flex items-center gap-2">
-                    <input
-                      className={`${inputCls} w-14`}
-                      type="number"
-                      min="1"
-                      max="24"
-                      placeholder="3"
-                      title="Durée d'expiration (mois)"
-                      value={row.expiresMonths}
-                      onChange={(e) => updateRow(row.id, 'expiresMonths', e.target.value)}
-                    />
-                    <span className="text-xs text-gray-400 shrink-0">mois</span>
-                  </div>
+                  <select
+                    className={inputCls}
+                    value={row.expiresMonths}
+                    title="Offre"
+                    onChange={(e) => updateRow(row.id, 'expiresMonths', e.target.value)}
+                  >
+                    {PLAN_OPTIONS.map((p) => (
+                      <option key={p.key} value={String(p.months)}>
+                        {p.label} ({p.months}m)
+                      </option>
+                    ))}
+                  </select>
                   <div className="flex items-center gap-1">
                     <input type="checkbox" id={`vat-${row.id}`} checked={row.vatPaid} onChange={(e) => updateRow(row.id, 'vatPaid', e.target.checked)} className="rounded border-gray-300" />
                     <label htmlFor={`vat-${row.id}`} className="text-xs text-gray-500">TVA</label>
