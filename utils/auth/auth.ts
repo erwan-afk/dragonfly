@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import * as nodemailer from 'nodemailer';
 import prisma from '../prisma/client';
+import { isInvitation } from './invite';
 
 // Only log during runtime, not during build
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -72,14 +73,8 @@ export const auth = betterAuth({
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
       });
 
-      // Detect invitation flow: user created less than 5 minutes ago
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { createdAt: true }
-      });
-      const isInvited = dbUser
-        ? Date.now() - new Date(dbUser.createdAt).getTime() < 5 * 60 * 1000
-        : false;
+      // Detect invitation flow via the shared Set in invite.ts (set before forget-password is called)
+      const isInvited = isInvitation(user.email);
 
       const subject = isInvited
         ? 'Your listing is live on Dragonfly Trimarans'
