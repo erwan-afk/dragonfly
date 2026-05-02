@@ -6,10 +6,15 @@ export const metadata = {
   title: 'Sign In - Dragonfly'
 };
 
-export default function SignIn() {
+export default function SignIn({
+  searchParams
+}: {
+  searchParams?: { callbackUrl?: string };
+}) {
+  const callbackUrl = searchParams?.callbackUrl;
   return (
     <SignInWrapper>
-      <AuthTabs defaultMode="login" />
+      <AuthTabs defaultMode="login" callbackUrl={callbackUrl} />
     </SignInWrapper>
   );
 }

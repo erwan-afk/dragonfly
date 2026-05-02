@@ -11,10 +11,12 @@ import Input from '../Input/Input';
 // Define prop type with allowEmail boolean
 interface PasswordSignInProps {
   redirectMethod: string;
+  callbackUrl?: string;
 }
 
 export default function PasswordSignIn({
-  redirectMethod
+  redirectMethod,
+  callbackUrl
 }: PasswordSignInProps) {
   const router = redirectMethod === 'client' ? useRouter() : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,10 +47,13 @@ export default function PasswordSignIn({
           '✅ Better Auth SignIn successful! User data:',
           result.data
         );
-        console.log('🔄 Redirecting to account page...');
-        // Utiliser window.location.href pour forcer un refresh complet et récupérer la session
+        const safeRedirect =
+          callbackUrl?.startsWith('/') ? callbackUrl : '/account';
+        const separator = safeRedirect.includes('?') ? '&' : '?';
         window.location.href =
-          '/account?status=Success!&status_description=You are now signed in.';
+          safeRedirect +
+          separator +
+          'status=Success!&status_description=You are now signed in.';
       } else {
         console.error('❌ Better Auth SignIn failed. Full result:', result);
         console.error('❌ Error details:', result.error);

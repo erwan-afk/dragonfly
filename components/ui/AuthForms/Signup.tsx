@@ -10,9 +10,10 @@ import { useReCaptcha } from 'next-recaptcha-v3';
 
 interface SignUpProps {
   redirectMethod: string;
+  callbackUrl?: string;
 }
 
-export default function SignUp({ redirectMethod }: SignUpProps) {
+export default function SignUp({ redirectMethod, callbackUrl }: SignUpProps) {
   const router = redirectMethod === 'client' ? useRouter() : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,12 +76,14 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
         console.log('🔍 Starting Better Auth SignUp for:', email);
 
         // Utiliser signUp.email directement (pas authClient.signUp.email)
+        const safeBase =
+          callbackUrl?.startsWith('/') ? callbackUrl : '/account';
         const { data, error: signUpError } = await signUp.email(
           {
             email,
             password,
             name: displayName,
-            callbackURL: '/account'
+            callbackURL: safeBase
           },
           {
             onRequest: () => {
@@ -107,15 +110,11 @@ export default function SignUp({ redirectMethod }: SignUpProps) {
           console.log('✅ SignUp successful!');
           console.log('👤 User:', data.user);
 
-          const status = 'Success!';
-          const description =
-            'Your account has been created successfully and you are now signed in.';
-          const params = new URLSearchParams({
-            status: status,
-            status_description: description
-          });
-
-          const redirectUrl = `/account?${params.toString()}`;
+          const separator = safeBase.includes('?') ? '&' : '?';
+          const redirectUrl =
+            safeBase +
+            separator +
+            'status=Success!&status_description=Your+account+has+been+created+successfully+and+you+are+now+signed+in.';
           console.log('🔗 Redirecting to:', redirectUrl);
 
           // Petit délai pour s'assurer que les cookies sont bien définis

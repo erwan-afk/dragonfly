@@ -39,20 +39,28 @@ export default function PricingSection({
     Renewal: ['Advertisement extended for a further 3 months']
   };
 
-  // Ordre souhaité des produits
-  const desiredOrder = ['Start line', 'Mid-course', 'Podium', 'Renewal'];
+  const toTitleCase = (str: string) =>
+    str.replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Trier les produits selon l'ordre souhaité
-  const sortedProducts = [...products].sort((a, b) => {
-    const indexA = desiredOrder.indexOf(a.name);
-    const indexB = desiredOrder.indexOf(b.name);
+  const getCurrencySymbol = (currency: string | null | undefined): string => {
+    const symbols: Record<string, string> = {
+      eur: ' €', usd: ' $', gbp: ' £', chf: ' CHF', cad: ' CA$', aud: ' A$'
+    };
+    return symbols[(currency ?? '').toLowerCase()] ?? ' ' + (currency?.toUpperCase() ?? '');
+  };
 
-    // Si le nom n'est pas trouvé, mettre à la fin
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
+  const classifyPlan = (name: string): number => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('start') && n.includes('line')) return 0;
+    if (n.includes('mid') || n.includes('course')) return 1;
+    if (n.includes('podium')) return 2;
+    if (n.includes('renewal')) return 3;
+    return 999;
+  };
 
-    return indexA - indexB;
-  });
+  const sortedProducts = [...products].sort(
+    (a, b) => classifyPlan(a.name) - classifyPlan(b.name)
+  );
 
   return (
     <section
@@ -68,7 +76,7 @@ export default function PricingSection({
         <div className="flex flex-col sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-16 justify-center items-stretch">
           {sortedProducts.map((product, index) => {
             const price = product?.prices?.[0];
-            const productName = product.name ?? 'No title';
+            const productName = toTitleCase(product.name ?? 'No title');
             const popular = productName === 'Mid-course'; // Mid-course est "popular" (2ème card)
             const renewal = productName === 'Renewal';
 
@@ -83,7 +91,7 @@ export default function PricingSection({
               >
                 <PricingCard
                   title={productName}
-                  price={`${Number(price.unit_amount ?? 0) / 100} ${price.currency?.toUpperCase() ?? ''}`}
+                  price={`${Number(price.unit_amount ?? 0) / 100}${getCurrencySymbol(price.currency)}`}
                   buttonText={renewal ? 'Upgrade an ad' : 'Place an ad'}
                   features={
                     featuresMap[productName] || [

@@ -14,7 +14,10 @@ export default async function ListBoatPage({
   });
 
   if (!session?.user) {
-    redirect('/signin/password_signin');
+    const callbackUrl = preference
+      ? `/list-boat?preference=${encodeURIComponent(preference)}`
+      : '/list-boat';
+    redirect(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
   const preference = searchParams?.preference || null;

@@ -11,7 +11,11 @@ type OAuthProviders = {
   signupDisplayName: string;
 };
 
-export default function OauthSignIn() {
+interface OauthSignInProps {
+  callbackUrl?: string;
+}
+
+export default function OauthSignIn({ callbackUrl }: OauthSignInProps) {
   const pathname = usePathname();
   const isSignupPage = pathname?.includes('/signup');
 
@@ -35,11 +39,11 @@ export default function OauthSignIn() {
       console.log(`🚀 Starting ${provider} OAuth authentication...`);
 
       if (provider === 'google') {
-        // Use Better Auth's Google OAuth - works for both signin and signup
-        // Better Auth automatically handles new user creation for OAuth
+        const safeRedirect =
+          callbackUrl?.startsWith('/') ? callbackUrl : '/account';
         await authClient.signIn.social({
           provider: 'google',
-          callbackURL: '/account' // Redirect after successful authentication
+          callbackURL: safeRedirect
         });
       }
     } catch (error) {

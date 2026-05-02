@@ -11,12 +11,14 @@ interface AuthTabsProps {
   allowOauth?: boolean;
   allowPassword?: boolean;
   defaultMode?: 'login' | 'signup' | 'forgot_password';
+  callbackUrl?: string;
 }
 
 export default function AuthTabs({
   allowOauth,
   allowPassword,
-  defaultMode = 'login'
+  defaultMode = 'login',
+  callbackUrl
 }: AuthTabsProps) {
   const [mode, setMode] = React.useState<'login' | 'signup' | 'forgot_password'>(defaultMode);
   const redirectMethod = getRedirectMethod();
@@ -49,7 +51,7 @@ export default function AuthTabs({
             {/* OAuth buttons */}
             {authTypes.allowOauth && mode !== 'forgot_password' && (
               <div className="flex flex-col gap-4">
-                <OauthSignIn />
+                <OauthSignIn callbackUrl={callbackUrl} />
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-oceanblue/20"></div>
                   <span className="text-sm text-oceanblue/60 font-medium">
@@ -64,10 +66,10 @@ export default function AuthTabs({
 
             {/* Form based on mode */}
             {mode === 'login' && (
-              <PasswordSignIn key="login" redirectMethod={redirectMethod} />
+              <PasswordSignIn key="login" redirectMethod={redirectMethod} callbackUrl={callbackUrl} />
             )}
             {mode === 'signup' && (
-              <SignUp key="signup" redirectMethod={redirectMethod} />
+              <SignUp key="signup" redirectMethod={redirectMethod} callbackUrl={callbackUrl} />
             )}
             {mode === 'forgot_password' && (
               <ForgotPassword
