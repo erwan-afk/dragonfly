@@ -6,19 +6,25 @@ import { specificationsData } from '@/utils/specifications';
 import { countries, boatConditions, dragonflyModels, currencies as currencyList } from '@/utils/constants';
 
 const PLAN_OPTIONS = [
-  { key: 'start-line',  label: 'Start line',  months: 3 },
-  { key: 'mid-course',  label: 'Mid-course',  months: 3 },
-  { key: 'podium',      label: 'Podium',      months: 4 },
+  { key: 'start-line', label: 'Start line', productName: 'start line', months: 3 },
+  { key: 'mid-course', label: 'Mid-course', productName: 'mid-course', months: 3 },
+  { key: 'podium',     label: 'Podium',     productName: 'podium',     months: 4 },
 ] as const;
 
-function planToMonths(raw: string): string {
+function parsePlan(raw: string): string {
   const lower = raw.toLowerCase().trim();
   const match = PLAN_OPTIONS.find(
-    (p) => p.key === lower || p.label.toLowerCase() === lower || lower.includes(p.key) || lower.includes(p.label.toLowerCase())
+    (p) => p.key === lower || p.productName === lower || p.label.toLowerCase() === lower ||
+           lower.includes(p.key) || lower.includes(p.productName)
   );
-  if (match) return String(match.months);
+  if (match) return match.key;
   const num = parseInt(raw);
-  return isNaN(num) ? '3' : String(num);
+  if (!isNaN(num)) return PLAN_OPTIONS.find((p) => p.months === num)?.key ?? 'start-line';
+  return 'start-line';
+}
+
+function getPlanOption(key: string) {
+  return PLAN_OPTIONS.find((p) => p.key === key) ?? PLAN_OPTIONS[0];
 }
 
 interface BoatRow {
@@ -123,7 +129,7 @@ function parseCSV(text: string): BoatRow[] {
       ownerEmail: get('owneremail') || get('owner_email'),
       photoUrls: get('photos').replace(/\|/g, ','),
       specifications: get('specifications').replace(/\|/g, ','),
-      expiresMonths: planToMonths(get('expires_months') || get('expiresmonths') || get('plan') || '3')
+      expiresMonths: parsePlan(get('plan') || get('expires_months') || get('expiresmonths') || '')
     };
   });
 }
@@ -213,7 +219,8 @@ export default function AdminBoatImport() {
           vatPaid: quick.vatPaid,
           specifications: quickSpecs,
           ownerEmail: quick.ownerEmail || undefined,
-          expiresMonths: parseInt(quick.expiresMonths) || 3
+          planName: getPlanOption(quick.expiresMonths).productName,
+          expiresMonths: getPlanOption(quick.expiresMonths).months
         })
       });
       const data = await res.json();
@@ -291,7 +298,8 @@ export default function AdminBoatImport() {
       email: r.email || undefined,
       ownerEmail: r.ownerEmail || undefined,
       vatPaid: r.vatPaid,
-      expiresMonths: parseInt(r.expiresMonths) || 3,
+      planName: getPlanOption(r.expiresMonths).productName,
+      expiresMonths: getPlanOption(r.expiresMonths).months,
       photos: r.photoUrls
         ? r.photoUrls.split(',').map((u) => u.trim()).filter(Boolean)
         : [],

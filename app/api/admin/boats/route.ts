@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       specifications,
       vatPaid,
       expiresMonths,
+      planName,
       ownerEmail
     } = body;
 
@@ -70,6 +71,16 @@ export async function POST(request: NextRequest) {
     const months = typeof expiresMonths === 'number' && expiresMonths > 0 ? expiresMonths : 3;
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + months);
+
+    // Resolve product by plan name
+    let productId: string | null = null;
+    if (planName && typeof planName === 'string') {
+      const product = await prisma.product.findFirst({
+        where: { name: { equals: planName, mode: 'insensitive' }, active: true },
+        select: { id: true }
+      });
+      productId = product?.id ?? null;
+    }
 
     // Resolve owner: find or create user from ownerEmail
     let ownerId = userCheck.user!.id;
@@ -122,6 +133,7 @@ export async function POST(request: NextRequest) {
         specifications: Array.isArray(specifications) ? specifications.slice(0, 50) : [],
         vatPaid: Boolean(vatPaid),
         userId: ownerId,
+        productId,
         status: 'active',
         expiresAt
       }

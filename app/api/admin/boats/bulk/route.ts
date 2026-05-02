@@ -21,6 +21,8 @@ interface BoatInput {
   currency?: string;
   specifications?: string[];
   vatPaid?: boolean;
+  planName?: string;
+  expiresMonths?: number;
 }
 
 async function findOrCreateUser(email: string): Promise<{ userId: string; isNew: boolean }> {
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
-    const { boats, expiresMonths } = body;
+    const { boats } = body;
 
     if (!Array.isArray(boats) || boats.length === 0) {
       return NextResponse.json({ error: 'boats must be a non-empty array' }, { status: 400 });
@@ -81,9 +83,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Maximum 100 boats per request' }, { status: 400 });
     }
 
-    const months = typeof expiresMonths === 'number' && expiresMonths > 0 ? expiresMonths : 3;
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + months);
+    // Pre-fetch all products once for plan resolution
+    const products = await prisma.product.findMany({
+      where: { active: true },
+      select: { id: true, name: true }
+    });
 
     const results: { index: number; boatId?: string; error?: string }[] = [];
     let created = 0;
@@ -114,6 +118,19 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
+      // Resolve plan → productId + expiresAt (per boat)
+      const boatMonths = typeof input.expiresMonths === 'number' && input.expiresMonths > 0 ? input.expiresMonths : 3;
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + boatMonths);
+
+      let productId: string | null = null;
+      if (input.planName && typeof input.planName === 'string') {
+        const match = products.find(
+          (p) => p.name?.toLowerCase() === input.planName!.toLowerCase()
+        );
+        productId = match?.id ?? null;
+      }
+
       // Resolve owner
       let ownerId = userCheck.user!.id;
       if (input.ownerEmail && typeof input.ownerEmail === 'string') {
@@ -140,6 +157,7 @@ export async function POST(request: NextRequest) {
             specifications: Array.isArray(input.specifications) ? input.specifications.slice(0, 50) : [],
             vatPaid: Boolean(input.vatPaid),
             userId: ownerId,
+            productId,
             status: 'active',
             expiresAt
           }
