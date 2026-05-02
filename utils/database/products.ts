@@ -92,6 +92,7 @@ export const getBoatsFromDatabase = unstable_cache(
           LEFT JOIN "user" u ON b.user_id = u.id
           LEFT JOIN "products" p ON b.product_id = p.id
           WHERE b.status IN ('active', 'sold')
+          AND (b.expires_at IS NULL OR b.expires_at > NOW())
           ORDER BY b.created_at DESC
           LIMIT ${limit}
         ` as any[];
@@ -104,6 +105,7 @@ export const getBoatsFromDatabase = unstable_cache(
           LEFT JOIN "user" u ON b.user_id = u.id
           LEFT JOIN "products" p ON b.product_id = p.id
           WHERE b.status IN ('active', 'sold')
+          AND (b.expires_at IS NULL OR b.expires_at > NOW())
           ORDER BY b.created_at DESC
         ` as any[];
       }

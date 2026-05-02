@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/utils/prisma/client';
 import { checkUser } from '@/utils/auth/check-user';
 import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
-import { sendInvitationEmail } from '@/utils/auth/invite';
+import { sendInvitationEmail, type BoatEmailData } from '@/utils/auth/invite';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
 
     const results: { index: number; boatId?: string; error?: string }[] = [];
     let created = 0;
-    const toInvite = new Set<string>(); // deduplicated new owners
+    const newUserEmails = new Set<string>();
+    const inviteBoats = new Map<string, BoatEmailData[]>(); // email → boats for new owners
 
     for (let i = 0; i < boats.length; i++) {
       const input: BoatInput = boats[i];
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
         try {
           const { userId, isNew } = await findOrCreateUser(input.ownerEmail);
           ownerId = userId;
-          if (isNew) toInvite.add(input.ownerEmail.toLowerCase().trim());
+          if (isNew) newUserEmails.add(input.ownerEmail.toLowerCase().trim());
         } catch (err) {
           console.error(`Error resolving owner for row ${i}:`, err);
         }
@@ -164,6 +165,23 @@ export async function POST(request: NextRequest) {
         });
         results.push({ index: i, boatId: boat.id });
         created++;
+
+        const ownerEmailKey = (input.ownerEmail || '').toLowerCase().trim();
+        if (ownerEmailKey && newUserEmails.has(ownerEmailKey)) {
+          const boatData: BoatEmailData = {
+            id: boat.id,
+            model,
+            price: numericPrice,
+            currency: input.currency || 'EUR',
+            country,
+            condition: input.condition ? String(input.condition).slice(0, 50) : null,
+            description,
+            photos: Array.isArray(input.photos) ? input.photos.slice(0, 20) : [],
+            specifications: Array.isArray(input.specifications) ? input.specifications.slice(0, 50) : [],
+          };
+          const existing = inviteBoats.get(ownerEmailKey) ?? [];
+          inviteBoats.set(ownerEmailKey, [...existing, boatData]);
+        }
       } catch (err) {
         console.error(`Error creating boat at index ${i}:`, err);
         results.push({ index: i, error: 'Database error' });
@@ -171,11 +189,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Send invitation emails after all boats are created (deduplicated)
-    for (const email of toInvite) {
-      await sendInvitationEmail(email);
+    for (const [email, boatData] of inviteBoats) {
+      await sendInvitationEmail(email, boatData);
     }
 
-    return NextResponse.json({ created, total: boats.length, results, invited: toInvite.size });
+    return NextResponse.json({ created, total: boats.length, results, invited: inviteBoats.size });
   } catch (error) {
     console.error('Error in bulk boat creation:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

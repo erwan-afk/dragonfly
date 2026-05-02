@@ -140,7 +140,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (isNewOwner && ownerEmail) {
-      await sendInvitationEmail(ownerEmail.toLowerCase().trim());
+      const boatEmailData = {
+        id: boat.id,
+        model: model.trim(),
+        price: numericPrice,
+        currency: currency || 'EUR',
+        country: country.trim(),
+        condition: condition ? String(condition).slice(0, 50) : null,
+        description: description.trim(),
+        photos: Array.isArray(photos) ? photos.slice(0, 20) : [],
+        specifications: Array.isArray(specifications) ? specifications.slice(0, 50) : [],
+      };
+      await sendInvitationEmail(ownerEmail.toLowerCase().trim(), [boatEmailData]);
     }
 
     return NextResponse.json({ success: true, boat });

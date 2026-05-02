@@ -118,7 +118,9 @@ export default function EditListing({
 
   // Sold states
   const [isMarkingSold, setIsMarkingSold] = useState(false);
-  const [boatStatus, setBoatStatus] = useState<string>((boat as any).status || 'active');
+  const [boatStatus, setBoatStatus] = useState<string>(
+    (boat as any).status || 'active'
+  );
 
   // Success message state
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -195,9 +197,9 @@ export default function EditListing({
   );
 
   // Track the original URLs of replaced photos (to delete from R2)
-  const [replacedPhotoUrls, setReplacedPhotoUrls] = useState<Map<number, string>>(
-    new Map()
-  );
+  const [replacedPhotoUrls, setReplacedPhotoUrls] = useState<
+    Map<number, string>
+  >(new Map());
 
   // Use the plan determined from payments (passed from the page)
   const [currentPlan, setCurrentPlan] = useState(
@@ -214,7 +216,9 @@ export default function EditListing({
 
   const [vatPaid, setVatPaid] = useState(!!(boat as any).vatPaid);
   const [contactEmail, setContactEmail] = useState(
-    typeof (boat as any).email === 'string' ? (boat as any).email : (boat.user?.email || '')
+    typeof (boat as any).email === 'string'
+      ? (boat as any).email
+      : boat.user?.email || ''
   );
   const [condition, setCondition] = useState(
     typeof (boat as any).condition === 'string' ? (boat as any).condition : ''
@@ -239,14 +243,20 @@ export default function EditListing({
     const sorted = [...products]
       .filter((p) => !p.name?.toLowerCase().includes('renewal'))
       .sort((a, b) => {
-        const priceA = a.prices?.[0]?.unitAmount || a.prices?.[0]?.unit_amount || 0;
-        const priceB = b.prices?.[0]?.unitAmount || b.prices?.[0]?.unit_amount || 0;
+        const priceA =
+          a.prices?.[0]?.unitAmount || a.prices?.[0]?.unit_amount || 0;
+        const priceB =
+          b.prices?.[0]?.unitAmount || b.prices?.[0]?.unit_amount || 0;
         return priceA - priceB;
       });
     const currentIndex = sorted.findIndex((p) => {
       const name = p.name?.toLowerCase() || '';
       const plan = currentPlan.toLowerCase();
-      return name.includes(plan) || name.includes(plan.replace('-', ' ')) || name.includes(plan.replace('-', ''));
+      return (
+        name.includes(plan) ||
+        name.includes(plan.replace('-', ' ')) ||
+        name.includes(plan.replace('-', ''))
+      );
     });
     return sorted.filter((_, index) => index > currentIndex);
   }, [products, currentPlan]);
@@ -256,16 +266,25 @@ export default function EditListing({
     return products.find((p) => {
       const name = p.name?.toLowerCase() || '';
       const plan = currentPlan.toLowerCase();
-      return name.includes(plan) || name.includes(plan.replace('-', ' ')) || name.includes(plan.replace('-', ''));
+      return (
+        name.includes(plan) ||
+        name.includes(plan.replace('-', ' ')) ||
+        name.includes(plan.replace('-', ''))
+      );
     });
   }, [products, currentPlan]);
-  const currentPlanPrice = currentPlanProduct?.prices?.[0]?.unitAmount || currentPlanProduct?.prices?.[0]?.unit_amount || 0;
+  const currentPlanPrice =
+    currentPlanProduct?.prices?.[0]?.unitAmount ||
+    currentPlanProduct?.prices?.[0]?.unit_amount ||
+    0;
   const currentPriceId = currentPlanProduct?.prices?.[0]?.id || null;
 
   // Keep upgradeProduct as the selected one (or first available) for backward compat
-  const upgradeProduct = upgradeProducts.length > 0
-    ? (upgradeProducts.find((p) => p.id === selectedUpgradeProductId) || upgradeProducts[0])
-    : null;
+  const upgradeProduct =
+    upgradeProducts.length > 0
+      ? upgradeProducts.find((p) => p.id === selectedUpgradeProductId) ||
+        upgradeProducts[0]
+      : null;
 
   // Price limit effect with upgrade toast
   useEffect(() => {
@@ -465,7 +484,9 @@ export default function EditListing({
         // Store the original URL before replacing (to delete from R2 later)
         const originalUrl = existingPhotos[targetIndex];
         if (originalUrl && !replacedPhotoUrls.has(targetIndex)) {
-          setReplacedPhotoUrls((prev) => new Map(prev).set(targetIndex, originalUrl));
+          setReplacedPhotoUrls((prev) =>
+            new Map(prev).set(targetIndex, originalUrl)
+          );
         }
 
         // Libérer l'ancienne URL blob si c'était une nouvelle photo
@@ -697,7 +718,9 @@ export default function EditListing({
   const deleteReplacedImages = async (): Promise<void> => {
     if (replacedPhotoUrls.size === 0) return;
 
-    console.log(`🗑️ Deleting ${replacedPhotoUrls.size} replaced images from R2...`);
+    console.log(
+      `🗑️ Deleting ${replacedPhotoUrls.size} replaced images from R2...`
+    );
 
     for (const [index, imageUrl] of replacedPhotoUrls) {
       try {
@@ -711,7 +734,9 @@ export default function EditListing({
         });
 
         if (response.ok) {
-          console.log(`✅ Deleted replaced image at index ${index}: ${imageUrl}`);
+          console.log(
+            `✅ Deleted replaced image at index ${index}: ${imageUrl}`
+          );
         } else {
           const error = await response.json();
           console.warn(`⚠️ Failed to delete image at index ${index}:`, error);
@@ -789,7 +814,9 @@ export default function EditListing({
 
     // Scroll to upgrade info section on mobile/tablet
     setTimeout(() => {
-      document.getElementById('upgrade-info')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document
+        .getElementById('upgrade-info')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
   };
 
@@ -1042,7 +1069,9 @@ export default function EditListing({
   const handleMarkAsSold = async () => {
     setIsMarkingSold(true);
     try {
-      const response = await fetch(`/api/boats/${boat.id}/sold`, { method: 'POST' });
+      const response = await fetch(`/api/boats/${boat.id}/sold`, {
+        method: 'POST'
+      });
       if (!response.ok) throw new Error('Failed to mark as sold');
       setBoatStatus('sold');
       router.refresh();
@@ -1056,7 +1085,9 @@ export default function EditListing({
   const handleRelist = async () => {
     setIsMarkingSold(true);
     try {
-      const response = await fetch(`/api/boats/${boat.id}/sold`, { method: 'DELETE' });
+      const response = await fetch(`/api/boats/${boat.id}/sold`, {
+        method: 'DELETE'
+      });
       if (!response.ok) throw new Error('Failed to relist');
       setBoatStatus('active');
       router.refresh();
@@ -1219,7 +1250,19 @@ export default function EditListing({
           onClick={() => router.push('/account')}
           className="inline-flex items-center gap-2 text-oceanblue hover:text-articblue transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
           Back to My Account
         </button>
       </div>
@@ -1241,56 +1284,103 @@ export default function EditListing({
                 (current: {currentPlan.replace('-', ' ')})
               </span>
             </div>
-            <svg className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <svg
+              className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </summary>
           <div className="px-4 pb-4 border-t border-gray-200 pt-4 overflow-hidden">
-            <div className={`grid grid-cols-1 ${upgradeProducts.length > 1 ? 'md:grid-cols-2' : ''} gap-4`}>
+            <div
+              className={`grid grid-cols-1 ${upgradeProducts.length > 1 ? 'md:grid-cols-2' : ''} gap-4`}
+            >
               {upgradeProducts.map((product) => {
                 const newPhotos = getMaxPhotos(product.name);
                 const currentPhotos = getMaxPhotos(currentPlan);
                 const extraPhotos = newPhotos - currentPhotos;
                 const isPodium = product.name?.toLowerCase().includes('podium');
                 const dur = getDuration(product.name);
-                const durationMonths = typeof dur === 'object' ? dur.months : dur;
+                const durationMonths =
+                  typeof dur === 'object' ? dur.months : dur;
                 const price = product.prices?.[0];
                 const fullPrice = price?.unitAmount || price?.unit_amount || 0;
-                const differenceAmount = Math.max(0, fullPrice - currentPlanPrice);
+                const differenceAmount = Math.max(
+                  0,
+                  fullPrice - currentPlanPrice
+                );
                 const priceAmount = (differenceAmount / 100).toFixed(2);
                 const priceCurrency = price?.currency?.toUpperCase() || 'EUR';
 
                 return (
-                  <div key={product.id} className="bg-white rounded-lg border border-gray-200 p-4 min-w-0">
+                  <div
+                    key={product.id}
+                    className="bg-white rounded-lg border border-gray-200 p-4 min-w-0"
+                  >
                     <p className="text-oceanblue text-sm leading-relaxed mb-2">
-                      En passant au forfait <strong>{product.name}</strong>, vous bénéficiez immédiatement de :
+                      En passant au forfait <strong>{product.name}</strong>,
+                      vous bénéficiez immédiatement de :
                     </p>
                     <ul className="text-xs text-oceanblue space-y-1 mb-3">
                       {extraPhotos > 0 && (
                         <li className="flex items-start gap-1.5">
-                          <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
-                          <span><strong>{extraPhotos} photo{extraPhotos > 1 ? 's' : ''} supplémentaire{extraPhotos > 1 ? 's' : ''}</strong> pour sublimer votre annonce.</span>
+                          <CheckCircle
+                            size={12}
+                            className="text-articblue mt-0.5 shrink-0"
+                          />
+                          <span>
+                            <strong>
+                              {extraPhotos} photo{extraPhotos > 1 ? 's' : ''}{' '}
+                              supplémentaire{extraPhotos > 1 ? 's' : ''}
+                            </strong>{' '}
+                            pour sublimer votre annonce.
+                          </span>
                         </li>
                       )}
                       {isPodium && (
                         <li className="flex items-start gap-1.5">
-                          <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
-                          <span>Une <strong>visibilité accrue</strong> auprès des acheteurs.</span>
+                          <CheckCircle
+                            size={12}
+                            className="text-articblue mt-0.5 shrink-0"
+                          />
+                          <span>
+                            Une <strong>visibilité accrue</strong> auprès des
+                            acheteurs.
+                          </span>
                         </li>
                       )}
                       <li className="flex items-start gap-1.5">
-                        <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
-                        <span>Un nouveau départ : la durée de parution de votre annonce est réinitialisée à <strong>{durationMonths} mois</strong> à partir d&apos;aujourd&apos;hui.</span>
+                        <CheckCircle
+                          size={12}
+                          className="text-articblue mt-0.5 shrink-0"
+                        />
+                        <span>
+                          Un nouveau départ : la durée de parution de votre
+                          annonce est réinitialisée à{' '}
+                          <strong>{durationMonths} mois</strong> à partir
+                          d&apos;aujourd&apos;hui.
+                        </span>
                       </li>
                     </ul>
-                    <button
-                      type="button"
-                      onClick={() => handleProductChange(product.id)}
-                      className="w-full py-2 px-3 bg-articblue text-white rounded-lg hover:bg-oceanblue transition-colors text-xs font-medium flex items-center justify-center gap-1.5 truncate"
-                    >
-                      <ArrowUpCircle size={14} className="shrink-0" />
-                      <span className="truncate">{product.name} — {priceAmount} {priceCurrency}</span>
-                    </button>
+                    <div className="w-full flex flex-col items-center">
+                      <button
+                        type="button"
+                        onClick={() => handleProductChange(product.id)}
+                        className="w-full max-w-60 py-2 px-3 bg-articblue text-white rounded-lg hover:bg-oceanblue transition-colors text-xs font-medium flex items-center justify-center gap-1.5 overflow-hidden"
+                      >
+                        <ArrowUpCircle size={14} className="shrink-0" />
+                        <span className="truncate min-w-0">
+                          {product.name} — {priceAmount} {priceCurrency}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1301,39 +1391,70 @@ export default function EditListing({
 
       {/* Section Payment — apparaît uniquement quand un upgrade est sélectionné */}
       {isUpgrading && upgradeProduct && (
-        <div id="upgrade-info" className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 border-2 border-articblue/20 rounded-xl bg-white">
+        <div
+          id="upgrade-info"
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 border-2 border-articblue/20 rounded-xl bg-white"
+        >
           {/* Texte informatif */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold text-oceanblue">Upgrade to {upgradeProduct.name}</h2>
+            <h2 className="text-xl font-semibold text-oceanblue">
+              Upgrade to {upgradeProduct.name}
+            </h2>
             {(() => {
               const newPhotos = getMaxPhotos(upgradeProduct.name);
               const currentPhotos = getMaxPhotos(currentPlan);
               const extraPhotos = newPhotos - currentPhotos;
-              const isPodium = upgradeProduct.name.toLowerCase().includes('podium');
+              const isPodium = upgradeProduct.name
+                .toLowerCase()
+                .includes('podium');
               const dur = getDuration(upgradeProduct.name);
               const durationMonths = typeof dur === 'object' ? dur.months : dur;
 
               return (
                 <div className="bg-articblue/5 border border-articblue/20 rounded-xl p-5">
                   <p className="text-oceanblue text-sm leading-relaxed mb-3">
-                    En passant au forfait <strong>{upgradeProduct.name}</strong>, vous bénéficiez immédiatement de :
+                    En passant au forfait <strong>{upgradeProduct.name}</strong>
+                    , vous bénéficiez immédiatement de :
                   </p>
                   <ul className="text-sm text-oceanblue space-y-2">
                     {extraPhotos > 0 && (
                       <li className="flex items-start gap-2">
-                        <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
-                        <span><strong>{extraPhotos} photo{extraPhotos > 1 ? 's' : ''} supplémentaire{extraPhotos > 1 ? 's' : ''}</strong> pour sublimer votre annonce.</span>
+                        <CheckCircle
+                          size={16}
+                          className="text-articblue mt-0.5 shrink-0"
+                        />
+                        <span>
+                          <strong>
+                            {extraPhotos} photo{extraPhotos > 1 ? 's' : ''}{' '}
+                            supplémentaire{extraPhotos > 1 ? 's' : ''}
+                          </strong>{' '}
+                          pour sublimer votre annonce.
+                        </span>
                       </li>
                     )}
                     {isPodium && (
                       <li className="flex items-start gap-2">
-                        <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
-                        <span>Une <strong>visibilité accrue</strong> auprès des acheteurs.</span>
+                        <CheckCircle
+                          size={16}
+                          className="text-articblue mt-0.5 shrink-0"
+                        />
+                        <span>
+                          Une <strong>visibilité accrue</strong> auprès des
+                          acheteurs.
+                        </span>
                       </li>
                     )}
                     <li className="flex items-start gap-2">
-                      <CheckCircle size={16} className="text-articblue mt-0.5 shrink-0" />
-                      <span>Un nouveau départ : la durée de parution de votre annonce est réinitialisée à <strong>{durationMonths} mois</strong> à partir d&apos;aujourd&apos;hui.</span>
+                      <CheckCircle
+                        size={16}
+                        className="text-articblue mt-0.5 shrink-0"
+                      />
+                      <span>
+                        Un nouveau départ : la durée de parution de votre
+                        annonce est réinitialisée à{' '}
+                        <strong>{durationMonths} mois</strong> à partir
+                        d&apos;aujourd&apos;hui.
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -1341,7 +1462,11 @@ export default function EditListing({
             })()}
             <button
               type="button"
-              onClick={() => { setIsUpgrading(false); setSelectedUpgradeProductId(''); setClientSecret(''); }}
+              onClick={() => {
+                setIsUpgrading(false);
+                setSelectedUpgradeProductId('');
+                setClientSecret('');
+              }}
               className="text-sm text-gray-500 hover:text-oceanblue transition-colors self-start"
             >
               ← Annuler l&apos;upgrade
@@ -1354,29 +1479,40 @@ export default function EditListing({
             {(() => {
               const fullPrice = upgradeProduct.prices[0]?.unitAmount || 0;
               const difference = Math.max(0, fullPrice - currentPlanPrice);
-              const cur = upgradeProduct.prices[0]?.currency?.toUpperCase() || 'EUR';
+              const cur =
+                upgradeProduct.prices[0]?.currency?.toUpperCase() || 'EUR';
               return (
                 <div className="bg-white rounded-xl p-4 border">
                   <div className="flex flex-col gap-1 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Upgrading to:</span>
-                      <span className="font-semibold text-oceanblue">{upgradeProduct.name}</span>
+                      <span className="font-semibold text-oceanblue">
+                        {upgradeProduct.name}
+                      </span>
                     </div>
                     {currentPlanPrice > 0 && (
                       <>
                         <div className="flex justify-between items-center mt-2 text-gray-500">
                           <span>Full price:</span>
-                          <span>{(fullPrice / 100).toFixed(2)} {cur}</span>
+                          <span>
+                            {(fullPrice / 100).toFixed(2)} {cur}
+                          </span>
                         </div>
                         <div className="flex justify-between items-center mt-1 text-gray-500">
                           <span>Current plan:</span>
-                          <span>-{(currentPlanPrice / 100).toFixed(2)} {cur}</span>
+                          <span>
+                            -{(currentPlanPrice / 100).toFixed(2)} {cur}
+                          </span>
                         </div>
                       </>
                     )}
                     <div className="flex justify-between items-center mt-2 pt-2 border-t border-dashed">
-                      <span className="text-gray-600 font-medium">Upgrade difference:</span>
-                      <span className="font-bold text-articblue text-lg">{(difference / 100).toFixed(2)} {cur}</span>
+                      <span className="text-gray-600 font-medium">
+                        Upgrade difference:
+                      </span>
+                      <span className="font-bold text-articblue text-lg">
+                        {(difference / 100).toFixed(2)} {cur}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1388,7 +1524,10 @@ export default function EditListing({
                 stripe={stripePromise}
                 options={{
                   clientSecret: clientSecret,
-                  appearance: { theme: 'stripe', variables: { colorPrimary: '#6cacaf' } }
+                  appearance: {
+                    theme: 'stripe',
+                    variables: { colorPrimary: '#6cacaf' }
+                  }
                 }}
               >
                 <StripePaymentForm
@@ -1407,8 +1546,12 @@ export default function EditListing({
               <div className="flex flex-col items-center justify-center gap-4 p-6 bg-articblue/5 rounded-lg border border-articblue/20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-articblue"></div>
                 <div className="text-center">
-                  <p className="text-oceanblue font-medium">Processing your upgrade...</p>
-                  <p className="text-stonegrey text-sm mt-1">Please wait while we update your listing plan</p>
+                  <p className="text-oceanblue font-medium">
+                    Processing your upgrade...
+                  </p>
+                  <p className="text-stonegrey text-sm mt-1">
+                    Please wait while we update your listing plan
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1420,7 +1563,9 @@ export default function EditListing({
             <div className="flex flex-col justify-center">
               <div className="flex flex-row justify-center items-center text-articblue">
                 <Lock />
-                <p className="text-darkgrey text-sm">Secure Checkout - SSL Encrypted</p>
+                <p className="text-darkgrey text-sm">
+                  Secure Checkout - SSL Encrypted
+                </p>
               </div>
             </div>
           </div>
@@ -1438,212 +1583,75 @@ export default function EditListing({
             <span className="text-articblue">Edit</span> your advert
           </h2>
 
-        {/* Success message */}
-        {showSuccessMessage && (
-          <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
-            <div className="flex items-center gap-3">
-              <svg
-                className="w-5 h-5 text-green-600"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          {/* Success message */}
+          {showSuccessMessage && (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+              <div className="flex items-center gap-3">
+                <svg
+                  className="w-5 h-5 text-green-600"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="font-medium">{successMessage}</span>
+              </div>
+              <button
+                onClick={() => setShowSuccessMessage(false)}
+                className="text-green-600 hover:text-green-800 transition-colors"
+                aria-label="Fermer le message"
               >
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="font-medium">{successMessage}</span>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={() => setShowSuccessMessage(false)}
-              className="text-green-600 hover:text-green-800 transition-colors"
-              aria-label="Fermer le message"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
+          )}
 
-
-        <div className="flex flex-col gap-[32px]">
-          {/* Model avec checkbox de validation */}
-          <div ref={modelFieldRef} className="flex flex-row gap-4 items-center">
-            <div className="flex-1">
-              <Select
-                classNames={{
-                  label: '!text-oceanblue text-md font-medium',
-                  trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg   ${!model && touched.model ? 'border-red-500 border-2' : ''}`,
-                  value: 'text-oceanblue ',
-                  listbox: 'bg-fullwhite',
-                  popoverContent: 'bg-fullwhite'
-                }}
-                className="text-oceanblue h-[40px]"
-                labelPlacement="outside"
-                size="lg"
-                label="Model"
-                placeholder="Select a model"
-                selectedKeys={model ? [model] : []}
-                onChange={handleModelChange}
-                scrollShadowProps={{ isEnabled: false }}
-                isDisabled={isLoading || isProcessingUpgrade}
-                isInvalid={!model && touched.model}
-                errorMessage={
-                  !model && touched.model ? 'Please select a model' : ''
-                }
-              >
-                {dragonflyModels.map((modele) => (
-                  <SelectItem
-                    key={modele.key}
-                    classNames={{
-                      base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
-                      title:
-                        '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
-                      wrapper:
-                        'data-[hover=true]:!bg-articblue/10 !transition-colors',
-                      selectedIcon: '!text-articblue'
-                    }}
-                  >
-                    {modele.label}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-            <div className="pt-8">
-              <ValidationCheckbox
-                isValid={!!model}
-                shouldPulse={shouldPulseInvalid && !model}
-              />
-            </div>
-          </div>
-
-          {/* Country avec checkbox de validation */}
-          <div
-            ref={countryFieldRef}
-            className="flex flex-row gap-4 items-center"
-          >
-            <div className="flex-1">
-              <Select
-                className="text-oceanblue h-[40px]"
-                label="Country"
-                size="lg"
-                classNames={{
-                  label: '!text-oceanblue text-md font-medium',
-                  trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg ${!country && touched.country ? 'border-red-500 border-2' : ''}`,
-                  value: 'text-oceanblue',
-                  listbox: 'bg-fullwhite',
-                  popoverContent: 'bg-fullwhite'
-                }}
-                labelPlacement="outside"
-                placeholder="Select a country"
-                selectedKeys={country ? [country] : []}
-                onChange={handleCountryChange}
-                isDisabled={isLoading || isProcessingUpgrade}
-                isInvalid={!country && touched.country}
-                errorMessage={
-                  !country && touched.country ? 'Please select a country' : ''
-                }
-              >
-                {countries.map(({ key, label, flag }) => (
-                  <SelectItem
-                    key={key}
-                    classNames={{
-                      base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
-                      title:
-                        '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
-                      wrapper:
-                        'data-[hover=true]:!bg-articblue/10 !transition-colors',
-                      selectedIcon: '!text-articblue'
-                    }}
-                    startContent={
-                      <Avatar alt={label} className="w-6 h-6" src={flag} />
-                    }
-                  >
-                    {label}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-            <div className="pt-8">
-              <ValidationCheckbox
-                isValid={!!country}
-                shouldPulse={shouldPulseInvalid && !country}
-              />
-            </div>
-          </div>
-
-          {/* Price avec checkbox de validation */}
-          <div className="flex flex-col w-full h-fit">
+          <div className="flex flex-col gap-[32px]">
+            {/* Model avec checkbox de validation */}
             <div
-              ref={priceFieldRef}
+              ref={modelFieldRef}
               className="flex flex-row gap-4 items-center"
             >
-              <div className="flex-1 flex flex-row gap-24 items-center justify-center">
-                <NumberInput
-                  className="text-oceanblue placeholder:text-oceanblue max-h-[48px] h-[48px] w-full "
-                  label="Price"
-                  classNames={{
-                    label: '!text-oceanblue text-md font-medium ',
-                    inputWrapper: `px-3 shadow-sm max-h-[48px] h-[48px] bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg ${
-                      (priceBoat <= 0 && touched.price) || isPriceOverLimit
-                        ? 'border-red-500 border-2'
-                        : ''
-                    }`,
-                    mainWrapper: 'w-full flex flex-col gap-1 ',
-                    input:
-                      'placeholder:text-oceanblue/40 outline-none w-full bg-transparent max-h-[44px]',
-                    errorMessage: 'text-red-500 text-xs mt-1'
-                  }}
-                  labelPlacement="outside"
-                  placeholder={
-                    priceLimit
-                      ? `Up to ${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}`
-                      : 'Enter price (no limit)'
-                  }
-                  value={priceBoat}
-                  onValueChange={(safeVal) => {
-                    setPriceBoat(safeVal);
-                    setTouched({ ...touched, price: true });
-                  }}
-                  isDisabled={isLoading || isProcessingUpgrade}
-                  isInvalid={
-                    (priceBoat <= 0 && touched.price) || isPriceOverLimit
-                  }
-                />
-
+              <div className="flex-1">
                 <Select
                   classNames={{
                     label: '!text-oceanblue text-md font-medium',
-                    trigger:
-                      ' bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg',
-                    value: 'text-oceanblue',
+                    trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg   ${!model && touched.model ? 'border-red-500 border-2' : ''}`,
+                    value: 'text-oceanblue ',
                     listbox: 'bg-fullwhite',
                     popoverContent: 'bg-fullwhite'
                   }}
-                  className="text-oceanblue h-[48px] max-w-[100px] mt-[4px]"
+                  className="text-oceanblue h-[40px]"
                   labelPlacement="outside"
                   size="lg"
+                  label="Model"
+                  placeholder="Select a model"
+                  selectedKeys={model ? [model] : []}
+                  onChange={handleModelChange}
                   scrollShadowProps={{ isEnabled: false }}
-                  startContent={getCurrencySymbol(currency)}
-                  label="Currency"
-                  defaultSelectedKeys={['USD']}
-                  selectedKeys={currency ? [currency] : ['USD']}
-                  onChange={handleCurrencyChange}
                   isDisabled={isLoading || isProcessingUpgrade}
+                  isInvalid={!model && touched.model}
+                  errorMessage={
+                    !model && touched.model ? 'Please select a model' : ''
+                  }
                 >
-                  {currencies.map((curr) => (
+                  {dragonflyModels.map((modele) => (
                     <SelectItem
-                      key={curr.key}
+                      key={modele.key}
                       classNames={{
                         base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
                         title:
@@ -1653,243 +1661,397 @@ export default function EditListing({
                         selectedIcon: '!text-articblue'
                       }}
                     >
-                      {curr.label}
+                      {modele.label}
                     </SelectItem>
                   ))}
                 </Select>
               </div>
               <div className="pt-8">
                 <ValidationCheckbox
-                  isValid={priceBoat > 0 && !isPriceOverLimit}
+                  isValid={!!model}
+                  shouldPulse={shouldPulseInvalid && !model}
+                />
+              </div>
+            </div>
+
+            {/* Country avec checkbox de validation */}
+            <div
+              ref={countryFieldRef}
+              className="flex flex-row gap-4 items-center"
+            >
+              <div className="flex-1">
+                <Select
+                  className="text-oceanblue h-[40px]"
+                  label="Country"
+                  size="lg"
+                  classNames={{
+                    label: '!text-oceanblue text-md font-medium',
+                    trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg ${!country && touched.country ? 'border-red-500 border-2' : ''}`,
+                    value: 'text-oceanblue',
+                    listbox: 'bg-fullwhite',
+                    popoverContent: 'bg-fullwhite'
+                  }}
+                  labelPlacement="outside"
+                  placeholder="Select a country"
+                  selectedKeys={country ? [country] : []}
+                  onChange={handleCountryChange}
+                  isDisabled={isLoading || isProcessingUpgrade}
+                  isInvalid={!country && touched.country}
+                  errorMessage={
+                    !country && touched.country ? 'Please select a country' : ''
+                  }
+                >
+                  {countries.map(({ key, label, flag }) => (
+                    <SelectItem
+                      key={key}
+                      classNames={{
+                        base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                        title:
+                          '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                        wrapper:
+                          'data-[hover=true]:!bg-articblue/10 !transition-colors',
+                        selectedIcon: '!text-articblue'
+                      }}
+                      startContent={
+                        <Avatar alt={label} className="w-6 h-6" src={flag} />
+                      }
+                    >
+                      {label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="pt-8">
+                <ValidationCheckbox
+                  isValid={!!country}
+                  shouldPulse={shouldPulseInvalid && !country}
+                />
+              </div>
+            </div>
+
+            {/* Price avec checkbox de validation */}
+            <div className="flex flex-col w-full h-fit">
+              <div
+                ref={priceFieldRef}
+                className="flex flex-row gap-4 items-center"
+              >
+                <div className="flex-1 flex flex-row gap-24 items-center justify-center">
+                  <NumberInput
+                    className="text-oceanblue placeholder:text-oceanblue max-h-[48px] h-[48px] w-full "
+                    label="Price"
+                    classNames={{
+                      label: '!text-oceanblue text-md font-medium ',
+                      inputWrapper: `px-3 shadow-sm max-h-[48px] h-[48px] bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg ${
+                        (priceBoat <= 0 && touched.price) || isPriceOverLimit
+                          ? 'border-red-500 border-2'
+                          : ''
+                      }`,
+                      mainWrapper: 'w-full flex flex-col gap-1 ',
+                      input:
+                        'placeholder:text-oceanblue/40 outline-none w-full bg-transparent max-h-[44px]',
+                      errorMessage: 'text-red-500 text-xs mt-1'
+                    }}
+                    labelPlacement="outside"
+                    placeholder={
+                      priceLimit
+                        ? `Up to ${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}`
+                        : 'Enter price (no limit)'
+                    }
+                    value={priceBoat}
+                    onValueChange={(safeVal) => {
+                      setPriceBoat(safeVal);
+                      setTouched({ ...touched, price: true });
+                    }}
+                    isDisabled={isLoading || isProcessingUpgrade}
+                    isInvalid={
+                      (priceBoat <= 0 && touched.price) || isPriceOverLimit
+                    }
+                  />
+
+                  <Select
+                    classNames={{
+                      label: '!text-oceanblue text-md font-medium',
+                      trigger:
+                        ' bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg',
+                      value: 'text-oceanblue',
+                      listbox: 'bg-fullwhite',
+                      popoverContent: 'bg-fullwhite'
+                    }}
+                    className="text-oceanblue h-[48px] max-w-[100px] mt-[4px]"
+                    labelPlacement="outside"
+                    size="lg"
+                    scrollShadowProps={{ isEnabled: false }}
+                    startContent={getCurrencySymbol(currency)}
+                    label="Currency"
+                    defaultSelectedKeys={['USD']}
+                    selectedKeys={currency ? [currency] : ['USD']}
+                    onChange={handleCurrencyChange}
+                    isDisabled={isLoading || isProcessingUpgrade}
+                  >
+                    {currencies.map((curr) => (
+                      <SelectItem
+                        key={curr.key}
+                        classNames={{
+                          base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                          title:
+                            '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                          wrapper:
+                            'data-[hover=true]:!bg-articblue/10 !transition-colors',
+                          selectedIcon: '!text-articblue'
+                        }}
+                      >
+                        {curr.label}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+                <div className="pt-8">
+                  <ValidationCheckbox
+                    isValid={priceBoat > 0 && !isPriceOverLimit}
+                    shouldPulse={
+                      shouldPulseInvalid && (priceBoat <= 0 || isPriceOverLimit)
+                    }
+                  />
+                </div>
+              </div>
+              {isPriceOverLimit && priceLimit && upgradeProduct && (
+                <div className=" min-w-full mt-3 flex flex-row items-center justify-between max-w-[420px] rounded-lg border border-red-300 bg-red-50 p-3">
+                  <div className="flex flex-row items-center justify-between gap-3 w-full">
+                    <div className="text-sm text-red-800">
+                      <p className="font-semibold">
+                        Price too high for {currentPlan.replace('-', ' ')} plan
+                      </p>
+                      <p className="mt-1">
+                        Limit: {getCurrencySymbol(currency)}
+                        {priceLimit?.toLocaleString('en-US')}. Upgrade to{' '}
+                        <strong>{upgradePlan}</strong> to list at this price.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleProductChange(upgradeProduct.id)}
+                      className="shrink-0 px-3 py-2 bg-articblue text-white rounded-lg hover:bg-articblue/90 transition-colors text-sm font-medium"
+                    >
+                      Upgrade
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Select
+              selectionMode="multiple"
+              className="text-oceanblue h-[40px] max-w-[512px]"
+              size="lg"
+              classNames={{
+                label: '!text-oceanblue text-md font-medium',
+                trigger:
+                  'bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg',
+                value: 'text-oceanblue',
+                listbox: 'bg-fullwhite',
+                popoverContent: 'bg-fullwhite'
+              }}
+              labelPlacement="outside"
+              label="Specifications"
+              placeholder="Select features"
+              selectedKeys={new Set(specifications)}
+              onSelectionChange={handleSpecificationsChange}
+              isDisabled={isLoading}
+            >
+              {specificationsData.map((section, index) => (
+                <SelectSection
+                  key={section.title}
+                  title={section.title}
+                  showDivider={index !== specificationsData.length - 1}
+                >
+                  {section.items.map((item) => (
+                    <SelectItem
+                      key={item.key}
+                      classNames={{
+                        base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors rounded-lg',
+                        title:
+                          '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                        wrapper:
+                          'data-[hover=true]:!bg-articblue/10 !transition-colors rounded-lg',
+                        selectedIcon: '!text-articblue'
+                      }}
+                    >
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectSection>
+              ))}
+            </Select>
+
+            <Checkbox
+              color="success"
+              className="text-fullwhite"
+              classNames={{ icon: 'text-fullwhite' }}
+              isSelected={vatPaid}
+              onValueChange={handleVatPaidChange}
+            >
+              VAT paid
+            </Checkbox>
+
+            {/* Description avec checkbox de validation */}
+            <div
+              ref={descriptionFieldRef}
+              className="flex flex-row gap-4 items-center"
+            >
+              <div className="flex-1">
+                <Textarea
+                  classNames={{
+                    label: '!text-oceanblue text-md font-medium ',
+                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 20 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
+                    input: 'placeholder:text-oceanblue',
+                    base: ' border-oceanblue/10 data-[hover=true]:border-articblue   data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors rounded-lg'
+                  }}
+                  className="text-oceanblue"
+                  labelPlacement="outside"
+                  size="lg"
+                  label="Description "
+                  minRows={6}
+                  placeholder="Enter your description (min. 20 characters)"
+                  value={description}
+                  onValueChange={(val) => {
+                    setDescription(val);
+                    setTouched({ ...touched, description: true });
+                  }}
+                  isDisabled={isLoading || isProcessingUpgrade}
+                  description={`${description.length} / 2000 characters`}
+                />
+              </div>
+              <div className="pt-8">
+                <ValidationCheckbox
+                  isValid={
+                    description.length >= 20 && description.length <= 2000
+                  }
                   shouldPulse={
-                    shouldPulseInvalid && (priceBoat <= 0 || isPriceOverLimit)
+                    shouldPulseInvalid &&
+                    (description.length < 20 || description.length > 2000)
                   }
                 />
               </div>
             </div>
-            {isPriceOverLimit && priceLimit && upgradeProduct && (
-              <div className=" min-w-full mt-3 flex flex-row items-center justify-between max-w-[420px] rounded-lg border border-red-300 bg-red-50 p-3">
-                <div className="flex flex-row items-center justify-between gap-3 w-full">
-                  <div className="text-sm text-red-800">
-                    <p className="font-semibold">
-                      Price too high for {currentPlan.replace('-', ' ')} plan
-                    </p>
-                    <p className="mt-1">
-                      Limit: {getCurrencySymbol(currency)}
-                      {priceLimit?.toLocaleString('en-US')}. Upgrade to{' '}
-                      <strong>{upgradePlan}</strong> to list at this price.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleProductChange(upgradeProduct.id)}
-                    className="shrink-0 px-3 py-2 bg-articblue text-white rounded-lg hover:bg-articblue/90 transition-colors text-sm font-medium"
-                  >
-                    Upgrade
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
-          <Select
-            selectionMode="multiple"
-            className="text-oceanblue h-[40px] max-w-[512px]"
-            size="lg"
-            classNames={{
-              label: '!text-oceanblue text-md font-medium',
-              trigger:
-                'bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg',
-              value: 'text-oceanblue',
-              listbox: 'bg-fullwhite',
-              popoverContent: 'bg-fullwhite'
-            }}
-            labelPlacement="outside"
-            label="Specifications"
-            placeholder="Select features"
-            selectedKeys={new Set(specifications)}
-            onSelectionChange={handleSpecificationsChange}
-            isDisabled={isLoading}
-          >
-            {specificationsData.map((section, index) => (
-              <SelectSection
-                key={section.title}
-                title={section.title}
-                showDivider={index !== specificationsData.length - 1}
-              >
-                {section.items.map((item) => (
-                  <SelectItem
-                    key={item.key}
-                    classNames={{
-                      base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors rounded-lg',
-                      title:
-                        '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
-                      wrapper:
-                        'data-[hover=true]:!bg-articblue/10 !transition-colors rounded-lg',
-                      selectedIcon: '!text-articblue'
-                    }}
-                  >
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectSection>
-            ))}
-          </Select>
-
-          <Checkbox
-            color="success"
-            className="text-fullwhite"
-            classNames={{ icon: 'text-fullwhite' }}
-            isSelected={vatPaid}
-            onValueChange={handleVatPaidChange}
-          >
-            VAT paid
-          </Checkbox>
-
-          {/* Description avec checkbox de validation */}
-          <div
-            ref={descriptionFieldRef}
-            className="flex flex-row gap-4 items-center"
-          >
-            <div className="flex-1">
-              <Textarea
-                classNames={{
-                  label: '!text-oceanblue text-md font-medium ',
-                  inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 20 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
-                  input: 'placeholder:text-oceanblue',
-                  base: ' border-oceanblue/10 data-[hover=true]:border-articblue   data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors rounded-lg'
-                }}
-                className="text-oceanblue"
-                labelPlacement="outside"
-                size="lg"
-                label="Description "
-                minRows={6}
-                placeholder="Enter your description (min. 20 characters)"
-                value={description}
-                onValueChange={(val) => {
-                  setDescription(val);
-                  setTouched({ ...touched, description: true });
-                }}
-                isDisabled={isLoading || isProcessingUpgrade}
-                description={`${description.length} / 2000 characters`}
-              />
-            </div>
-            <div className="pt-8">
-              <ValidationCheckbox
-                isValid={description.length >= 20 && description.length <= 2000}
-                shouldPulse={
-                  shouldPulseInvalid &&
-                  (description.length < 20 || description.length > 2000)
-                }
-              />
-            </div>
-          </div>
-
-          {/* Email avec checkbox de validation */}
-          <div className="flex flex-row gap-4 items-center">
-            <div className="flex-1 flex flex-col gap-1">
-              <label className="text-oceanblue text-md font-medium">Contact Email</label>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                value={contactEmail}
-                onChange={(e) => {
-                  setContactEmail(e.target.value);
-                  setTouched({ ...touched, email: true });
-                }}
-                disabled={isLoading || isProcessingUpgrade}
-                className={`w-full h-[48px] px-3 text-oceanblue bg-fullwhite border-2 rounded-lg outline-none transition-colors placeholder:text-oceanblue/40 ${
-                  touched.email && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
-                    ? 'border-red-500'
-                    : 'border-oceanblue/10 hover:border-articblue hover:bg-articblue/10'
-                }`}
-              />
-              {touched.email && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) && (
-                <span className="text-red-500 text-xs">Please enter a valid email</span>
-              )}
-            </div>
-            <div className="pt-6">
-              <ValidationCheckbox
-                isValid={!!contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)}
-                shouldPulse={shouldPulseInvalid && (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))}
-              />
-            </div>
-          </div>
-
-          {/* Condition avec checkbox de validation */}
-          <div className="flex flex-row gap-4 items-center">
-            <div className="flex-1">
-              <Select
-                className="text-oceanblue h-[40px]"
-                label="Condition"
-                size="lg"
-                classNames={{
-                  label: '!text-oceanblue text-md font-medium',
-                  trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg`,
-                  value: 'text-oceanblue',
-                  listbox: 'bg-fullwhite',
-                  popoverContent: 'bg-fullwhite'
-                }}
-                labelPlacement="outside"
-                placeholder="Select condition"
-                selectedKeys={condition ? [condition] : []}
-                onChange={(e) => setCondition(e.target.value)}
-                isDisabled={isLoading || isProcessingUpgrade}
-              >
-                {boatConditions.map(({ key, label }) => (
-                  <SelectItem
-                    key={key}
-                    classNames={{
-                      base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
-                      title: '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
-                      selectedIcon: '!text-articblue'
-                    }}
-                  >
-                    {label}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-            <div className="pt-8">
-              <ValidationCheckbox
-                isValid={!!condition}
-                optional
-              />
-            </div>
-          </div>
-
-          {/* Photos avec checkbox de validation */}
-          {maxPhotos > 0 ? (
-            <div
-              ref={photosFieldRef}
-              className="flex flex-row gap-4 items-start"
-            >
-              <div className="flex-1 space-y-4">
-                <label className="block !text-oceanblue text-md font-medium">
-                  Photos
+            {/* Email avec checkbox de validation */}
+            <div className="flex flex-row gap-4 items-center">
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-oceanblue text-md font-medium">
+                  Contact Email
                 </label>
-
-                {/* Input file caché */}
                 <input
-                  id="photo-upload-input"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                  disabled={isLoading}
+                  type="email"
+                  placeholder="your@email.com"
+                  value={contactEmail}
+                  onChange={(e) => {
+                    setContactEmail(e.target.value);
+                    setTouched({ ...touched, email: true });
+                  }}
+                  disabled={isLoading || isProcessingUpgrade}
+                  className={`w-full h-[48px] px-3 text-oceanblue bg-fullwhite border-2 rounded-lg outline-none transition-colors placeholder:text-oceanblue/40 ${
+                    touched.email &&
+                    (!contactEmail ||
+                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+                      ? 'border-red-500'
+                      : 'border-oceanblue/10 hover:border-articblue hover:bg-articblue/10'
+                  }`}
                 />
+                {touched.email &&
+                  (!contactEmail ||
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) && (
+                    <span className="text-red-500 text-xs">
+                      Please enter a valid email
+                    </span>
+                  )}
+              </div>
+              <div className="pt-6">
+                <ValidationCheckbox
+                  isValid={
+                    !!contactEmail &&
+                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)
+                  }
+                  shouldPulse={
+                    shouldPulseInvalid &&
+                    (!contactEmail ||
+                      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
+                  }
+                />
+              </div>
+            </div>
 
-                {/* Grille de cases de preview */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {Array.from({ length: maxPhotos }).map((_, index) => {
-                    const hasPhoto = index < allPhotoPreviews.length;
-                    const preview = allPhotoPreviews[index];
+            {/* Condition avec checkbox de validation */}
+            <div className="flex flex-row gap-4 items-center">
+              <div className="flex-1">
+                <Select
+                  className="text-oceanblue h-[40px]"
+                  label="Condition"
+                  size="lg"
+                  classNames={{
+                    label: '!text-oceanblue text-md font-medium',
+                    trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg`,
+                    value: 'text-oceanblue',
+                    listbox: 'bg-fullwhite',
+                    popoverContent: 'bg-fullwhite'
+                  }}
+                  labelPlacement="outside"
+                  placeholder="Select condition"
+                  selectedKeys={condition ? [condition] : []}
+                  onChange={(e) => setCondition(e.target.value)}
+                  isDisabled={isLoading || isProcessingUpgrade}
+                >
+                  {boatConditions.map(({ key, label }) => (
+                    <SelectItem
+                      key={key}
+                      classNames={{
+                        base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                        title:
+                          '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                        selectedIcon: '!text-articblue'
+                      }}
+                    >
+                      {label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="pt-8">
+                <ValidationCheckbox isValid={!!condition} optional />
+              </div>
+            </div>
 
-                    return (
-                      <div
-                        key={index}
-                        className={`
+            {/* Photos avec checkbox de validation */}
+            {maxPhotos > 0 ? (
+              <div
+                ref={photosFieldRef}
+                className="flex flex-row gap-4 items-start"
+              >
+                <div className="flex-1 space-y-4">
+                  <label className="block !text-oceanblue text-md font-medium">
+                    Photos
+                  </label>
+
+                  {/* Input file caché */}
+                  <input
+                    id="photo-upload-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                    disabled={isLoading}
+                  />
+
+                  {/* Grille de cases de preview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {Array.from({ length: maxPhotos }).map((_, index) => {
+                      const hasPhoto = index < allPhotoPreviews.length;
+                      const preview = allPhotoPreviews[index];
+
+                      return (
+                        <div
+                          key={index}
+                          className={`
                       relative aspect-square rounded-lg border-2 overflow-hidden
                       transition-all duration-300 cursor-pointer
                       ${
@@ -1901,130 +2063,130 @@ export default function EditListing({
                       }
                       ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
                     `}
-                        onClick={() => !isLoading && handlePhotoClick(index)}
-                        onDragOver={(e) => handleDragOver(e, index)}
-                        onDragEnter={(e) => handleDragEnter(e, index)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, index)}
-                      >
-                        {hasPhoto ? (
-                          <>
-                            <img
-                              src={preview}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            {!isLoading && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removePhoto(index);
-                                }}
-                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                                aria-label="Remove photo"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2.5"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
+                          onClick={() => !isLoading && handlePhotoClick(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragEnter={(e) => handleDragEnter(e, index)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, index)}
+                        >
+                          {hasPhoto ? (
+                            <>
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              {!isLoading && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removePhoto(index);
+                                  }}
+                                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                                  aria-label="Remove photo"
                                 >
-                                  <path d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2 text-center">
-                              Photo {index + 1}
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2.5"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2 text-center">
+                                Photo {index + 1}
+                              </div>
+                            </>
+                          ) : (
+                            <div
+                              className={`w-full h-full flex flex-col items-center justify-center transition-colors ${
+                                dragOverIndex === index
+                                  ? 'text-articblue'
+                                  : 'text-stonegrey hover:text-articblue'
+                              }`}
+                            >
+                              {dragOverIndex === index ? (
+                                <>
+                                  <svg
+                                    className="w-12 h-12 mb-2 animate-pulse"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                  </svg>
+                                  <span className="text-sm font-semibold">
+                                    Drop photo here
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg
+                                    className="w-10 h-10 mb-2"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="1.5"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  <span className="text-xs font-medium">
+                                    Add photo
+                                  </span>
+                                </>
+                              )}
                             </div>
-                          </>
-                        ) : (
-                          <div
-                            className={`w-full h-full flex flex-col items-center justify-center transition-colors ${
-                              dragOverIndex === index
-                                ? 'text-articblue'
-                                : 'text-stonegrey hover:text-articblue'
-                            }`}
-                          >
-                            {dragOverIndex === index ? (
-                              <>
-                                <svg
-                                  className="w-12 h-12 mb-2 animate-pulse"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                <span className="text-sm font-semibold">
-                                  Drop photo here
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <svg
-                                  className="w-10 h-10 mb-2"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="1.5"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span className="text-xs font-medium">
-                                  Add photo
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
 
-                <p className="text-xs text-stonegrey">
-                  {photoFiles.length + existingPhotos.length} / {maxPhotos}{' '}
-                  photos
-                </p>
-              </div>
-              <div className="pt-8">
-                <ValidationCheckbox
-                  isValid={photoFiles.length + existingPhotos.length > 0}
-                  shouldPulse={
-                    shouldPulseInvalid &&
-                    photoFiles.length + existingPhotos.length === 0
-                  }
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-row gap-4 items-start">
-              <div className="flex-1 space-y-4">
-                <label className="block text-oceanblue font-medium">
-                  Photos
-                </label>
-                <div className="p-4 bg-stonegrey/10 rounded-lg border border-stonegrey/20">
-                  <p className="text-sm text-stonegrey">
-                    This offer does not include photo uploads.
+                  <p className="text-xs text-stonegrey">
+                    {photoFiles.length + existingPhotos.length} / {maxPhotos}{' '}
+                    photos
                   </p>
                 </div>
+                <div className="pt-8">
+                  <ValidationCheckbox
+                    isValid={photoFiles.length + existingPhotos.length > 0}
+                    shouldPulse={
+                      shouldPulseInvalid &&
+                      photoFiles.length + existingPhotos.length === 0
+                    }
+                  />
+                </div>
               </div>
-              <div className="pt-8">
-                <ValidationCheckbox isValid={true} optional={true} />
+            ) : (
+              <div className="flex flex-row gap-4 items-start">
+                <div className="flex-1 space-y-4">
+                  <label className="block text-oceanblue font-medium">
+                    Photos
+                  </label>
+                  <div className="p-4 bg-stonegrey/10 rounded-lg border border-stonegrey/20">
+                    <p className="text-sm text-stonegrey">
+                      This offer does not include photo uploads.
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-8">
+                  <ValidationCheckbox isValid={true} optional={true} />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </form>
+            )}
+          </div>
+        </form>
 
         {/* Save / Cancel */}
         <div className="flex flex-col gap-4 mt-8">
@@ -2057,8 +2219,12 @@ export default function EditListing({
           {boatStatus === 'sold' && (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-300 bg-gray-100">
-                <span className="font-semibold text-sm uppercase tracking-wide text-gray-700">Vendu</span>
-                <span className="text-14 text-gray-500">Cette annonce est marquée comme vendue.</span>
+                <span className="font-semibold text-sm uppercase tracking-wide text-gray-700">
+                  Vendu
+                </span>
+                <span className="text-14 text-gray-500">
+                  Cette annonce est marquée comme vendue.
+                </span>
               </div>
               <button
                 type="button"
@@ -2071,7 +2237,8 @@ export default function EditListing({
             </div>
           )}
         </div>
-      </div>{/* fin max-w-lg */}
+      </div>
+      {/* fin max-w-lg */}
     </div>
   );
 }

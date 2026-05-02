@@ -3,7 +3,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import * as nodemailer from 'nodemailer';
 import prisma from '../prisma/client';
-import { isInvitation } from './invite';
 
 // Only log during runtime, not during build
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -74,92 +73,53 @@ export const auth = betterAuth({
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
       });
 
-      // Detect invitation flow via the shared Set in invite.ts (set before forget-password is called)
-      const isInvited = isInvitation(user.email);
-
-      const subject = isInvited
-        ? 'Your listing is live on Dragonfly Trimarans'
-        : 'Reset your password';
-
-      const html = isInvited
-        ? `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #1e3a8a; text-align: center;">Welcome to Dragonfly Trimarans</h1>
-            <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-              <p style="font-size: 16px; line-height: 1.6;">
-                Hello <strong>${user.name || user.email}</strong>,
-              </p>
-              <p style="font-size: 16px; line-height: 1.6;">
-                Your listing has been published on <strong>Dragonfly Trimarans</strong>, the marketplace dedicated to trimarans.
-              </p>
-              <p style="font-size: 16px; line-height: 1.6;">
-                Create your password to access your account and manage your listings:
-              </p>
-              <div style="text-align: center; margin: 25px 0;">
-                <a href="${url}"
-                   style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                  Create my password
-                </a>
-              </div>
-              <p style="color: #6b7280; font-size: 14px;">
-                This link expires in 7 days.
-              </p>
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #1e3a8a; text-align: center;">Password Reset</h1>
+          <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
+            <p style="font-size: 16px; line-height: 1.6;">
+              Hello <strong>${user.name || 'there'}</strong>,
+            </p>
+            <p style="font-size: 16px; line-height: 1.6;">
+              You requested a password reset. Click the button below to create a new one.
+            </p>
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${url}"
+                 style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Reset my password
+              </a>
             </div>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 12px; text-align: center;">
-              This email was sent automatically by Dragonfly Trimarans.
+            <p style="color: #6b7280; font-size: 14px;">
+              This link expires in 7 days. If you did not request this, please ignore this email.
             </p>
           </div>
-        `
-        : `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #1e3a8a; text-align: center;">Password Reset</h1>
-            <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-              <p style="font-size: 16px; line-height: 1.6;">
-                Hello <strong>${user.name || 'there'}</strong>,
-              </p>
-              <p style="font-size: 16px; line-height: 1.6;">
-                You requested a password reset. Click the button below to create a new one.
-              </p>
-              <div style="text-align: center; margin: 25px 0;">
-                <a href="${url}"
-                   style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                  Reset my password
-                </a>
-              </div>
-              <p style="color: #6b7280; font-size: 14px;">
-                This link expires in 7 days. If you did not request this, please ignore this email.
-              </p>
-            </div>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-            <p style="color: #6b7280; font-size: 12px; text-align: center;">
-              This email was sent automatically by Dragonfly Trimarans.
-            </p>
-          </div>
-        `;
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 12px; text-align: center;">
+            This email was sent automatically by Dragonfly Trimarans.
+          </p>
+        </div>
+      `;
 
-      const text = isInvited
-        ? `Hello ${user.name || user.email},\n\nYour listing has been published on Dragonfly Trimarans.\n\nCreate your password to access your account:\n${url}\n\nThis link expires in 7 days.\n\nDragonfly Trimarans`
-        : `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\nDragonfly Trimarans`;
+      const text = `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\nDragonfly Trimarans`;
 
       try {
         await transporter.sendMail({
           from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
           to: user.email,
-          subject,
+          subject: 'Reset your password',
           html,
           text,
         });
 
         await prisma.email_log.create({
           data: {
-            type: isInvited ? 'invitation' : 'password_reset',
+            type: 'password_reset',
             userId: user.id,
             email: user.email,
           },
         });
 
-        console.log(`✅ ${isInvited ? 'Invitation' : 'Reset'} email sent to ${user.email}`);
+        console.log(`✅ Reset email sent to ${user.email}`);
       } catch (error) {
         console.error(`❌ Failed to send email to ${user.email}:`, error);
       }

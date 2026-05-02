@@ -60,7 +60,8 @@
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
       "Bash(node -e ' *)",
       "Bash(taskkill /F /IM node.exe)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npx tsx *)"
     ]
   }
 }

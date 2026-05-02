@@ -24,7 +24,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     // Construire les conditions WHERE dynamiquement
     const conditions: string[] = [
       "b.status IN ('active', 'sold')",
-      "(b.status = 'sold' OR b.expires_at IS NULL OR b.expires_at > NOW())"
+      "(b.expires_at IS NULL OR b.expires_at > NOW())"
     ];
     const sqlParams: any[] = [];
     let paramIndex = 1;

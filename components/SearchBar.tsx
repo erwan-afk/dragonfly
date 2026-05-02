@@ -3,7 +3,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Checkbox } from '@heroui/checkbox';
-import { dragonflyModels as BOAT_MODELS, countries as COUNTRIES } from '@/utils/constants';
+import {
+  dragonflyModels as BOAT_MODELS,
+  countries as COUNTRIES,
+  currencies as CURRENCIES
+} from '@/utils/constants';
 import { specificationsData as ATTRIBUTES } from '@/utils/specifications';
 import {
   Dropdown,
@@ -15,37 +19,6 @@ import ArrowDropdown from '@/components/icons/ArrowDropdown';
 import Link from 'next/link';
 import FlagIcon from './icons/Flag';
 
-const PRICE_OPTIONS = [
-  { value: 0, label: 'Tout' },
-  { value: 2000, label: '2 000 €' },
-  { value: 4000, label: '4 000 €' },
-  { value: 6000, label: '6 000 €' },
-  { value: 8000, label: '8 000 €' },
-  { value: 10000, label: '10 000 €' },
-  { value: 12000, label: '12 000 €' },
-  { value: 14000, label: '14 000 €' },
-  { value: 16000, label: '16 000 €' },
-  { value: 18000, label: '18 000 €' },
-  { value: 20000, label: '20 000 €' },
-  { value: 22000, label: '22 000 €' },
-  { value: 24000, label: '24 000 €' },
-  { value: 26000, label: '26 000 €' },
-  { value: 28000, label: '28 000 €' },
-  { value: 30000, label: '30 000 €' },
-  { value: 35000, label: '35 000 €' },
-  { value: 40000, label: '40 000 €' },
-  { value: 45000, label: '45 000 €' },
-  { value: 50000, label: '50 000 €' },
-  { value: 60000, label: '60 000 €' },
-  { value: 70000, label: '70 000 €' },
-  { value: 80000, label: '80 000 €' },
-  { value: 90000, label: '90 000 €' },
-  { value: 100000, label: '100 000 €' },
-  { value: 150000, label: '150 000 €' },
-  { value: 200000, label: '200 000 €' },
-  { value: 300000, label: '300 000 €' }
-];
-
 export default function SearchBar() {
   const router = useRouter();
   const [selectedModel, setSelectedModel] = useState<string>('');
@@ -54,7 +27,7 @@ export default function SearchBar() {
     new Set()
   );
   const [maxPrice, setMaxPrice] = useState<number>(0);
-  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false);
+  const [currency, setCurrency] = useState<string>('EUR');
   const [isAttributeDropdownOpen, setIsAttributeDropdownOpen] = useState(false);
 
   const flatAttributes = useMemo(
@@ -75,6 +48,7 @@ export default function SearchBar() {
 
     if (maxPrice > 0) {
       params.append('maxPrice', maxPrice.toString());
+      params.append('currency', currency);
     }
 
     if (selectedAttributes.size > 0) {
@@ -110,7 +84,7 @@ export default function SearchBar() {
         </Link>
       </div>
       {/* Première ligne : Model + Prix max */}
-      <div className="grid grid-cols-2 w-full gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 w-full gap-2 sm:gap-4 items-center">
         {/* Dropdown Model */}
         <div className="w-full">
           <Dropdown>
@@ -154,45 +128,41 @@ export default function SearchBar() {
           </Dropdown>
         </div>
 
-        {/* Dropdown Prix max */}
-        <div className="w-full">
-          <Dropdown
-            isOpen={isPriceDropdownOpen}
-            onOpenChange={setIsPriceDropdownOpen}
-          >
+        {/* Prix max + Currency */}
+        <div className="w-full h-fit flex flex-row items-center bg-lightgrey rounded-full h-7 sm:h-10 overflow-hidden px-6 gap-2">
+          <input
+            type="number"
+            min={0}
+            placeholder="Price max"
+            value={maxPrice === 0 ? '' : maxPrice}
+            onChange={(e) =>
+              setMaxPrice(e.target.value === '' ? 0 : Number(e.target.value))
+            }
+            className="flex-1 max-w-20 bg-transparent text-oceanblue font-medium text-[12px] sm:text-14 placeholder:text-oceanblue  outline-none   "
+          />
+          <Dropdown>
             <DropdownTrigger>
-              <button className="w-full rounded-full px-3 sm:px-5 h-7 sm:h-10 flex flex-row gap-1 sm:gap-2 items-center justify-between bg-lightgrey text-oceanblue hover:bg-smokygrey transition-colors min-w-0">
-                <div className="font-medium text-[12px] sm:text-14 truncate flex-1">
-                  {maxPrice === 0
-                    ? 'Price max'
-                    : PRICE_OPTIONS.find((p) => p.value === maxPrice)?.label ||
-                      'Price max'}
-                </div>
-                <ArrowDropdown className="flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4" />
+              <button className="flex items-center gap-1 text-oceanblue font-medium text-[12px] sm:text-14 shrink-0 cursor-pointer">
+                {CURRENCIES.find((c) => c.key === currency)?.symbol || currency}
+                <ArrowDropdown className="w-3 h-3" />
               </button>
             </DropdownTrigger>
             <DropdownMenu
-              aria-label="Prix maximum"
-              classNames={{
-                base: 'max-h-[400px] overflow-y-auto bg-fullwhite',
-                list: 'bg-fullwhite'
-              }}
-              onAction={(key) => {
-                setMaxPrice(Number(key));
-                setIsPriceDropdownOpen(false);
-              }}
+              aria-label="Select currency"
+              classNames={{ base: 'bg-fullwhite', list: 'bg-fullwhite' }}
+              onAction={(key) => setCurrency(key as string)}
             >
-              {PRICE_OPTIONS.map((option) => (
+              {CURRENCIES.map((c) => (
                 <DropdownItem
-                  key={option.value}
+                  key={c.key}
                   classNames={{
                     base:
-                      maxPrice === option.value
+                      currency === c.key
                         ? 'bg-lightgrey text-oceanblue font-medium data-[hover=true]:bg-lightgrey'
                         : 'text-oceanblue data-[hover=true]:bg-lightgrey data-[hover=true]:text-oceanblue'
                   }}
                 >
-                  {option.label}
+                  {c.symbol} {c.label}
                 </DropdownItem>
               ))}
             </DropdownMenu>
