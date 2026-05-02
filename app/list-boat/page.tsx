@@ -13,14 +13,14 @@ export default async function ListBoatPage({
     headers: await headers()
   });
 
+  const preference = searchParams?.preference || null;
+
   if (!session?.user) {
     const callbackUrl = preference
       ? `/list-boat?preference=${encodeURIComponent(preference)}`
       : '/list-boat';
     redirect(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
-
-  const preference = searchParams?.preference || null;
   const products = await getProductsFromDatabase();
 
   return (
