@@ -31,18 +31,16 @@ export default function BoatImageGallery({
       url !== '/images/default-boat-image.png'
   );
 
-  // Si aucune image valide, afficher un message
+  // Si aucune image valide, afficher l'image générique (pleine largeur, sans thumbnails)
   if (validImages.length === 0) {
     return (
-      <div className="flex flex-col sm:flex-row w-full gap-8 sm:gap-16 max-h-none sm:max-h-[384px]">
-        <div className="w-full h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-gray-400 text-lg mb-2">📸</div>
-            <p className="text-gray-500 text-sm">No images available</p>
-            <p className="text-gray-400 text-xs">
-              Images will be displayed after validation
-            </p>
-          </div>
+      <div className="flex w-full gap-8 sm:gap-16 max-h-none sm:max-h-[384px]">
+        <div className="w-full h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative">
+          <BoatImage
+            src="/images/dragonfly-boat.webp"
+            alt={`${boatModel} — no photo available`}
+            className="w-full h-full object-cover object-center"
+          />
         </div>
       </div>
     );
