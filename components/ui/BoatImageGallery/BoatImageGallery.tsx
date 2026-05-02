@@ -37,7 +37,7 @@ export default function BoatImageGallery({
       <div className="flex w-full gap-8 sm:gap-16 max-h-none sm:max-h-[384px]">
         <div className="w-full h-[250px] sm:h-[384px] rounded-12 overflow-hidden relative">
           <BoatImage
-            src="/images/dragonfly-boat.webp"
+            src="/images/No-image.png"
             alt={`${boatModel} — no photo available`}
             className="w-full h-full object-cover object-center"
           />
