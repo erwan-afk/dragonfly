@@ -18,6 +18,7 @@ interface BoatRow {
   vatPaid: boolean;
   photoUrls: string;
   specifications: string;
+  expiresMonths: string;
 
   status?: 'pending' | 'success' | 'error';
   errorMessage?: string;
@@ -33,40 +34,80 @@ function createEmptyRow(): BoatRow {
     price: '',
     currency: 'EUR',
     country: '',
-    condition: 'used',
+    condition: '',
     description: '',
     email: '',
     vatPaid: false,
     ownerEmail: '',
     photoUrls: '',
-    specifications: ''
+    specifications: '',
+    expiresMonths: '3'
   };
 }
 
+// Maps a raw CSV string to a valid option key (tries key → label → partial label)
+function matchKey<T extends { key: string; label: string }>(
+  options: readonly T[],
+  raw: string,
+  fallback = ''
+): string {
+  if (!raw) return fallback;
+  const lower = raw.toLowerCase().trim();
+  const byKey = options.find((o) => o.key.toLowerCase() === lower);
+  if (byKey) return byKey.key;
+  const byLabel = options.find((o) => o.label.toLowerCase() === lower);
+  if (byLabel) return byLabel.key;
+  const byPartial = options.find(
+    (o) => lower.includes(o.label.toLowerCase()) || o.label.toLowerCase().includes(lower)
+  );
+  if (byPartial) return byPartial.key;
+  return fallback;
+}
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
 function parseCSV(text: string): BoatRow[] {
-  const lines = text.trim().split('\n');
+  const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
-  return lines.slice(1).map((line) => {
-    const values = line.match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g) || [];
-    const clean = values.map((v) => v.replace(/^"|"$/g, '').trim());
+  const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().replace(/"/g, ''));
+  return lines.slice(1).filter((l) => l.trim()).map((line) => {
+    const clean = parseCSVLine(line);
     const get = (key: string) => {
       const idx = headers.indexOf(key);
       return idx >= 0 ? (clean[idx] || '') : '';
     };
     return {
       id: Math.random().toString(36).slice(2),
-      model: get('model'),
+      model: matchKey(dragonflyModels, get('model')),
       price: get('price'),
-      currency: get('currency') || 'EUR',
-      country: get('country'),
-      condition: get('condition') || 'used',
+      currency: matchKey(currencyList, get('currency'), 'EUR'),
+      country: matchKey(countries, get('country')),
+      condition: matchKey(boatConditions, get('condition')),
       description: get('description'),
       email: get('email'),
       vatPaid: get('vatpaid') === 'true' || get('vat_paid') === 'true',
       ownerEmail: get('owneremail') || get('owner_email'),
       photoUrls: get('photos'),
-      specifications: get('specifications')
+      specifications: get('specifications'),
+      expiresMonths: get('expires_months') || get('expiresmonths') || '3'
     };
   });
 }
@@ -155,7 +196,8 @@ export default function AdminBoatImport() {
           email: quick.email || undefined,
           vatPaid: quick.vatPaid,
           specifications: quickSpecs,
-          ownerEmail: quick.ownerEmail || undefined
+          ownerEmail: quick.ownerEmail || undefined,
+          expiresMonths: parseInt(quick.expiresMonths) || 3
         })
       });
       const data = await res.json();
@@ -233,6 +275,7 @@ export default function AdminBoatImport() {
       email: r.email || undefined,
       ownerEmail: r.ownerEmail || undefined,
       vatPaid: r.vatPaid,
+      expiresMonths: parseInt(r.expiresMonths) || 3,
       photos: r.photoUrls
         ? r.photoUrls.split(',').map((u) => u.trim()).filter(Boolean)
         : [],
@@ -406,6 +449,18 @@ export default function AdminBoatImport() {
                 />
                 <p className="text-xs text-gray-400 mt-0.5">Crée le compte automatiquement si inexistant et envoie une invitation.</p>
               </div>
+              <div>
+                <label className={labelCls}>Durée d'expiration (mois)</label>
+                <input
+                  className={inputCls}
+                  type="number"
+                  min="1"
+                  max="24"
+                  placeholder="3"
+                  value={quick.expiresMonths}
+                  onChange={(e) => setQuick((q) => ({ ...q, expiresMonths: e.target.value }))}
+                />
+              </div>
               <div className="flex items-center gap-2 mt-5">
                 <input
                   type="checkbox"
@@ -558,7 +613,7 @@ export default function AdminBoatImport() {
               </button>
               <input ref={csvFileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCSV} />
               <span className="text-xs text-gray-400">
-                En-têtes : model, price, currency, country, condition, description, email, photos
+                En-têtes CSV : model, price, currency, country, condition, description, email, owner_email, vat_paid, photos, specifications, expires_months
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -661,6 +716,19 @@ export default function AdminBoatImport() {
                   <input className={inputCls} placeholder="URLs photos…" value={row.photoUrls} onChange={(e) => updateRow(row.id, 'photoUrls', e.target.value)} />
                   <input className={inputCls} type="email" placeholder="Email contact" value={row.email} onChange={(e) => updateRow(row.id, 'email', e.target.value)} />
                   <input className={inputCls} type="email" placeholder="Email propriétaire" value={row.ownerEmail} onChange={(e) => updateRow(row.id, 'ownerEmail', e.target.value)} title="Crée le compte et envoie une invitation si inexistant" />
+                  <div className="flex items-center gap-2">
+                    <input
+                      className={`${inputCls} w-14`}
+                      type="number"
+                      min="1"
+                      max="24"
+                      placeholder="3"
+                      title="Durée d'expiration (mois)"
+                      value={row.expiresMonths}
+                      onChange={(e) => updateRow(row.id, 'expiresMonths', e.target.value)}
+                    />
+                    <span className="text-xs text-gray-400 shrink-0">mois</span>
+                  </div>
                   <div className="flex items-center gap-1">
                     <input type="checkbox" id={`vat-${row.id}`} checked={row.vatPaid} onChange={(e) => updateRow(row.id, 'vatPaid', e.target.checked)} className="rounded border-gray-300" />
                     <label htmlFor={`vat-${row.id}`} className="text-xs text-gray-500">TVA</label>
