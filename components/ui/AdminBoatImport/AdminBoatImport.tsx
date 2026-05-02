@@ -631,7 +631,7 @@ export default function AdminBoatImport() {
               </button>
               <input ref={csvFileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCSV} />
               <span className="text-xs text-gray-400">
-                En-têtes CSV : model, price, currency, country, condition, description, email, owner_email, vat_paid, photos, specifications, expires_months
+                En-têtes CSV : model, price, currency, country, condition, description, email, owner_email, vat_paid, photos, specifications, plan — colonne plan : "start-line" (3m), "mid-course" (3m), "podium" (4m) ou un nombre de mois
               </span>
             </div>
             <div className="flex items-center gap-2">
