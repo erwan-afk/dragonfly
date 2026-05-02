@@ -561,7 +561,7 @@ export default function SpotlightBoats({
           >
             Edit Listing
           </DropdownItem>
-          {(boat as any).status !== 'sold' && (
+          {((boat as any).status !== 'sold' && (
             <DropdownItem
               key="renew"
               startContent={<RefreshCw size={14} />}
@@ -571,8 +571,8 @@ export default function SpotlightBoats({
             >
               Renew Listing
             </DropdownItem>
-          )}
-          {(boat as any).status === 'active' && (
+          )) as any}
+          {((boat as any).status === 'active' && (
             <DropdownItem
               key="mark_sold"
               startContent={<CheckSquare size={14} />}
@@ -582,8 +582,8 @@ export default function SpotlightBoats({
             >
               Marquer comme vendu
             </DropdownItem>
-          )}
-          {(boat as any).status === 'sold' && (
+          )) as any}
+          {((boat as any).status === 'sold' && (
             <DropdownItem
               key="relist"
               startContent={<RefreshCw size={14} />}
@@ -593,7 +593,7 @@ export default function SpotlightBoats({
             >
               Remettre en vente
             </DropdownItem>
-          )}
+          )) as any}
           <DropdownItem
             key="delete"
             startContent={<TrashIcon size={14} />}

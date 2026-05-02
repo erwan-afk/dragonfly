@@ -18,7 +18,7 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
   EmailNotVerified: {
     title: 'Email non vérifié',
     description:
-      'Votre adresse email n'a pas encore été vérifiée. Veuillez consulter votre boîte de réception.',
+      "Votre adresse email n'a pas encore été vérifiée. Veuillez consulter votre boîte de réception.",
   },
   AccessDenied: {
     title: 'Accès refusé',
