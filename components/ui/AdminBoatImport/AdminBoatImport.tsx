@@ -105,8 +105,8 @@ function parseCSV(text: string): BoatRow[] {
       email: get('email'),
       vatPaid: get('vatpaid') === 'true' || get('vat_paid') === 'true',
       ownerEmail: get('owneremail') || get('owner_email'),
-      photoUrls: get('photos'),
-      specifications: get('specifications'),
+      photoUrls: get('photos').replace(/\|/g, ','),
+      specifications: get('specifications').replace(/\|/g, ','),
       expiresMonths: get('expires_months') || get('expiresmonths') || '3'
     };
   });
