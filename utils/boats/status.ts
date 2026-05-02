@@ -120,7 +120,24 @@ export async function markBoatAsInactive(boatId: string) {
     }
 }
 
-export async function getBoatsByStatus(status: 'pending' | 'active' | 'inactive' | 'deleted') {
+export async function markBoatAsSold(boatId: string) {
+    try {
+        const boat = await prisma.boat.update({
+            where: { id: boatId },
+            data: {
+                status: 'sold',
+                updatedAt: new Date()
+            }
+        });
+        console.log(`✅ Boat ${boatId} marked as sold`);
+        return boat;
+    } catch (error) {
+        console.error(`❌ Error marking boat ${boatId} as sold:`, error);
+        throw error;
+    }
+}
+
+export async function getBoatsByStatus(status: 'pending' | 'active' | 'inactive' | 'deleted' | 'sold') {
     try {
         const boats = await prisma.boat.findMany({
             where: { status },

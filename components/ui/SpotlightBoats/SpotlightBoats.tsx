@@ -31,7 +31,8 @@ import {
   RefreshCw,
   SlidersHorizontal,
   X,
-  Check
+  Check,
+  CheckSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import { Spinner } from '@heroui/spinner';
@@ -52,6 +53,7 @@ interface SpotlightBoatsProps {
   boats: Boat[];
   suggestedBoats?: Boat[]; // Bateaux suggérés quand les filtres URL ne retournent rien
   spotlight?: boolean;
+  gridView?: boolean; // 3 colonnes, 1 ligne — layout homepage alternatif
   accountTable?: boolean; // Nouveau prop pour le mode tableau account
   userId?: string;
   products?: any[];
@@ -63,6 +65,7 @@ export default function SpotlightBoats({
   boats,
   suggestedBoats = [],
   spotlight,
+  gridView,
   accountTable,
   userId,
   products = [],
@@ -188,6 +191,7 @@ export default function SpotlightBoats({
   ]);
 
   const [deletingBoatId, setDeletingBoatId] = useState<string | null>(null);
+  const [soldBoatId, setSoldBoatId] = useState<string | null>(null);
   const [imageRetryCount, setImageRetryCount] = useState<
     Record<string, number>
   >({});
@@ -245,6 +249,32 @@ export default function SpotlightBoats({
     openDeleteModal(boat);
   };
 
+  const handleMarkAsSold = async (boat: Boat) => {
+    setSoldBoatId(boat.id);
+    try {
+      const response = await fetch(`/api/boats/${boat.id}/sold`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to mark as sold');
+      router.refresh();
+    } catch {
+      alert('Failed to mark boat as sold. Please try again.');
+    } finally {
+      setSoldBoatId(null);
+    }
+  };
+
+  const handleRelist = async (boat: Boat) => {
+    setSoldBoatId(boat.id);
+    try {
+      const response = await fetch(`/api/boats/${boat.id}/sold`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to relist');
+      router.refresh();
+    } catch {
+      alert('Failed to relist boat. Please try again.');
+    } finally {
+      setSoldBoatId(null);
+    }
+  };
+
   const confirmDeleteBoat = async () => {
     if (!boatToDelete) return;
 
@@ -273,6 +303,22 @@ export default function SpotlightBoats({
 
   const formatPrice = (price: number): string => {
     return price.toLocaleString('en-US');
+  };
+
+  const getCurrencySymbol = (currency: string): string => {
+    try {
+      return (0)
+        .toLocaleString('en', {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        })
+        .replace(/[\d\s,.]/, '')
+        .trim();
+    } catch {
+      return currency;
+    }
   };
 
   const handleImageError = (
@@ -320,48 +366,59 @@ export default function SpotlightBoats({
   // Applique les filtres seulement si on n'est pas en mode accountTable
   const filteredBoats = accountTable
     ? boats
-    : (() => {
-        const filtered = boats.filter((boat) => {
-          const price = Number(boat.price) ?? 0;
-          const inPriceRange =
-            price >= selectedPrice[0] && price <= selectedPrice[1];
-          const matchesModel = !selectedModel || boat.model === selectedModel;
-          const matchesCountry =
-            !selectedCountry || boat.country === selectedCountry;
-          const matchesSpecs =
-            selectedSpecs.length === 0 ||
-            selectedSpecs.every((spec) => boat.specifications?.includes(spec));
-          return inPriceRange && matchesModel && matchesCountry && matchesSpecs;
-        });
+    : gridView
+      ? [...boats].sort((a, b) => {
+          const aIsPodium = (a as any).productName?.toLowerCase() === 'podium';
+          const bIsPodium = (b as any).productName?.toLowerCase() === 'podium';
+          if (aIsPodium !== bIsPodium) return aIsPodium ? -1 : 1;
+          return ((b as any).viewCount ?? 0) - ((a as any).viewCount ?? 0);
+        })
+      : (() => {
+          const filtered = boats.filter((boat) => {
+            const price = Number(boat.price) ?? 0;
+            const inPriceRange =
+              price >= selectedPrice[0] && price <= selectedPrice[1];
+            const matchesModel = !selectedModel || boat.model === selectedModel;
+            const matchesCountry =
+              !selectedCountry || boat.country === selectedCountry;
+            const matchesSpecs =
+              selectedSpecs.length === 0 ||
+              selectedSpecs.every((spec) =>
+                boat.specifications?.includes(spec)
+              );
+            return (
+              inPriceRange && matchesModel && matchesCountry && matchesSpecs
+            );
+          });
 
-        return filtered.sort((a, b) => {
-          switch (selectedSort) {
-            case 'price_asc':
-              return (Number(a.price) ?? 0) - (Number(b.price) ?? 0);
-            case 'price_desc':
-              return (Number(b.price) ?? 0) - (Number(a.price) ?? 0);
-            case 'created_asc':
-              return (
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
-              );
-            case 'created_desc':
-              return (
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-              );
-            case 'model_asc':
-              return a.model.localeCompare(b.model);
-            case 'model_desc':
-              return b.model.localeCompare(a.model);
-            default:
-              return (
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-              );
-          }
-        });
-      })();
+          return filtered.sort((a, b) => {
+            switch (selectedSort) {
+              case 'price_asc':
+                return (Number(a.price) ?? 0) - (Number(b.price) ?? 0);
+              case 'price_desc':
+                return (Number(b.price) ?? 0) - (Number(a.price) ?? 0);
+              case 'created_asc':
+                return (
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+                );
+              case 'created_desc':
+                return (
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+                );
+              case 'model_asc':
+                return a.model.localeCompare(b.model);
+              case 'model_desc':
+                return b.model.localeCompare(a.model);
+              default:
+                return (
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+                );
+            }
+          });
+        })();
 
   // Mode tableau pour l'account
   const renderAccountTableView = () => {
@@ -418,6 +475,7 @@ export default function SpotlightBoats({
         daysUntilExpiration > 0;
 
       const productId = (boat as any).productId || (boat as any).product_id;
+      const isSold = (boat as any).status === 'sold';
 
       return {
         hasValidImages,
@@ -428,7 +486,8 @@ export default function SpotlightBoats({
         daysUntilExpiration,
         isExpired,
         expiresSoon,
-        productId
+        productId,
+        isSold
       };
     };
 
@@ -440,7 +499,7 @@ export default function SpotlightBoats({
             className="text-oceanblue hover:text-oceanblue px-4 py-4 rounded-lg hover:bg-articblue/20 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
-            {deletingBoatId === boat.id ? (
+            {deletingBoatId === boat.id || soldBoatId === boat.id ? (
               <Spinner
                 classNames={{
                   wrapper: 'min-w-[16px]',
@@ -476,6 +535,12 @@ export default function SpotlightBoats({
             if (key === 'delete') {
               handleDeleteBoat(boat);
             }
+            if (key === 'mark_sold') {
+              handleMarkAsSold(boat);
+            }
+            if (key === 'relist') {
+              handleRelist(boat);
+            }
           }}
         >
           <DropdownItem
@@ -496,15 +561,39 @@ export default function SpotlightBoats({
           >
             Edit Listing
           </DropdownItem>
-          <DropdownItem
-            key="renew"
-            startContent={<RefreshCw size={14} />}
-            classNames={{
-              base: 'text-articblue data-[hover=true]:bg-articblue/10 data-[hover=true]:text-articblue'
-            }}
-          >
-            Renew Listing
-          </DropdownItem>
+          {(boat as any).status !== 'sold' && (
+            <DropdownItem
+              key="renew"
+              startContent={<RefreshCw size={14} />}
+              classNames={{
+                base: 'text-articblue data-[hover=true]:bg-articblue/10 data-[hover=true]:text-articblue'
+              }}
+            >
+              Renew Listing
+            </DropdownItem>
+          )}
+          {(boat as any).status === 'active' && (
+            <DropdownItem
+              key="mark_sold"
+              startContent={<CheckSquare size={14} />}
+              classNames={{
+                base: 'text-gray-600 data-[hover=true]:bg-gray-100 data-[hover=true]:text-gray-800'
+              }}
+            >
+              Marquer comme vendu
+            </DropdownItem>
+          )}
+          {(boat as any).status === 'sold' && (
+            <DropdownItem
+              key="relist"
+              startContent={<RefreshCw size={14} />}
+              classNames={{
+                base: 'text-green-600 data-[hover=true]:bg-green-50 data-[hover=true]:text-green-700'
+              }}
+            >
+              Remettre en vente
+            </DropdownItem>
+          )}
           <DropdownItem
             key="delete"
             startContent={<TrashIcon size={14} />}
@@ -566,7 +655,8 @@ export default function SpotlightBoats({
                       {boat.country}
                     </div>
                     <div className="text-xs sm:text-sm font-medium text-gray-900 mt-0.5">
-                      {formatPrice(Number(boat.price))} {boat.currency}
+                      {formatPrice(Number(boat.price))}{' '}
+                      {getCurrencySymbol(boat.currency)}
                     </div>
                   </div>
                   <div className="flex-shrink-0 flex items-center">
@@ -577,21 +667,27 @@ export default function SpotlightBoats({
                 {/* Bottom row: status, plan, expiry, actions */}
                 <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-xs text-gray-500">
                   <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                    <span
-                      className={`inline-flex px-1.5 sm:px-2 py-0.5 font-semibold rounded-full border ${
-                        d.isExpired
-                          ? 'bg-red-50 text-red-700 border-red-200'
+                    {d.isSold ? (
+                      <span className="inline-flex px-1.5 sm:px-2 py-0.5 font-semibold rounded-full border bg-gray-100 text-gray-700 border-gray-300 text-xs uppercase tracking-wide">
+                        Vendu
+                      </span>
+                    ) : (
+                      <span
+                        className={`inline-flex px-1.5 sm:px-2 py-0.5 font-semibold rounded-full border ${
+                          d.isExpired
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : d.expiresSoon
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              : 'bg-green-50 text-green-700 border-green-200'
+                        }`}
+                      >
+                        {d.isExpired
+                          ? 'Expired'
                           : d.expiresSoon
-                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                            : 'bg-green-50 text-green-700 border-green-200'
-                      }`}
-                    >
-                      {d.isExpired
-                        ? 'Expired'
-                        : d.expiresSoon
-                          ? 'Expiring'
-                          : 'Active'}
-                    </span>
+                            ? 'Expiring'
+                            : 'Active'}
+                      </span>
+                    )}
                     <span className="font-medium text-gray-700">
                       {getProductLabel(d.productId, products)}
                     </span>
@@ -613,37 +709,39 @@ export default function SpotlightBoats({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <Link
-                      href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md transition-colors ${
-                        d.isExpired
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : d.expiresSoon
-                            ? 'bg-orange-500 text-white hover:bg-orange-600'
-                            : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
-                      }`}
-                    >
-                      <RefreshCw size={8} className="sm:w-[10px] sm:h-[10px]" />
-                      Renew
-                    </Link>
-                    {upgradeOptions.length > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/upgrade/${boat.id}`);
-                        }}
-                        className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md text-white bg-articblue hover:bg-oceanblue transition-colors"
+                  {!d.isSold && (
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Link
+                        href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md transition-colors ${
+                          d.isExpired
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : d.expiresSoon
+                              ? 'bg-orange-500 text-white hover:bg-orange-600'
+                              : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
+                        }`}
                       >
-                        <ArrowUpCircle
-                          size={8}
-                          className="sm:w-[10px] sm:h-[10px]"
-                        />
-                        Upgrade
-                      </button>
-                    )}
-                  </div>
+                        <RefreshCw size={8} className="sm:w-[10px] sm:h-[10px]" />
+                        Renew
+                      </Link>
+                      {upgradeOptions.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/upgrade/${boat.id}`);
+                          }}
+                          className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md text-white bg-articblue hover:bg-oceanblue transition-colors"
+                        >
+                          <ArrowUpCircle
+                            size={8}
+                            className="sm:w-[10px] sm:h-[10px]"
+                          />
+                          Upgrade
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -746,27 +844,34 @@ export default function SpotlightBoats({
                     {/* Price */}
                     <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 font-medium">
-                        {formatPrice(Number(boat.price))} {boat.currency}
+                        {formatPrice(Number(boat.price))}{' '}
+                        {getCurrencySymbol(boat.currency)}
                       </div>
                     </td>
 
                     {/* Status */}
                     <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${
-                          d.isExpired
-                            ? 'bg-red-50 text-red-700 border-red-200'
+                      {d.isSold ? (
+                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full border bg-gray-100 text-gray-700 border-gray-300 uppercase tracking-wide">
+                          Vendu
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${
+                            d.isExpired
+                              ? 'bg-red-50 text-red-700 border-red-200'
+                              : d.expiresSoon
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                : 'bg-green-50 text-green-700 border-green-200'
+                          }`}
+                        >
+                          {d.isExpired
+                            ? 'Expired'
                             : d.expiresSoon
-                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                              : 'bg-green-50 text-green-700 border-green-200'
-                        }`}
-                      >
-                        {d.isExpired
-                          ? 'Expired'
-                          : d.expiresSoon
-                            ? 'Expiring Soon'
-                            : 'Active'}
-                      </span>
+                              ? 'Expiring Soon'
+                              : 'Active'}
+                        </span>
+                      )}
                     </td>
 
                     {/* Created */}
@@ -797,32 +902,34 @@ export default function SpotlightBoats({
                         ) : (
                           <span className="text-sm text-gray-400">—</span>
                         )}
-                        <Link
-                          href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`inline-flex items-center gap-1 w-fit px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                            d.isExpired
-                              ? 'bg-red-500 text-white hover:bg-red-600'
-                              : d.expiresSoon
-                                ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
-                          }`}
-                        >
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        {!d.isSold && (
+                          <Link
+                            href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className={`inline-flex items-center gap-1 w-fit px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                              d.isExpired
+                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                : d.expiresSoon
+                                  ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                  : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
+                            }`}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            />
-                          </svg>
-                          {d.isExpired ? 'Renew Now' : 'Renew'}
-                        </Link>
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              />
+                            </svg>
+                            {d.isExpired ? 'Renew Now' : 'Renew'}
+                          </Link>
+                        )}
                       </div>
                     </td>
 
@@ -837,7 +944,9 @@ export default function SpotlightBoats({
 
                     {/* Upgrade */}
                     <td className="text-center px-2 xl:px-0 py-3 xl:py-4 whitespace-nowrap">
-                      {(() => {
+                      {d.isSold ? (
+                        <span className="text-xs text-gray-400">—</span>
+                      ) : (() => {
                         const upgradeOptions = getUpgradeOptions(d.productId);
                         return upgradeOptions.length > 0 ? (
                           <button
@@ -1072,7 +1181,7 @@ export default function SpotlightBoats({
   return (
     <>
       {/* Mobile Filter & Sort Buttons */}
-      {!spotlight && (
+      {!spotlight && !gridView && (
         <div className="flex md:hidden gap-3 w-full">
           <button
             onClick={() => setIsMobileFilterOpen(true)}
@@ -1212,8 +1321,9 @@ export default function SpotlightBoats({
                 Specifications
               </h3>
               <div className="space-y-2">
-                {specificationsData.flatMap((section) =>
-                  section.items.map((item) => (
+                {specificationsData.flatMap((section) => section.items)
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((item) => (
                     <button
                       key={item.key}
                       onClick={() => {
@@ -1239,7 +1349,7 @@ export default function SpotlightBoats({
                       <span className="text-14">{item.label}</span>
                     </button>
                   ))
-                )}
+                }
               </div>
             </div>
           </div>
@@ -1341,7 +1451,7 @@ export default function SpotlightBoats({
         </div>
       )}
 
-      {!spotlight && (
+      {!spotlight && !gridView && (
         <div className="hidden md:block">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             {/* Filtres à gauche */}
@@ -1497,114 +1607,20 @@ export default function SpotlightBoats({
                     setSelectedCountry(value as string)
                   }
                 >
-                  <AutocompleteItem
-                    key="Argentina"
-                    startContent={
-                      <Avatar
-                        alt="Argentina"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/ar.svg"
-                      />
-                    }
-                  >
-                    Argentina
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Venezuela"
-                    startContent={
-                      <Avatar
-                        alt="Venezuela"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/ve.svg"
-                      />
-                    }
-                  >
-                    Venezuela
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Brazil"
-                    startContent={
-                      <Avatar
-                        alt="Brazil"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/br.svg"
-                      />
-                    }
-                  >
-                    Brazil
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Switzerland"
-                    startContent={
-                      <Avatar
-                        alt="Switzerland"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/ch.svg"
-                      />
-                    }
-                  >
-                    Switzerland
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Germany"
-                    startContent={
-                      <Avatar
-                        alt="Germany"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/de.svg"
-                      />
-                    }
-                  >
-                    Germany
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Spain"
-                    startContent={
-                      <Avatar
-                        alt="Spain"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/es.svg"
-                      />
-                    }
-                  >
-                    Spain
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="France"
-                    startContent={
-                      <Avatar
-                        alt="France"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/fr.svg"
-                      />
-                    }
-                  >
-                    France
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Italy"
-                    startContent={
-                      <Avatar
-                        alt="Italy"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/it.svg"
-                      />
-                    }
-                  >
-                    Italy
-                  </AutocompleteItem>
-                  <AutocompleteItem
-                    key="Mexico"
-                    startContent={
-                      <Avatar
-                        alt="Mexico"
-                        className="w-6 h-6"
-                        src="https://flagcdn.com/mx.svg"
-                      />
-                    }
-                  >
-                    Mexico
-                  </AutocompleteItem>
+                  {countries.map((country) => (
+                    <AutocompleteItem
+                      key={country.key}
+                      startContent={
+                        <Avatar
+                          alt={country.label}
+                          className="w-6 h-6"
+                          src={country.flag}
+                        />
+                      }
+                    >
+                      {country.label}
+                    </AutocompleteItem>
+                  ))}
                 </Autocomplete>
               </div>
 
@@ -1634,8 +1650,9 @@ export default function SpotlightBoats({
                     setSelectedSpecs(Array.from(keys) as string[]);
                   }}
                 >
-                  {specificationsData.flatMap((section) =>
-                    section.items.map((item) => (
+                  {specificationsData.flatMap((section) => section.items)
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map((item) => (
                       <DropdownItem
                         key={item.key}
                         classNames={{
@@ -1645,7 +1662,7 @@ export default function SpotlightBoats({
                         {item.label}
                       </DropdownItem>
                     ))
-                  )}
+                  }
                 </DropdownMenu>
               </Dropdown>
             </div>
@@ -1760,7 +1777,7 @@ export default function SpotlightBoats({
       )}
 
       {/* Informations sur les résultats de recherche */}
-      {!spotlight && (
+      {!spotlight && !gridView && (
         <div className=" flex flex-row items-center justify-between gap-4 ">
           <p className="text-oceanblue text-16 ">
             {(() => {
@@ -1807,7 +1824,7 @@ export default function SpotlightBoats({
       )}
 
       <div
-        className={`gap-16 lg:gap-32 ${!spotlight ? 'grid grid-cols-1 md:grid-cols-2 gap-x-[17px] gap-y-[16px] lg:gap-y-[32px]' : 'flex flex-col'}`}
+        className={`gap-16 lg:gap-32 ${gridView ? 'grid grid-cols-1 sm:grid-cols-3 gap-[17px]' : !spotlight ? 'grid grid-cols-1 md:grid-cols-2 gap-x-[17px] gap-y-[16px] lg:gap-y-[32px]' : 'flex flex-col'}`}
       >
         {isLoading ? (
           createSkeletonCards(spotlight ? 3 : 6)
@@ -1959,7 +1976,7 @@ export default function SpotlightBoats({
                                   </span>
                                   <span className="font-semibold text-oceanblue">
                                     {formatPrice(Number(boat.price))}{' '}
-                                    {boat.currency}
+                                    {getCurrencySymbol(boat.currency)}
                                   </span>
                                 </div>
                               </div>
@@ -2010,16 +2027,32 @@ export default function SpotlightBoats({
                 })
               : 'Unknown';
 
+            const isPodium =
+              (boat as any).productName?.toLowerCase() === 'podium';
+
             return (
-              <Link href={`/boat/${boat.id}`} key={boat.id} className="h-full block">
+              <Link
+                href={`/boat/${boat.id}`}
+                key={boat.id}
+                className="h-full block"
+              >
                 <div
-                  className={`group border-stonegrey border-2 hover:border-articblue flex flex-col sm:flex-row overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px] h-full`}
-                  style={{
-                    boxShadow: '0px 1px 20px 0px #00000014'
-                  }}
+                  className={`group flex overflow-hidden transition-all cursor-pointer duration-300 rounded-[16px] h-full min-h-[220px] ${gridView ? 'flex-col' : 'flex-col sm:flex-row'} ${isPodium ? 'border-articblue border-2' : 'border-stonegrey/40 border-2 hover:border-stonegrey'}`}
                 >
                   {/* Image */}
-                  <div className="w-full sm:w-1/3 relative overflow-hidden min-h-[180px] sm:self-stretch">
+                  <div
+                    className={`relative overflow-hidden ${gridView ? 'w-full min-h-[200px]' : 'w-1/2 min-h-[220px] self-stretch'}`}
+                  >
+                    {isPodium && (
+                      <div className="absolute top-3 left-3 z-20 bg-articblue text-fullwhite text-xs font-medium px-3 py-1.5 rounded-md shadow-2xl drop-shadow-2xl">
+                        À ne pas manquer
+                      </div>
+                    )}
+                    {(boat as any).status === 'sold' && (
+                      <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-lg tracking-wider uppercase">
+                        Vendu
+                      </div>
+                    )}
                     <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
                       {countries.find((country) => country.key === boat.country)
                         ?.label || ''}
@@ -2063,9 +2096,9 @@ export default function SpotlightBoats({
 
                   {/* Contenu */}
                   <div
-                    className={`flex flex-1 flex-col gap-16 bg-fullwhite ${spotlight ? 'p-8 xs:p-16 sm:p-32' : 'p-8 xs:p-16 sm:p-24'}`}
+                    className={`flex flex-1 flex-col gap-16 bg-fullwhite ${spotlight || gridView ? 'p-8 xs:p-16 sm:p-24' : 'p-8 xs:p-16 sm:p-24'}`}
                   >
-                    {spotlight ? (
+                    {spotlight || gridView ? (
                       /* Mode Spotlight - Layout épuré */
                       <>
                         <div className="flex flex-row justify-between h-full w-full">
@@ -2081,20 +2114,27 @@ export default function SpotlightBoats({
 
                           {/* Section centrale : Prix principal */}
                         </div>
-                        <div className="flex flex-row items-center gap-2 flex-wrap">
-                          {boat.specifications.map((specification) => (
-                            <span
-                              className="text-oceanblue bg-lightgrey px-2 py-1 rounded-[6px] text-[12px] xs:text-14"
-                              key={specification}
-                            >
-                              {specification}
-                            </span>
-                          ))}
+                        <div
+                          className="relative py-1 w-fit max-w-full"
+                          style={{ overflowX: 'clip' }}
+                        >
+                          <div className="flex flex-row items-center gap-2 flex-nowrap">
+                            {boat.specifications.map((specification) => (
+                              <span
+                                className="text-oceanblue bg-lightgrey px-2 py-1 rounded-[6px] text-[12px] xs:text-14 shrink-0"
+                                key={specification}
+                              >
+                                {specification}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-fullwhite to-transparent pointer-events-none" />
                         </div>
                         <div className="flex flex-row items-center gap-2 ">
                           <span className="text-oceanblue">Price: </span>
                           <span className="font-medium text-oceanblue">
-                            {formatPrice(Number(boat.price))} {boat.currency}
+                            {formatPrice(Number(boat.price))}{' '}
+                            {getCurrencySymbol(boat.currency)}
                           </span>
                         </div>
                       </>
@@ -2114,15 +2154,21 @@ export default function SpotlightBoats({
                         {/* Specifications */}
                         {boat.specifications &&
                           boat.specifications.length > 0 && (
-                            <div className="flex flex-row items-center gap-2 flex-wrap">
-                              {boat.specifications.map((specification) => (
-                                <span
-                                  className="text-oceanblue bg-lightgrey px-2 py-1 rounded-[6px] text-[12px]"
-                                  key={specification}
-                                >
-                                  {specification}
-                                </span>
-                              ))}
+                            <div
+                              className="relative py-1 w-fit max-w-full"
+                              style={{ overflowX: 'clip' }}
+                            >
+                              <div className="flex flex-row items-center gap-2 flex-nowrap">
+                                {boat.specifications.slice(0, 2).map((specification) => (
+                                  <span
+                                    className="text-oceanblue bg-lightgrey px-2 py-1 rounded-[6px] text-[12px] shrink-0"
+                                    key={specification}
+                                  >
+                                    {specification}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-fullwhite to-transparent pointer-events-none" />
                             </div>
                           )}
 
@@ -2130,30 +2176,23 @@ export default function SpotlightBoats({
                         <div className="flex items-center">
                           <div className="text-oceanblue text-24">
                             <span className="font-semibold text-oceanblue">
-                              {formatPrice(Number(boat.price))} {boat.currency}
+                              {formatPrice(Number(boat.price))}{' '}
+                              {getCurrencySymbol(boat.currency)}
                             </span>
                           </div>
-                        </div>
-
-                        {/* Spacer to push views to bottom */}
-                        <div className="flex-1" />
-
-                        {/* Section inférieure : Statistiques */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-oceanblue/60 font-medium text-14">
-                            {boat.viewCount} views
-                          </span>
                         </div>
                       </>
                     )}
                   </div>
 
                   {/* Flèche See More */}
-                  <div className="bg-fullwhite hidden sm:flex items-center justify-center">
-                    <div className="w-[60px] mr-24 h-fit py-2 flex justify-center text-articblue bg-fullwhite border-2 border-articblue rounded-[75px] transition-all duration-300 group-hover:text-fullwhite group-hover:bg-articblue">
-                      <ArrowSeemore />
+                  {!gridView && (
+                    <div className="bg-fullwhite hidden sm:flex items-center justify-center">
+                      <div className="w-[60px] mr-24 h-fit py-2 flex justify-center text-articblue bg-fullwhite border-2 border-articblue rounded-[75px] transition-all duration-300 group-hover:text-fullwhite group-hover:bg-articblue">
+                        <ArrowSeemore />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </Link>
             );

@@ -20,7 +20,7 @@ export default function BoatGrid({ boats }: BoatGridProps) {
             href="/forsale"
           /> */}
         </div>
-        <SpotlightBoats key="homepage" spotlight boats={boats ?? []} />
+        <SpotlightBoats key="homepage" gridView boats={boats ?? []} />
       </div>
     </section>
   );

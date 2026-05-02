@@ -61,7 +61,7 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     sendResetPassword: async ({ user, url }: any) => {
       if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-        console.error('❌ SMTP non configuré — email de reset non envoyé');
+        console.error('❌ SMTP non configuré — email non envoyé');
         return;
       }
 
@@ -72,56 +72,105 @@ export const auth = betterAuth({
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
       });
 
+      // Detect invitation flow: user created less than 5 minutes ago
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { createdAt: true }
+      });
+      const isInvited = dbUser
+        ? Date.now() - new Date(dbUser.createdAt).getTime() < 5 * 60 * 1000
+        : false;
+
+      const subject = isInvited
+        ? 'Your listing is live on Dragonfly Trimarans'
+        : 'Reset your password';
+
+      const html = isInvited
+        ? `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #1e3a8a; text-align: center;">Welcome to Dragonfly Trimarans</h1>
+            <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
+              <p style="font-size: 16px; line-height: 1.6;">
+                Hello <strong>${user.name || user.email}</strong>,
+              </p>
+              <p style="font-size: 16px; line-height: 1.6;">
+                Your listing has been published on <strong>Dragonfly Trimarans</strong>, the marketplace dedicated to trimarans.
+              </p>
+              <p style="font-size: 16px; line-height: 1.6;">
+                Create your password to access your account and manage your listings:
+              </p>
+              <div style="text-align: center; margin: 25px 0;">
+                <a href="${url}"
+                   style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                  Create my password
+                </a>
+              </div>
+              <p style="color: #6b7280; font-size: 14px;">
+                This link expires in 1 hour.
+              </p>
+            </div>
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px; text-align: center;">
+              This email was sent automatically by Dragonfly Trimarans.
+            </p>
+          </div>
+        `
+        : `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #1e3a8a; text-align: center;">Password Reset</h1>
+            <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
+              <p style="font-size: 16px; line-height: 1.6;">
+                Hello <strong>${user.name || 'there'}</strong>,
+              </p>
+              <p style="font-size: 16px; line-height: 1.6;">
+                You requested a password reset. Click the button below to create a new one.
+              </p>
+              <div style="text-align: center; margin: 25px 0;">
+                <a href="${url}"
+                   style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                  Reset my password
+                </a>
+              </div>
+              <p style="color: #6b7280; font-size: 14px;">
+                This link expires in 1 hour. If you did not request this, please ignore this email.
+              </p>
+            </div>
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px; text-align: center;">
+              This email was sent automatically by Dragonfly Trimarans.
+            </p>
+          </div>
+        `;
+
+      const text = isInvited
+        ? `Hello ${user.name || user.email},\n\nYour listing has been published on Dragonfly Trimarans.\n\nCreate your password to access your account:\n${url}\n\nThis link expires in 1 hour.\n\nDragonfly Trimarans`
+        : `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 1 hour. If you did not request this, please ignore this email.\n\nDragonfly Trimarans`;
+
       try {
         await transporter.sendMail({
           from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
           to: user.email,
-          subject: '🔑 Réinitialisation de votre mot de passe',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="color: #1e3a8a; text-align: center;">🔑 Mot de passe oublié</h1>
-              <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-                <p style="font-size: 16px; line-height: 1.6;">
-                  Bonjour <strong>${user.name || 'Cher utilisateur'}</strong>,
-                </p>
-                <p style="font-size: 16px; line-height: 1.6;">
-                  Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour en créer un nouveau.
-                </p>
-                <div style="text-align: center; margin: 25px 0;">
-                  <a href="${url}"
-                     style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                    Réinitialiser mon mot de passe
-                  </a>
-                </div>
-                <p style="color: #6b7280; font-size: 14px;">
-                  Ce lien expire dans 1 heure. Si vous n'avez pas fait cette demande, ignorez cet email.
-                </p>
-              </div>
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 12px; text-align: center;">
-                Cet email a été envoyé automatiquement par Dragonfly Trimarans.
-              </p>
-            </div>
-          `,
+          subject,
+          html,
+          text,
         });
 
-        // Log dans email_logs
         await prisma.email_log.create({
           data: {
-            type: 'password_reset',
+            type: isInvited ? 'invitation' : 'password_reset',
             userId: user.id,
             email: user.email,
           },
         });
 
-        console.log(`✅ Email de reset envoyé à ${user.email}`);
+        console.log(`✅ ${isInvited ? 'Invitation' : 'Reset'} email sent to ${user.email}`);
       } catch (error) {
-        console.error(`❌ Erreur envoi email reset à ${user.email}:`, error);
+        console.error(`❌ Failed to send email to ${user.email}:`, error);
       }
     },
     sendVerificationEmail: async ({ user, url }: any) => {
       if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-        console.error('❌ SMTP non configuré — email de vérification non envoyé');
+        console.error('❌ SMTP not configured — verification email not sent');
         return;
       }
 
@@ -136,40 +185,44 @@ export const auth = betterAuth({
         await transporter.sendMail({
           from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
           to: user.email,
-          subject: '✉️ Vérifiez votre adresse email',
+          subject: 'Verify your email address',
+          text: `Hello ${user.name || 'there'},\n\nPlease verify your email address by clicking the link below:\n${url}\n\nDragonfly Trimarans`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="color: #1e3a8a; text-align: center;">✉️ Vérification d'email</h1>
+              <h1 style="color: #1e3a8a; text-align: center;">Verify your email</h1>
               <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
                 <p style="font-size: 16px; line-height: 1.6;">
-                  Bonjour <strong>${user.name || 'Cher utilisateur'}</strong>,
+                  Hello <strong>${user.name || 'there'}</strong>,
                 </p>
                 <p style="font-size: 16px; line-height: 1.6;">
-                  Veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous.
+                  Please confirm your email address by clicking the button below.
                 </p>
                 <div style="text-align: center; margin: 25px 0;">
                   <a href="${url}"
                      style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                    Vérifier mon email
+                    Verify my email
                   </a>
                 </div>
               </div>
               <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
               <p style="color: #6b7280; font-size: 12px; text-align: center;">
-                Cet email a été envoyé automatiquement par Dragonfly Trimarans.
+                This email was sent automatically by Dragonfly Trimarans.
               </p>
             </div>
           `,
         });
-        console.log(`✅ Email de vérification envoyé à ${user.email}`);
+        console.log(`✅ Verification email sent to ${user.email}`);
       } catch (error) {
-        console.error(`❌ Erreur envoi email vérification à ${user.email}:`, error);
+        console.error(`❌ Failed to send verification email to ${user.email}:`, error);
       }
     },
   },
   socialProviders: getSocialProviders(),
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  pages: {
+    error: '/auth/error',
+  },
   plugins: [
     admin({
       defaultRole: "user",

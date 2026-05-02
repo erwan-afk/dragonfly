@@ -196,6 +196,17 @@ model email_log {
   @@map("email_logs")
 }
 
+model survey_response {
+  id        String   @id @default(cuid())
+  page      String
+  question  String
+  answer    String
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("survey_responses")
+}
+
 model csrf_token {
   sessionId String   @id @map("session_id")
   token     String
@@ -215,6 +226,7 @@ enum BoatStatus {
   active
   inactive
   deleted
+  sold
 }
 
 enum PricingType {

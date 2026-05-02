@@ -1,13 +1,13 @@
 export const dragonflyModels = [
   { key: 'df25', label: 'Dragonfly 25' },
-  { key: 'df800', label: 'Dragonfly 800' },
   { key: 'df28', label: 'Dragonfly 28' },
-  { key: 'df920', label: 'Dragonfly 920' },
-  { key: 'df1000', label: 'Dragonfly 1000' },
   { key: 'df32', label: 'Dragonfly 32' },
   { key: 'df35', label: 'Dragonfly 35' },
-  { key: 'df1200', label: 'Dragonfly 1200' },
-  { key: 'df40', label: 'Dragonfly 40' }
+  { key: 'df40', label: 'Dragonfly 40' },
+  { key: 'df800', label: 'Dragonfly 800' },
+  { key: 'df920', label: 'Dragonfly 920' },
+  { key: 'df1000', label: 'Dragonfly 1000' },
+  { key: 'df1200', label: 'Dragonfly 1200' }
 ] as const;
 
 export const currencies = [
@@ -25,18 +25,14 @@ export const currencies = [
 
 export const countries = [
   { key: 'argentina', label: 'Argentina', flag: 'https://flagcdn.com/ar.svg' },
-  { key: 'venezuela', label: 'Venezuela', flag: 'https://flagcdn.com/ve.svg' },
   { key: 'brazil', label: 'Brazil', flag: 'https://flagcdn.com/br.svg' },
-  {
-    key: 'switzerland',
-    label: 'Switzerland',
-    flag: 'https://flagcdn.com/ch.svg'
-  },
-  { key: 'germany', label: 'Germany', flag: 'https://flagcdn.com/de.svg' },
-  { key: 'spain', label: 'Spain', flag: 'https://flagcdn.com/es.svg' },
   { key: 'france', label: 'France', flag: 'https://flagcdn.com/fr.svg' },
+  { key: 'germany', label: 'Germany', flag: 'https://flagcdn.com/de.svg' },
   { key: 'italy', label: 'Italy', flag: 'https://flagcdn.com/it.svg' },
-  { key: 'mexico', label: 'Mexico', flag: 'https://flagcdn.com/mx.svg' }
+  { key: 'mexico', label: 'Mexico', flag: 'https://flagcdn.com/mx.svg' },
+  { key: 'spain', label: 'Spain', flag: 'https://flagcdn.com/es.svg' },
+  { key: 'switzerland', label: 'Switzerland', flag: 'https://flagcdn.com/ch.svg' },
+  { key: 'venezuela', label: 'Venezuela', flag: 'https://flagcdn.com/ve.svg' }
 ] as const;
 
 export const boatConditions = [

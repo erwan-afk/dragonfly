@@ -116,6 +116,10 @@ export default function EditListing({
   const [isSaving, setIsSaving] = useState(false);
   const [saveCompleted, setSaveCompleted] = useState(false);
 
+  // Sold states
+  const [isMarkingSold, setIsMarkingSold] = useState(false);
+  const [boatStatus, setBoatStatus] = useState<string>((boat as any).status || 'active');
+
   // Success message state
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -1035,6 +1039,34 @@ export default function EditListing({
     }
   };
 
+  const handleMarkAsSold = async () => {
+    setIsMarkingSold(true);
+    try {
+      const response = await fetch(`/api/boats/${boat.id}/sold`, { method: 'POST' });
+      if (!response.ok) throw new Error('Failed to mark as sold');
+      setBoatStatus('sold');
+      router.refresh();
+    } catch {
+      alert('Failed to mark boat as sold. Please try again.');
+    } finally {
+      setIsMarkingSold(false);
+    }
+  };
+
+  const handleRelist = async () => {
+    setIsMarkingSold(true);
+    try {
+      const response = await fetch(`/api/boats/${boat.id}/sold`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to relist');
+      setBoatStatus('active');
+      router.refresh();
+    } catch {
+      alert('Failed to relist boat. Please try again.');
+    } finally {
+      setIsMarkingSold(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -1231,24 +1263,24 @@ export default function EditListing({
                 return (
                   <div key={product.id} className="bg-white rounded-lg border border-gray-200 p-4 min-w-0">
                     <p className="text-oceanblue text-sm leading-relaxed mb-2">
-                      En passant au forfait <strong>{product.name}</strong> :
+                      En passant au forfait <strong>{product.name}</strong>, vous bénéficiez immédiatement de :
                     </p>
                     <ul className="text-xs text-oceanblue space-y-1 mb-3">
                       {extraPhotos > 0 && (
                         <li className="flex items-start gap-1.5">
                           <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
-                          <span><strong>+{extraPhotos} photo{extraPhotos > 1 ? 's' : ''}</strong></span>
+                          <span><strong>{extraPhotos} photo{extraPhotos > 1 ? 's' : ''} supplémentaire{extraPhotos > 1 ? 's' : ''}</strong> pour sublimer votre annonce.</span>
                         </li>
                       )}
                       {isPodium && (
                         <li className="flex items-start gap-1.5">
                           <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
-                          <span><strong>Visibilité accrue</strong></span>
+                          <span>Une <strong>visibilité accrue</strong> auprès des acheteurs.</span>
                         </li>
                       )}
                       <li className="flex items-start gap-1.5">
                         <CheckCircle size={12} className="text-articblue mt-0.5 shrink-0" />
-                        <span>Durée réinitialisée à <strong>{durationMonths} mois</strong></span>
+                        <span>Un nouveau départ : la durée de parution de votre annonce est réinitialisée à <strong>{durationMonths} mois</strong> à partir d&apos;aujourd&apos;hui.</span>
                       </li>
                     </ul>
                     <button
@@ -2010,6 +2042,34 @@ export default function EditListing({
                   ? 'Saving changes...'
                   : 'Save Changes'}
           </button>
+
+          {boatStatus === 'active' && (
+            <button
+              type="button"
+              onClick={handleMarkAsSold}
+              disabled={isMarkingSold}
+              className="border border-gray-300 bg-gray-50 text-gray-700 font-medium px-6 py-4 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isMarkingSold ? 'Traitement...' : 'Marquer comme vendu'}
+            </button>
+          )}
+
+          {boatStatus === 'sold' && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-300 bg-gray-100">
+                <span className="font-semibold text-sm uppercase tracking-wide text-gray-700">Vendu</span>
+                <span className="text-14 text-gray-500">Cette annonce est marquée comme vendue.</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRelist}
+                disabled={isMarkingSold}
+                className="border border-green-300 bg-green-50 text-green-700 font-medium px-6 py-4 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isMarkingSold ? 'Traitement...' : 'Remettre en vente'}
+              </button>
+            </div>
+          )}
         </div>
       </div>{/* fin max-w-lg */}
     </div>

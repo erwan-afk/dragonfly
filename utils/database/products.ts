@@ -86,20 +86,24 @@ export const getBoatsFromDatabase = unstable_cache(
       if (limit) {
         boats = await prisma.$queryRaw`
           SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
-                 u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+                 u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
+                 p.name as product_name
           FROM "boats" b
           LEFT JOIN "user" u ON b.user_id = u.id
-          WHERE b.status = 'active'
+          LEFT JOIN "products" p ON b.product_id = p.id
+          WHERE b.status IN ('active', 'sold')
           ORDER BY b.created_at DESC
           LIMIT ${limit}
         ` as any[];
       } else {
         boats = await prisma.$queryRaw`
           SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
-                 u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url
+                 u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
+                 p.name as product_name
           FROM "boats" b
           LEFT JOIN "user" u ON b.user_id = u.id
-          WHERE b.status = 'active'
+          LEFT JOIN "products" p ON b.product_id = p.id
+          WHERE b.status IN ('active', 'sold')
           ORDER BY b.created_at DESC
         ` as any[];
       }
@@ -107,10 +111,11 @@ export const getBoatsFromDatabase = unstable_cache(
       // Reformater les données et convertir les objets Decimal en nombres
       const formattedBoats = boats.map((boat: any) => ({
         ...boat,
-        price: parseFloat(boat.price.toString()), // Convertir Decimal en nombre
-        createdAt: boat.created_at, // Convertir created_at en camelCase
+        price: parseFloat(boat.price.toString()),
+        createdAt: boat.created_at,
         viewCount: boat.view_count,
         specifications: boat.specifications,
+        productName: boat.product_name || null,
         user: {
           name: boat.user_name,
           email: boat.user_email,

@@ -25,8 +25,8 @@ const transporter = nodemailer.createTransport({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app';
 
-function formatDateFr(date: Date): string {
-  return date.toLocaleDateString('fr-FR', {
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -41,7 +41,7 @@ function emailWrapper(content: string): string {
       ${content}
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
       <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-        Cet email a été envoyé automatiquement par Dragonfly Trimarans.
+        This email was sent automatically by Dragonfly Trimarans.
       </p>
     </div>
   `;
@@ -50,26 +50,26 @@ function emailWrapper(content: string): string {
 function template7d(userName: string, boatModel: string, expiryDate: Date, daysLeft: number, boatId: string): string {
   return emailWrapper(`
     <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #1e3a8a; margin: 0;">📅 Votre annonce expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}</h1>
+      <h1 style="color: #1e3a8a; margin: 0;">Your listing expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}</h1>
     </div>
     <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
       <p style="font-size: 16px; line-height: 1.6;">
-        Bonjour <strong>${userName}</strong>,
+        Hello <strong>${userName}</strong>,
       </p>
       <p style="font-size: 16px; line-height: 1.6;">
-        Votre annonce pour le <strong>${boatModel}</strong> expire le <strong>${formatDateFr(expiryDate)}</strong>.
+        Your listing for the <strong>${boatModel}</strong> expires on <strong>${formatDate(expiryDate)}</strong>.
       </p>
       <p style="font-size: 16px; line-height: 1.6;">
-        Pensez à la renouveler pour continuer à recevoir des demandes d'acheteurs potentiels.
+        Renew it to keep receiving enquiries from potential buyers.
       </p>
       <div style="text-align: center; margin: 25px 0;">
         <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
            style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          🔄 Renouveler mon annonce
+          Renew my listing
         </a>
       </div>
       <p style="color: #6b7280; font-size: 14px;">
-        💡 Le renouvellement peut se faire à tout moment. Votre annonce reste visible jusqu'à expiration.
+        You can renew at any time. Your listing stays visible until it expires.
       </p>
     </div>
   `);
@@ -78,23 +78,23 @@ function template7d(userName: string, boatModel: string, expiryDate: Date, daysL
 function template1d(userName: string, boatModel: string, expiryDate: Date, boatId: string): string {
   return emailWrapper(`
     <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #dc2626; margin: 0;">⚠️ Votre annonce expire demain !</h1>
+      <h1 style="color: #dc2626; margin: 0;">Your listing expires tomorrow!</h1>
     </div>
     <div style="background-color: #fef2f2; padding: 25px; border-radius: 8px;">
       <p style="font-size: 16px; line-height: 1.6;">
-        Bonjour <strong>${userName}</strong>,
+        Hello <strong>${userName}</strong>,
       </p>
       <p style="font-size: 16px; line-height: 1.6;">
-        <strong>Dernier rappel :</strong> votre annonce pour le <strong>${boatModel}</strong> expire
-        le <strong>${formatDateFr(expiryDate)}</strong>, soit <strong>demain</strong>.
+        <strong>Last reminder:</strong> your listing for the <strong>${boatModel}</strong> expires
+        on <strong>${formatDate(expiryDate)}</strong>, which is <strong>tomorrow</strong>.
       </p>
       <p style="font-size: 16px; line-height: 1.6;">
-        Après cette date, votre annonce ne sera plus visible par les acheteurs.
+        After that date your listing will no longer be visible to buyers.
       </p>
       <div style="text-align: center; margin: 25px 0;">
         <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
            style="background-color: #dc2626; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          🔄 Renouveler maintenant
+          Renew now
         </a>
       </div>
     </div>
@@ -104,23 +104,23 @@ function template1d(userName: string, boatModel: string, expiryDate: Date, boatI
 function templateExpired(userName: string, boatModel: string, expiryDate: Date, boatId: string): string {
   return emailWrapper(`
     <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #6b7280; margin: 0;">📋 Votre annonce a expiré</h1>
+      <h1 style="color: #6b7280; margin: 0;">Your listing has expired</h1>
     </div>
     <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
       <p style="font-size: 16px; line-height: 1.6;">
-        Bonjour <strong>${userName}</strong>,
+        Hello <strong>${userName}</strong>,
       </p>
       <p style="font-size: 16px; line-height: 1.6;">
-        Votre annonce pour le <strong>${boatModel}</strong> a expiré le <strong>${formatDateFr(expiryDate)}</strong>
-        et n'est plus visible sur le site.
+        Your listing for the <strong>${boatModel}</strong> expired on <strong>${formatDate(expiryDate)}</strong>
+        and is no longer visible on the site.
       </p>
       <p style="font-size: 16px; line-height: 1.6;">
-        Vous pouvez la republier à tout moment si votre bateau est toujours en vente.
+        You can re-publish it at any time if your boat is still for sale.
       </p>
       <div style="text-align: center; margin: 25px 0;">
         <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
            style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          📋 Republier mon annonce
+          Re-publish my listing
         </a>
       </div>
     </div>
@@ -129,17 +129,18 @@ function templateExpired(userName: string, boatModel: string, expiryDate: Date, 
 
 // ─── Core Logic ─────────────────────────────────────────────────
 
-async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
   try {
     await transporter.sendMail({
       from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
+      text,
     });
     return true;
   } catch (error) {
-    console.error(`❌ Erreur envoi email à ${to}:`, error);
+    console.error(`❌ Failed to send email to ${to}:`, error);
     return false;
   }
 }
@@ -160,7 +161,7 @@ async function getAlreadySentSet(type: string, boatIds: string[]): Promise<Set<s
 }
 
 async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
-  console.log('\n── Passe 1 : Rappels 7 jours ──');
+  console.log('\n── Pass 1: 7-day reminders ──');
   const now = new Date();
   const in6d = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
   const in8d = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
@@ -173,21 +174,22 @@ async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
     include: { user: { select: { id: true, name: true, email: true } } },
   });
 
-  console.log(`   ${boats.length} annonces expirant dans 6-8 jours`);
+  console.log(`   ${boats.length} listings expiring in 6-8 days`);
   const alreadySent = await getAlreadySentSet('reminder_7d', boats.map(b => b.id));
   let sent = 0, skipped = 0;
 
   for (const boat of boats) {
     if (!boat.user?.email || !boat.expiresAt) { skipped++; continue; }
     if (alreadySent.has(boat.id)) {
-      console.log(`   ⏭️  "${boat.model}" — déjà envoyé`);
+      console.log(`   ⏭️  "${boat.model}" — already sent`);
       skipped++;
       continue;
     }
 
     const daysLeft = Math.ceil((boat.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const html = template7d(boat.user.name || 'Cher utilisateur', boat.model, boat.expiresAt, daysLeft, boat.id);
-    const ok = await sendEmail(boat.user.email, `📅 Votre annonce "${boat.model}" expire dans ${daysLeft} jours`, html);
+    const html = template7d(boat.user.name || 'there', boat.model, boat.expiresAt, daysLeft, boat.id);
+    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expires on ${formatDate(boat.expiresAt)} (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\nDragonfly Trimarans`;
+    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`, html, text);
 
     if (ok) {
       await logEmail('reminder_7d', boat.id, boat.user.id, boat.user.email);
@@ -201,7 +203,7 @@ async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
 }
 
 async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
-  console.log('\n── Passe 2 : Rappels 1 jour ──');
+  console.log('\n── Pass 2: 1-day reminders ──');
   const now = new Date();
   const in0d = now;
   const in2d = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
@@ -214,20 +216,21 @@ async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
     include: { user: { select: { id: true, name: true, email: true } } },
   });
 
-  console.log(`   ${boats.length} annonces expirant dans 0-2 jours`);
+  console.log(`   ${boats.length} listings expiring in 0-2 days`);
   const alreadySent = await getAlreadySentSet('reminder_1d', boats.map(b => b.id));
   let sent = 0, skipped = 0;
 
   for (const boat of boats) {
     if (!boat.user?.email || !boat.expiresAt) { skipped++; continue; }
     if (alreadySent.has(boat.id)) {
-      console.log(`   ⏭️  "${boat.model}" — déjà envoyé`);
+      console.log(`   ⏭️  "${boat.model}" — already sent`);
       skipped++;
       continue;
     }
 
-    const html = template1d(boat.user.name || 'Cher utilisateur', boat.model, boat.expiresAt, boat.id);
-    const ok = await sendEmail(boat.user.email, `⚠️ Dernière chance : votre annonce "${boat.model}" expire demain !`, html);
+    const html = template1d(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
+    const text = `Hello ${boat.user.name || 'there'},\n\nLast reminder: your listing for the ${boat.model} expires tomorrow (${formatDate(boat.expiresAt)}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\nDragonfly Trimarans`;
+    const ok = await sendEmail(boat.user.email, `Last chance: your listing "${boat.model}" expires tomorrow`, html, text);
 
     if (ok) {
       await logEmail('reminder_1d', boat.id, boat.user.id, boat.user.email);
@@ -241,7 +244,7 @@ async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
 }
 
 async function processExpired(): Promise<{ sent: number; skipped: number; deactivated: number }> {
-  console.log('\n── Passe 3 : Annonces expirées ──');
+  console.log('\n── Pass 3: Expired listings ──');
   const now = new Date();
 
   const boats = await prisma.boat.findMany({
@@ -252,12 +255,11 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
     include: { user: { select: { id: true, name: true, email: true } } },
   });
 
-  console.log(`   ${boats.length} annonces expirées encore actives`);
+  console.log(`   ${boats.length} expired listings still active`);
   const alreadySent = await getAlreadySentSet('expired', boats.map(b => b.id));
   let sent = 0, skipped = 0, deactivated = 0;
 
   for (const boat of boats) {
-    // Toujours désactiver le bateau, même si l'email échoue
     await prisma.boat.update({
       where: { id: boat.id },
       data: { status: 'inactive' },
@@ -267,13 +269,14 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
 
     if (!boat.user?.email || !boat.expiresAt) { skipped++; continue; }
     if (alreadySent.has(boat.id)) {
-      console.log(`   ⏭️  "${boat.model}" — email déjà envoyé`);
+      console.log(`   ⏭️  "${boat.model}" — email already sent`);
       skipped++;
       continue;
     }
 
-    const html = templateExpired(boat.user.name || 'Cher utilisateur', boat.model, boat.expiresAt, boat.id);
-    const ok = await sendEmail(boat.user.email, `📋 Votre annonce "${boat.model}" a expiré`, html);
+    const html = templateExpired(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
+    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expired on ${formatDate(boat.expiresAt)} and is no longer visible on the site.\n\nRe-publish it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\nDragonfly Trimarans`;
+    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" has expired`, html, text);
 
     if (ok) {
       await logEmail('expired', boat.id, boat.user.id, boat.user.email);
@@ -289,11 +292,11 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
 // ─── Main ───────────────────────────────────────────────────────
 
 async function sendRenewalReminders() {
-  console.log('🚀 Démarrage du script de rappels de renouvellement');
-  console.log(`📅 ${formatDateFr(new Date())}`);
+  console.log('🚀 Starting renewal reminder script');
+  console.log(`📅 ${formatDate(new Date())}`);
 
   if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    console.error('❌ SMTP_USER ou SMTP_PASSWORD manquant');
+    console.error('❌ SMTP_USER or SMTP_PASSWORD missing');
     process.exit(1);
   }
 
@@ -302,13 +305,13 @@ async function sendRenewalReminders() {
     const r1 = await processReminder1d();
     const exp = await processExpired();
 
-    console.log('\n── Résumé ──');
-    console.log(`   7 jours  : ${r7.sent} envoyés, ${r7.skipped} ignorés`);
-    console.log(`   1 jour   : ${r1.sent} envoyés, ${r1.skipped} ignorés`);
-    console.log(`   Expirés  : ${exp.sent} envoyés, ${exp.skipped} ignorés, ${exp.deactivated} désactivés`);
-    console.log('✅ Terminé');
+    console.log('\n── Summary ──');
+    console.log(`   7 days  : ${r7.sent} sent, ${r7.skipped} skipped`);
+    console.log(`   1 day   : ${r1.sent} sent, ${r1.skipped} skipped`);
+    console.log(`   Expired : ${exp.sent} sent, ${exp.skipped} skipped, ${exp.deactivated} deactivated`);
+    console.log('✅ Done');
   } catch (error) {
-    console.error('❌ Erreur:', error);
+    console.error('❌ Error:', error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

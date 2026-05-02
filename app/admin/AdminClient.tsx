@@ -23,18 +23,41 @@ import {
   ChevronRight,
   ArrowLeft,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  PackagePlus,
+  MessageSquare,
+  TrendingUp,
+  TrendingDown,
+  Minus
 } from 'lucide-react';
+import AdminBoatImport from '@/components/ui/AdminBoatImport/AdminBoatImport';
 import { getModelLabel } from '@/utils/constants';
+
+interface SurveyPageStat {
+  page: string;
+  total: number;
+  answers: Record<string, number>;
+  satisfactionPct: number;
+  negativePct: number;
+  comments: { answer: string; comment: string; createdAt: string }[];
+}
+
+interface SurveyData {
+  total: number;
+  byPage: SurveyPageStat[];
+  recent: { page: string; question: string; answer: string; comment: string | null; createdAt: string }[];
+}
 
 interface AdminClientProps {
   users: any[];
   boats: any[];
   payments: any[];
+  products: { id: string; name: string | null }[];
   currentUserRole: 'admin' | 'superAdmin';
+  surveyData: SurveyData;
 }
 
-type Tab = 'users' | 'boats' | 'payments' | 'storage';
+type Tab = 'users' | 'boats' | 'payments' | 'storage' | 'import' | 'survey';
 
 interface R2Object {
   key: string;
@@ -74,7 +97,9 @@ export default function AdminClient({
   users,
   boats,
   payments,
-  currentUserRole
+  products,
+  currentUserRole,
+  surveyData
 }: AdminClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('users');
@@ -250,6 +275,29 @@ export default function AdminClient({
         router.refresh();
       } else {
         alert('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUpdateBoatPlan = async (boatId: string, productId: string) => {
+    if (!productId) return;
+    setLoading(boatId);
+    try {
+      const response = await fetch(`/api/admin/boats/${boatId}/plan`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+      });
+
+      if (response.ok) {
+        router.refresh();
+      } else {
+        alert('Failed to update plan');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -464,7 +512,9 @@ export default function AdminClient({
       label: 'Payments',
       icon: CreditCard,
       count: payments.length
-    }
+    },
+    { id: 'survey', label: 'Survey', icon: MessageSquare, count: surveyData.total },
+    { id: 'import', label: 'Importer', icon: PackagePlus, count: null }
   ];
 
   // Add Storage tab only for superAdmin
@@ -534,6 +584,12 @@ export default function AdminClient({
         return (
           <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
             Inactive
+          </span>
+        );
+      case 'sold':
+        return (
+          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 border border-gray-300">
+            Vendu
           </span>
         );
       case 'deleted':
@@ -644,9 +700,11 @@ export default function AdminClient({
             >
               <tab.icon size={18} />
               {tab.label}
-              <span className="px-2 py-0.5 text-xs bg-gray-100 rounded-full">
-                {tab.count}
-              </span>
+              {tab.count !== null && (
+                <span className="px-2 py-0.5 text-xs bg-gray-100 rounded-full">
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -831,6 +889,9 @@ export default function AdminClient({
                   Status
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
+                  Plan
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
                   Created
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase">
@@ -863,6 +924,23 @@ export default function AdminClient({
                     {boat.price.toLocaleString('en-US')} {boat.currency}
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(boat.status, boat.expiresAt)}</td>
+                  <td className="px-6 py-4">
+                    {boat.product?.name ? (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        boat.product.name.toLowerCase() === 'podium'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : boat.product.name.toLowerCase() === 'mid-course'
+                          ? 'bg-purple-100 text-purple-800'
+                          : boat.product.name.toLowerCase() === 'renewal'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {boat.product.name}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {new Date(boat.createdAt).toLocaleDateString()}
                   </td>
@@ -880,6 +958,22 @@ export default function AdminClient({
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                         <option value="deleted">Deleted</option>
+                        <option value="sold">Vendu</option>
+                      </select>
+                      <select
+                        value={boat.product?.id || ''}
+                        onChange={(e) =>
+                          handleUpdateBoatPlan(boat.id, e.target.value)
+                        }
+                        disabled={loading === boat.id}
+                        className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-900"
+                      >
+                        <option value="">— Plan —</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
                       </select>
                       <button
                         onClick={() => router.push(`/boat/${boat.id}`)}
@@ -1323,6 +1417,226 @@ export default function AdminClient({
           )}
         </div>
       )}
+      {/* Survey Tab */}
+      {activeTab === 'survey' && (
+        <SurveyDashboard data={surveyData} />
+      )}
+
+      {/* Import Tab */}
+      {activeTab === 'import' && (
+        <AdminBoatImport />
+      )}
     </section>
+  );
+}
+
+// ─── Survey Dashboard ──────────────────────────────────────────────────────
+
+const ANSWER_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
+  Oui:           { bg: 'bg-green-100',  text: 'text-green-800',  bar: 'bg-green-500' },
+  Super:         { bg: 'bg-green-100',  text: 'text-green-800',  bar: 'bg-green-500' },
+  Bien:          { bg: 'bg-green-100',  text: 'text-green-700',  bar: 'bg-green-400' },
+  Moyen:         { bg: 'bg-yellow-100', text: 'text-yellow-800', bar: 'bg-yellow-400' },
+  Non:           { bg: 'bg-red-100',    text: 'text-red-800',    bar: 'bg-red-500' },
+  'À améliorer': { bg: 'bg-red-100',    text: 'text-red-700',    bar: 'bg-red-400' }
+};
+
+function SatisfactionBadge({ pct }: { pct: number }) {
+  if (pct >= 70) return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+      <TrendingUp size={12} /> {pct}%
+    </span>
+  );
+  if (pct >= 40) return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+      <Minus size={12} /> {pct}%
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+      <TrendingDown size={12} /> {pct}%
+    </span>
+  );
+}
+
+function SurveyDashboard({ data }: { data: SurveyData }) {
+  const [selectedPage, setSelectedPage] = useState<string | null>(null);
+
+  if (data.total === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-3">
+        <MessageSquare size={40} className="opacity-30" />
+        <p className="text-sm">Aucune réponse pour le moment.</p>
+      </div>
+    );
+  }
+
+  const avgSatisfaction = data.byPage.length
+    ? Math.round(data.byPage.reduce((s, p) => s + p.satisfactionPct, 0) / data.byPage.length)
+    : 0;
+  const worstPage = data.byPage[0];
+  const bestPage = data.byPage[data.byPage.length - 1];
+  const mostActive = [...data.byPage].sort((a, b) => b.total - a.total)[0];
+
+  const detail = selectedPage ? data.byPage.find(p => p.page === selectedPage) : null;
+
+  return (
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border p-5">
+          <div className="text-2xl font-bold text-gray-900">{data.total}</div>
+          <div className="text-xs text-gray-500 mt-0.5">Réponses totales</div>
+        </div>
+        <div className="bg-white rounded-xl border p-5">
+          <div className="text-2xl font-bold text-gray-900">{data.byPage.length}</div>
+          <div className="text-xs text-gray-500 mt-0.5">Pages évaluées</div>
+        </div>
+        <div className="bg-white rounded-xl border p-5">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-gray-900">{avgSatisfaction}%</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">Satisfaction moyenne</div>
+        </div>
+        <div className="bg-white rounded-xl border p-5">
+          <div className="text-sm font-semibold text-gray-900 truncate">{mostActive?.page || '—'}</div>
+          <div className="text-xs text-gray-500 mt-0.5">Page la plus évaluée ({mostActive?.total ?? 0} rép.)</div>
+        </div>
+      </div>
+
+      {/* Insight banners */}
+      {worstPage && worstPage.negativePct > 30 && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-4">
+          <AlertTriangle size={18} className="text-red-500 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold text-red-800">Page à améliorer en priorité :</span>{' '}
+            <span className="text-red-700 font-mono text-sm">{worstPage.page}</span>
+            <span className="text-red-600 text-sm ml-2">— {worstPage.negativePct}% d'avis négatifs sur {worstPage.total} réponses</span>
+          </div>
+        </div>
+      )}
+      {bestPage && bestPage.satisfactionPct >= 70 && (
+        <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-5 py-4">
+          <CheckCircle size={18} className="text-green-600 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold text-green-800">Page la mieux notée :</span>{' '}
+            <span className="text-green-700 font-mono text-sm">{bestPage.page}</span>
+            <span className="text-green-600 text-sm ml-2">— {bestPage.satisfactionPct}% de satisfaction</span>
+          </div>
+        </div>
+      )}
+
+      {/* Per-page breakdown */}
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">Analyse par page</h3>
+          <span className="text-xs text-gray-400">Triées par satisfaction ↑</span>
+        </div>
+        <div className="divide-y">
+          {data.byPage.map((p) => (
+            <div
+              key={p.page}
+              className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+              onClick={() => setSelectedPage(selectedPage === p.page ? null : p.page)}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <code className="text-sm font-mono text-gray-700 truncate">{p.page}</code>
+                  <SatisfactionBadge pct={p.satisfactionPct} />
+                </div>
+                <span className="text-xs text-gray-400 shrink-0">{p.total} réponse{p.total > 1 ? 's' : ''}</span>
+              </div>
+
+              {/* Stacked bar */}
+              <div className="flex h-3 rounded-full overflow-hidden gap-px mb-3">
+                {Object.entries(p.answers).map(([ans, count]) => {
+                  const pct = Math.round((count / p.total) * 100);
+                  const color = ANSWER_COLORS[ans]?.bar ?? 'bg-gray-300';
+                  return (
+                    <div
+                      key={ans}
+                      className={`${color} transition-all`}
+                      style={{ width: `${pct}%` }}
+                      title={`${ans}: ${count} (${pct}%)`}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3">
+                {Object.entries(p.answers).map(([ans, count]) => {
+                  const pct = Math.round((count / p.total) * 100);
+                  const c = ANSWER_COLORS[ans] ?? { bg: 'bg-gray-100', text: 'text-gray-700' };
+                  return (
+                    <span key={ans} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${c.bg} ${c.text}`}>
+                      {ans} <span className="opacity-70">{count} ({pct}%)</span>
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Expanded: comments */}
+              {selectedPage === p.page && p.comments.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Commentaires</p>
+                  {p.comments.map((c, i) => (
+                    <div key={i} className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                      <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${ANSWER_COLORS[c.answer]?.bg ?? 'bg-gray-100'} ${ANSWER_COLORS[c.answer]?.text ?? 'text-gray-700'}`}>
+                        {c.answer}
+                      </span>
+                      <p className="text-sm text-gray-700 flex-1">{c.comment}</p>
+                      <span className="text-xs text-gray-400 shrink-0">{new Date(c.createdAt).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedPage === p.page && p.comments.length === 0 && (
+                <p className="mt-3 text-xs text-gray-400 italic">Aucun commentaire sur cette page.</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent responses */}
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="px-6 py-4 border-b bg-gray-50">
+          <h3 className="font-semibold text-gray-900">Dernières réponses</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px]">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Page</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Réponse</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commentaire</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {data.recent.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-6 py-3">
+                    <code className="text-xs font-mono text-gray-600">{r.page}</code>
+                  </td>
+                  <td className="px-6 py-3">
+                    <span className={`inline-flex text-xs px-2 py-0.5 rounded-full font-medium ${ANSWER_COLORS[r.answer]?.bg ?? 'bg-gray-100'} ${ANSWER_COLORS[r.answer]?.text ?? 'text-gray-700'}`}>
+                      {r.answer}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-600 max-w-xs truncate">
+                    {r.comment || <span className="text-gray-300">—</span>}
+                  </td>
+                  <td className="px-6 py-3 text-xs text-gray-400 whitespace-nowrap">
+                    {new Date(r.createdAt).toLocaleDateString('fr-FR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }

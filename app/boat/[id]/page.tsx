@@ -39,9 +39,10 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
   } as Boat & { status?: string; userId?: string };
 
   const isActive = (boat as any).status === 'active';
-  const isOwner = !!viewerUserId && (boat as any).userId === viewerUserId;
+  const isSold = (boat as any).status === 'sold';
+  const isOwner = !!viewerUserId && (boat as any).user_id === viewerUserId;
 
-  if (!isActive && !isOwner) {
+  if (!isActive && !isSold && !isOwner) {
     notFound();
   }
 
@@ -73,8 +74,16 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
       <ViewTracker boatId={boat.id} />
 
       <div className="mx-auto max-w-screen-xl flex flex-col gap-[32px] lg:gap-[56px]">
+        {/* Sold banner */}
+        {isSold && (
+          <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 flex items-center gap-3">
+            <span className="font-bold text-sm tracking-wider uppercase text-red-700">Vendu</span>
+            <span className="text-14 text-red-600">Ce bateau a été vendu et n&apos;est plus disponible.</span>
+          </div>
+        )}
+
         {/* Pending banner for owners */}
-        {!isActive && isOwner && (
+        {!isActive && !isSold && isOwner && (
           <div className="rounded-[12px] border border-orange-200 bg-orange-50 px-4 py-3 text-oceanblue">
             <div className="font-medium">Payment is being processed</div>
             <div className="text-14 text-darkgrey">

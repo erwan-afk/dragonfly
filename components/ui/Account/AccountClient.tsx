@@ -172,7 +172,7 @@ export function AccountClient({
   }, [currentBoats, refreshBoatsData, showPaymentSuccess]);
 
   const pendingBoats = currentBoats.filter((b: any) => b?.status === 'pending');
-  const activeBoats = currentBoats.filter((b: any) => b?.status === 'active');
+  const activeBoats = currentBoats.filter((b: any) => b?.status === 'active' || b?.status === 'sold');
   const pendingBoatsCount = pendingBoats.length;
   const hasPendingBoats = pendingBoatsCount > 0;
 

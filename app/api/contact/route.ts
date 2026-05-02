@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     if (!contentType || !contentType.includes('application/json')) {
       logSuspiciousActivity(ip, userAgent, 'Invalid Content-Type');
       return NextResponse.json(
-        { error: 'Type de contenu invalide' },
+        { error: 'Invalid content type' },
         { status: 400 }
       );
     }
@@ -225,39 +225,39 @@ export async function POST(request: NextRequest) {
     const mailOptions = {
       from: `"Contact Dragonfly" <${process.env.SMTP_USER}>`,
       to: process.env.CONTACT_EMAIL,
-      subject: `[Contact Site] ${sanitizedData.subject}`,
+      subject: `[Contact] ${sanitizedData.subject}`,
       replyTo: sanitizedData.email,
+      text: `New contact message\n\nName: ${sanitizedData.name}\nEmail: ${sanitizedData.email}\nSubject: ${sanitizedData.subject}\nDate: ${new Date().toLocaleString('en-GB')}\nIP: ${ip}\n\nMessage:\n${sanitizedData.message}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #1e3a8a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-            📧 Nouveau message de contact
+            New contact message
           </h2>
-          
+
           <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #1e3a8a; margin-top: 0;">Informations du contact :</h3>
-            <p style="margin: 5px 0;"><strong>👤 Nom :</strong> ${sanitizedData.name}</p>
-            <p style="margin: 5px 0;"><strong>📧 Email :</strong> <a href="mailto:${sanitizedData.email}">${sanitizedData.email}</a></p>
-            <p style="margin: 5px 0;"><strong>📝 Sujet :</strong> ${sanitizedData.subject}</p>
-            <p style="margin: 5px 0;"><strong>📅 Date :</strong> ${new Date().toLocaleString('fr-FR')}</p>
-            <p style="margin: 5px 0;"><strong>🌐 IP :</strong> ${ip}</p>
+            <h3 style="color: #1e3a8a; margin-top: 0;">Contact details:</h3>
+            <p style="margin: 5px 0;"><strong>Name:</strong> ${sanitizedData.name}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${sanitizedData.email}">${sanitizedData.email}</a></p>
+            <p style="margin: 5px 0;"><strong>Subject:</strong> ${sanitizedData.subject}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString('en-GB')}</p>
+            <p style="margin: 5px 0;"><strong>IP:</strong> ${ip}</p>
           </div>
-          
-          <h3 style="color: #1e3a8a; margin-top: 30px;">💬 Message :</h3>
+
+          <h3 style="color: #1e3a8a; margin-top: 30px;">Message:</h3>
           <div style="background-color: #ffffff; padding: 20px; border-left: 4px solid #3b82f6; margin: 10px 0; border-radius: 4px;">
             <p style="line-height: 1.6; margin: 0; white-space: pre-wrap;">${sanitizedData.message}</p>
           </div>
-          
+
           <div style="background-color: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <p style="color: #1e3a8a; font-size: 14px; margin: 0;">
-              💡 <strong>Astuce :</strong> Vous pouvez répondre directement à ce message, 
-              la réponse sera envoyée à ${sanitizedData.email}
+              Reply directly to this email to reach ${sanitizedData.email}.
             </p>
           </div>
-          
+
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-          
+
           <p style="color: #6b7280; font-size: 12px; margin: 0; text-align: center;">
-            Ce message a été envoyé depuis le formulaire de contact du site Dragonfly Trimarans
+            Sent from the Dragonfly Trimarans contact form
           </p>
         </div>
       `,
@@ -287,13 +287,13 @@ export async function POST(request: NextRequest) {
 
 // Bloquer les autres méthodes HTTP
 export async function GET() {
-  return NextResponse.json({ error: 'Méthode non autorisée' }, { status: 405 });
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
 
 export async function PUT() {
-  return NextResponse.json({ error: 'Méthode non autorisée' }, { status: 405 });
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
 
 export async function DELETE() {
-  return NextResponse.json({ error: 'Méthode non autorisée' }, { status: 405 });
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 } 
