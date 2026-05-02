@@ -20,12 +20,12 @@ export default function PricingSection({
 
   // Mapper les noms de produits aux features correspondantes
   const featuresMap: Record<string, string[]> = {
-    'Start line': [
+    'Start Line': [
       'Boats up to €30,000',
       'Includes 3 photos',
       'Duration of 3 months'
     ],
-    'Mid-course': [
+    'Mid-Course': [
       'Boats over €30,000',
       'Includes 5 photos',
       'Duration of 3 months'
@@ -77,7 +77,7 @@ export default function PricingSection({
           {sortedProducts.map((product, index) => {
             const price = product?.prices?.[0];
             const productName = toTitleCase(product.name ?? 'No title');
-            const popular = productName === 'Mid-course'; // Mid-course est "popular" (2ème card)
+            const popular = productName === 'Mid-Course';
             const renewal = productName === 'Renewal';
 
             if (!price) return null;
