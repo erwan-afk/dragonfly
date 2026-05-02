@@ -12,59 +12,59 @@ type SurveyConfig = {
 function getSurveyConfig(pathname: string): SurveyConfig {
   if (pathname === '/') {
     return {
-      question: "Cette page d'accueil vous donne-t-elle envie d'explorer ?",
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Does this homepage make you want to explore?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   if (pathname === '/forsale') {
     return {
-      question: 'Les filtres et annonces vous semblent-ils clairs ?',
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Are the filters and listings clear to you?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   if (pathname.startsWith('/boat/')) {
     return {
-      question: 'Les informations sur ce bateau sont-elles suffisantes ?',
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Is the information on this boat sufficient?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   if (pathname === '/pricing') {
     return {
-      question: 'Les offres et tarifs vous semblent-ils lisibles ?',
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Are the plans and pricing easy to understand?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   if (pathname === '/list-boat') {
     return {
-      question: 'Le processus de mise en vente est-il simple ?',
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Is the listing process straightforward?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   if (pathname === '/contact') {
     return {
-      question: 'Avez-vous trouvé facilement comment nous contacter ?',
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Did you easily find how to contact us?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   if (pathname === '/forum') {
     return {
-      question: 'Le forum répond-il à vos attentes ?',
-      answers: ['Oui', 'Moyen', 'Non']
+      question: 'Does the forum meet your expectations?',
+      answers: ['Yes', 'Sort of', 'No']
     };
   }
   return {
-    question: 'Comment trouvez-vous cette nouvelle version du site ?',
-    answers: ['Super', 'Bien', 'À améliorer']
+    question: 'What do you think of this new version of the site?',
+    answers: ['Great', 'Good', 'Needs work']
   };
 }
 
 const ANSWER_EMOJI: Record<string, string> = {
-  Oui: '👍',
-  Moyen: '😐',
-  Non: '👎',
-  Super: '🔥',
-  Bien: '👍',
-  'À améliorer': '🛠️'
+  Yes: '👍',
+  'Sort of': '😐',
+  No: '👎',
+  Great: '🔥',
+  Good: '👍',
+  'Needs work': '🛠️'
 };
 
 export default function SurveyWidget() {
@@ -139,12 +139,12 @@ export default function SurveyWidget() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
               <span className="text-xs font-semibold text-articblue uppercase tracking-wider">
-                Votre avis
+                Quick Feedback
               </span>
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-smokygrey hover:text-white transition-colors text-lg leading-none"
-                aria-label="Fermer"
+                aria-label="Close"
               >
                 ×
               </button>
@@ -158,7 +158,9 @@ export default function SurveyWidget() {
                   className="py-4 text-center"
                 >
                   <p className="text-2xl mb-1">🙏</p>
-                  <p className="text-sm text-smokygrey">Merci pour votre retour !</p>
+                  <p className="text-sm text-smokygrey">
+                    Thanks for your feedback!
+                  </p>
                 </motion.div>
               ) : (
                 <>
@@ -190,7 +192,7 @@ export default function SurveyWidget() {
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Un commentaire ? (optionnel)"
+                    placeholder="Any comments? (optional)"
                     maxLength={300}
                     rows={2}
                     className="w-full bg-white/5 border border-white/10 rounded-xl text-xs text-white/80 placeholder-white/30 px-3 py-2 resize-none focus:outline-none focus:border-articblue transition-colors mb-3"
@@ -205,7 +207,7 @@ export default function SurveyWidget() {
                         : 'bg-white/10 text-white/30 cursor-not-allowed'
                     }`}
                   >
-                    {loading ? 'Envoi…' : 'Envoyer'}
+                    {loading ? 'Sending…' : 'Send'}
                   </button>
                 </>
               )}
@@ -219,7 +221,7 @@ export default function SurveyWidget() {
         onClick={() => setIsOpen((v) => !v)}
         whileTap={{ scale: 0.95 }}
         className="flex items-center gap-2 bg-darkgrey text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg border border-white/10 hover:border-articblue/50 hover:bg-[#2e3033] transition-all duration-150"
-        aria-label={isOpen ? 'Fermer le feedback' : 'Donner mon avis'}
+        aria-label={isOpen ? 'Close feedback' : 'Give feedback'}
       >
         <svg
           width="14"
@@ -236,7 +238,7 @@ export default function SurveyWidget() {
             strokeLinejoin="round"
           />
         </svg>
-        <span className="text-white/80">Votre avis</span>
+        <span className="text-white/80">Your feedback</span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}

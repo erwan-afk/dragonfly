@@ -1325,8 +1325,8 @@ export default function EditListing({
                     className="bg-white rounded-lg border border-gray-200 p-4 min-w-0"
                   >
                     <p className="text-oceanblue text-sm leading-relaxed mb-2">
-                      En passant au forfait <strong>{product.name}</strong>,
-                      vous bénéficiez immédiatement de :
+                      By upgrading to the <strong>{product.name}</strong> plan,
+                      you immediately get:
                     </p>
                     <ul className="text-xs text-oceanblue space-y-1 mb-3">
                       {extraPhotos > 0 && (
@@ -1337,10 +1337,9 @@ export default function EditListing({
                           />
                           <span>
                             <strong>
-                              {extraPhotos} photo{extraPhotos > 1 ? 's' : ''}{' '}
-                              supplémentaire{extraPhotos > 1 ? 's' : ''}
+                              {extraPhotos} additional photo{extraPhotos > 1 ? 's' : ''}
                             </strong>{' '}
-                            pour sublimer votre annonce.
+                            to showcase your listing.
                           </span>
                         </li>
                       )}
@@ -1351,8 +1350,7 @@ export default function EditListing({
                             className="text-articblue mt-0.5 shrink-0"
                           />
                           <span>
-                            Une <strong>visibilité accrue</strong> auprès des
-                            acheteurs.
+                            <strong>Increased visibility</strong> among buyers.
                           </span>
                         </li>
                       )}
@@ -1362,10 +1360,8 @@ export default function EditListing({
                           className="text-articblue mt-0.5 shrink-0"
                         />
                         <span>
-                          Un nouveau départ : la durée de parution de votre
-                          annonce est réinitialisée à{' '}
-                          <strong>{durationMonths} mois</strong> à partir
-                          d&apos;aujourd&apos;hui.
+                          A fresh start: your listing duration is reset to{' '}
+                          <strong>{durationMonths} months</strong> from today.
                         </span>
                       </li>
                     </ul>
@@ -1389,13 +1385,13 @@ export default function EditListing({
         </details>
       )}
 
-      {/* Section Payment — apparaît uniquement quand un upgrade est sélectionné */}
+      {/* Payment section — only shown when an upgrade is selected */}
       {isUpgrading && upgradeProduct && (
         <div
           id="upgrade-info"
           className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 p-6 border-2 border-articblue/20 rounded-xl bg-white"
         >
-          {/* Texte informatif */}
+          {/* Info text */}
           <div className="flex flex-col gap-4">
             <h2 className="text-xl font-semibold text-oceanblue">
               Upgrade to {upgradeProduct.name}
@@ -1413,8 +1409,8 @@ export default function EditListing({
               return (
                 <div className="bg-articblue/5 border border-articblue/20 rounded-xl p-5">
                   <p className="text-oceanblue text-sm leading-relaxed mb-3">
-                    En passant au forfait <strong>{upgradeProduct.name}</strong>
-                    , vous bénéficiez immédiatement de :
+                    By upgrading to the <strong>{upgradeProduct.name}</strong>{' '}
+                    plan, you immediately get:
                   </p>
                   <ul className="text-sm text-oceanblue space-y-2">
                     {extraPhotos > 0 && (
@@ -1425,10 +1421,9 @@ export default function EditListing({
                         />
                         <span>
                           <strong>
-                            {extraPhotos} photo{extraPhotos > 1 ? 's' : ''}{' '}
-                            supplémentaire{extraPhotos > 1 ? 's' : ''}
+                            {extraPhotos} additional photo{extraPhotos > 1 ? 's' : ''}
                           </strong>{' '}
-                          pour sublimer votre annonce.
+                          to showcase your listing.
                         </span>
                       </li>
                     )}
@@ -1439,8 +1434,7 @@ export default function EditListing({
                           className="text-articblue mt-0.5 shrink-0"
                         />
                         <span>
-                          Une <strong>visibilité accrue</strong> auprès des
-                          acheteurs.
+                          <strong>Increased visibility</strong> among buyers.
                         </span>
                       </li>
                     )}
@@ -1450,10 +1444,8 @@ export default function EditListing({
                         className="text-articblue mt-0.5 shrink-0"
                       />
                       <span>
-                        Un nouveau départ : la durée de parution de votre
-                        annonce est réinitialisée à{' '}
-                        <strong>{durationMonths} mois</strong> à partir
-                        d&apos;aujourd&apos;hui.
+                        A fresh start: your listing duration is reset to{' '}
+                        <strong>{durationMonths} months</strong> from today.
                       </span>
                     </li>
                   </ul>
@@ -1469,7 +1461,7 @@ export default function EditListing({
               }}
               className="text-sm text-gray-500 hover:text-oceanblue transition-colors self-start"
             >
-              ← Annuler l&apos;upgrade
+              ← Cancel upgrade
             </button>
           </div>
 
