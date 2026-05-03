@@ -142,7 +142,12 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
             To manage your listing, update its details, or renew it when the time comes, simply create your password below. Your account is ready and waiting for you.
           </p>
 
-          <div style="text-align: center; margin: 28px 0 20px;">
+          <p style="font-size: 15px; line-height: 1.6; margin: 0 0 20px; color: #26282A; text-align: center;">
+            Your login email is this address: <strong>${normalized}</strong><br>
+            Simply create your password to get started.
+          </p>
+
+          <div style="text-align: center; margin: 0 0 20px;">
             <a href="${activateUrl}"
                style="background-color: #58A4A7; color: #FDFDFD; padding: 14px 36px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
               Activate my account

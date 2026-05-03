@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { Plus, Trash2, Upload, CheckCircle, XCircle, Loader2, X, ImageIcon } from 'lucide-react';
-import { specificationsData } from '@/utils/specifications';
+import { specificationsData, normalizeSpecList } from '@/utils/specifications';
 import { countries, boatConditions, dragonflyModels, currencies as currencyList } from '@/utils/constants';
 
 const PLAN_OPTIONS = [
@@ -128,7 +128,9 @@ function parseCSV(text: string): BoatRow[] {
       vatPaid: get('vatpaid') === 'true' || get('vat_paid') === 'true',
       ownerEmail: get('owneremail') || get('owner_email'),
       photoUrls: get('photos').replace(/\|/g, ','),
-      specifications: get('specifications').replace(/\|/g, ','),
+      specifications: normalizeSpecList(
+        get('specifications').split(/[|,]/).map((s) => s.trim()).filter(Boolean)
+      ).join(','),
       expiresMonths: parsePlan(get('plan') || get('expires_months') || get('expiresmonths') || '')
     };
   });

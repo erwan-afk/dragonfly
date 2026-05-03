@@ -582,7 +582,7 @@ export default function SpotlightBoats({
                   base: 'text-green-600 data-[hover=true]:bg-green-50 data-[hover=true]:text-green-700'
                 }}
               >
-                Remettre en vente
+                Relist
               </DropdownItem>
             )) as any
           }

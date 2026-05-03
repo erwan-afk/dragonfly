@@ -2224,7 +2224,7 @@ export default function EditListing({
                 disabled={isMarkingSold}
                 className="border border-green-300 bg-green-50 text-green-700 font-medium px-6 py-4 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isMarkingSold ? 'Traitement...' : 'Remettre en vente'}
+                {isMarkingSold ? 'Processing...' : 'Relist'}
               </button>
             </div>
           )}
