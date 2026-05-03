@@ -128,8 +128,8 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
 
       <!-- Header -->
       <div style="background-color: #235B68; padding: 28px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-        <img src="${baseUrl}/logo-4-2.svg" alt="Dragonfly Trimarans" width="130" height="60"
-             style="display: inline-block; filter: brightness(0) invert(1);" />
+        <img src="${baseUrl}/logo-white.png" alt="Dragonfly Trimarans" width="130" height="60"
+             style="display: inline-block; max-width: 130px; height: auto;" />
       </div>
 
       <!-- Body -->
@@ -182,8 +182,8 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
       <!-- Footer -->
       <div style="background-color: #26282A; padding: 36px 24px; border-radius: 0 0 12px 12px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <img src="${baseUrl}/logo-4-2.svg" alt="Dragonfly Trimarans" width="100" height="46"
-               style="display: inline-block; filter: brightness(0) invert(1); opacity: 0.8;" />
+          <img src="${baseUrl}/logo-white.png" alt="Dragonfly Trimarans" width="100" height="46"
+               style="display: inline-block; max-width: 100px; height: auto; opacity: 0.85;" />
         </div>
         <div style="text-align: center; margin-bottom: 20px;">
           <a href="${baseUrl}" style="color: #A4B4BB; font-size: 13px; text-decoration: none; margin: 0 10px;">Home</a>
