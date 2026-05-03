@@ -63,7 +63,7 @@ function createEmptyRow(): BoatRow {
     ownerEmail: '',
     photoUrls: '',
     specifications: '',
-    expiresMonths: '3'
+    expiresMonths: 'start-line'
   };
 }
 
@@ -483,7 +483,7 @@ export default function AdminBoatImport() {
                   onChange={(e) => setQuick((q) => ({ ...q, expiresMonths: e.target.value }))}
                 >
                   {PLAN_OPTIONS.map((p) => (
-                    <option key={p.key} value={String(p.months)}>
+                    <option key={p.key} value={p.key}>
                       {p.label} — {p.months} mois
                     </option>
                   ))}
@@ -751,7 +751,7 @@ export default function AdminBoatImport() {
                     onChange={(e) => updateRow(row.id, 'expiresMonths', e.target.value)}
                   >
                     {PLAN_OPTIONS.map((p) => (
-                      <option key={p.key} value={String(p.months)}>
+                      <option key={p.key} value={p.key}>
                         {p.label} ({p.months}m)
                       </option>
                     ))}

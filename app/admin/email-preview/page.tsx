@@ -110,7 +110,7 @@ const emailHtml = `
     </div>
     <p style="color: #CCD5DB; font-size: 12px; text-align: center; margin: 0 0 12px;">
       You received this because your listing was transferred from the Dragonfly Trimarans User Forum.<br>
-      Questions? <a href="mailto:admin@dragonfly-trimarans.org" style="color: #58A4A7; text-decoration: none;">admin@dragonfly-trimarans.org</a>
+      Questions? <a href="mailto:administrator@dragonfly-trimarans.org" style="color: #58A4A7; text-decoration: none;">administrator@dragonfly-trimarans.org</a>
     </p>
     <p style="color: #A4B4BB; font-size: 11px; text-align: center; margin: 0;">
       All rights reserved by Dragonfly Trimarans Marketplace &nbsp;·&nbsp; © 2026 Dragonfly

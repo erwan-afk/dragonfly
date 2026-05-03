@@ -186,7 +186,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
         </div>
         <p style="color: #CCD5DB; font-size: 12px; text-align: center; margin: 0 0 12px;">
           You received this because your listing was transferred from the Dragonfly Trimarans User Forum.<br>
-          Questions? <a href="mailto:admin@dragonfly-trimarans.org" style="color: #58A4A7; text-decoration: none;">admin@dragonfly-trimarans.org</a>
+          Questions? <a href="mailto:administrator@dragonfly-trimarans.org" style="color: #58A4A7; text-decoration: none;">administrator@dragonfly-trimarans.org</a>
         </p>
         <p style="color: #A4B4BB; font-size: 11px; text-align: center; margin: 0;">
           All rights reserved by Dragonfly Trimarans Marketplace &nbsp;·&nbsp; © 2026 Dragonfly
@@ -208,7 +208,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
     `This link expires in 7 days. If you don't activate your account, your listing will remain visible but you won't be able to manage it online.`,
     '',
     `— The Dragonfly Trimarans team`,
-    `This email was sent automatically. If you have any questions, contact us at admin@dragonfly-trimarans.org.`,
+    `This email was sent automatically. If you have any questions, contact us at administrator@dragonfly-trimarans.org.`,
   ].join('\n');
 
   const transporter = nodemailer.createTransport({
@@ -221,7 +221,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
   try {
     await transporter.sendMail({
       from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
-      replyTo: 'admin@dragonfly-trimarans.org',
+      replyTo: 'administrator@dragonfly-trimarans.org',
       to: normalized,
       subject: 'Dragonfly Trimarans User Forum — Your listing is now on the new platform',
       html,
