@@ -87,13 +87,26 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
   const normalized = email.toLowerCase().trim();
   const baseUrl = process.env.BETTER_AUTH_URL || 'http://localhost:3000';
 
+  const user = await prisma.user.findUnique({
+    where: { email: normalized },
+    select: { id: true, name: true },
+  });
+
+  if (!user) {
+    console.error(`❌ Cannot send invitation: user ${normalized} not found`);
+    return;
+  }
+
+  // Match Better Auth's reset-password token format:
+  //   identifier = "reset-password:<token>"
+  //   value      = user.id
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await prisma.verification.create({
     data: {
-      identifier: `reset-password:${normalized}`,
-      value: token,
+      identifier: `reset-password:${token}`,
+      value: user.id,
       expiresAt,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -101,11 +114,6 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
   });
 
   const activateUrl = `${baseUrl}/reset-password?token=${token}`;
-
-  const user = await prisma.user.findUnique({
-    where: { email: normalized },
-    select: { id: true, name: true },
-  });
 
   const firstName = user?.name
     ? user.name.charAt(0).toUpperCase() + user.name.slice(1)
