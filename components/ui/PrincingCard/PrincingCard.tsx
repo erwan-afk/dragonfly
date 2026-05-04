@@ -102,52 +102,54 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       </div>
 
       {popular && ( // Condition d'affichage
-        <div className="flex flex-row justify-center">
-        <div
-          className={`border-2 sm:hidden w-fit border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
-        >
-          <motion.div
-            key={isHovered ? 'hovered' : 'not-hovered'} // Force re-render on hover
-            initial={{ rotate: 0, scale: 1 }}
-            animate={
-              isHovered
-                ? {
-                    rotate: [0, 15, -15, 0],
-                    scale: [1, 1.4, 1.4, 1]
-                  }
-                : { rotate: 0, scale: 1 }
-            }
-            transition={{
-              duration: 0.8,
-              ease: 'easeInOut'
-            }}
+        <div className="flex flex-row justify-center sm:hidden">
+          <div
+            className={`border-2  w-fit border-oceanblue text-oceanblue h-fit px-[10px] py-[4px] gap-[5px] flex flex-row items-center rounded-[100px]`}
           >
-            <Star />
-          </motion.div>
-          <div className="uppercase font-medium text-oceanblue leading-[80%] text-[12px]">
-            Popular
+            <motion.div
+              key={isHovered ? 'hovered' : 'not-hovered'} // Force re-render on hover
+              initial={{ rotate: 0, scale: 1 }}
+              animate={
+                isHovered
+                  ? {
+                      rotate: [0, 15, -15, 0],
+                      scale: [1, 1.4, 1.4, 1]
+                    }
+                  : { rotate: 0, scale: 1 }
+              }
+              transition={{
+                duration: 0.8,
+                ease: 'easeInOut'
+              }}
+            >
+              <Star />
+            </motion.div>
+            <div className="uppercase font-medium text-oceanblue leading-[80%] text-[12px]">
+              Popular
+            </div>
           </div>
-        </div>
         </div>
       )}
 
-      <h1 className="font-medium text-24 xs:text-32 text-oceanblue break-words text-center sm:text-left">{price}</h1>
+      <h1 className="font-medium text-24 xs:text-32 text-oceanblue break-words text-center sm:text-left">
+        {price}
+      </h1>
 
       <div className="flex justify-center sm:justify-start">
-      <Button
-        text={title}
-        href="/pricing"
-        bgColor={popular ? 'bg-oceanblue' : 'bg-articblue'}
-        textColor="text-fullwhite"
-        icon="link"
-        textsize="text-12"
-        onClick={() => {
-          const queryString = new URLSearchParams({
-            preference: title
-          }).toString();
-          window.location.href = `/list-boat?${queryString}`;
-        }}
-      />
+        <Button
+          text={title}
+          href="/pricing"
+          bgColor={popular ? 'bg-oceanblue' : 'bg-articblue'}
+          textColor="text-fullwhite"
+          icon="link"
+          textsize="text-12"
+          onClick={() => {
+            const queryString = new URLSearchParams({
+              preference: title
+            }).toString();
+            window.location.href = `/list-boat?${queryString}`;
+          }}
+        />
       </div>
       <div className="h-[1px] w-full bg-smokygrey"></div>
       <div className="flex flex-col gap-24">
