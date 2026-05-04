@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import prisma from '../prisma/client';
 import { dragonflyModels, currencies, countries, boatConditions } from '../constants';
 import { normalizeImageUrls } from '../image-urls';
+import { formatPriceNumber } from '../format-price';
 
 export interface BoatEmailData {
   id: string;
@@ -62,7 +63,7 @@ function buildBoatCardHtml(boat: BoatEmailData, baseUrl: string): string {
           ${modelLabel}
         </div>
         <div style="color: #235B68; font-size: 22px; font-weight: 500; margin-bottom: 16px;">
-          ${boat.price.toLocaleString('en-US')} ${currencySymbol}
+          ${formatPriceNumber(boat.price, boat.currency)} ${currencySymbol}
         </div>
         ${conditionHtml}
         <div style="height: 1px; background-color: #ECEFF5; margin: 16px 0;"></div>

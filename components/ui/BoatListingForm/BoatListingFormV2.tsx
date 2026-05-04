@@ -29,6 +29,7 @@ import {
   getUpgradePlan,
   getPriceLimitSummaryText
 } from '@/lib/product-features';
+import { formatPriceNumber, formatPriceCurrency } from '@/utils/format-price';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
@@ -253,7 +254,7 @@ export default function BoatListingFormV2({
 
   // Utiliser les fonctions importées depuis la configuration partagée
   const maxPhotos = getMaxPhotos(selectedProduct?.name);
-  const priceLimit = getPriceLimit(selectedProduct?.name);
+  const priceLimit = getPriceLimit(selectedProduct?.name, currency);
   const upgradePlan = getUpgradePlan(selectedProduct?.name);
   const duration = getDuration(selectedProduct?.name);
 
@@ -430,7 +431,7 @@ export default function BoatListingFormV2({
           <p className="text-sm text-gray-700">
             This price exceeds the <strong>{selectedProduct?.name}</strong>{' '}
             limit ({getCurrencySymbol(currency)}
-            {priceLimit.toLocaleString('en-US')}). Upgrade to{' '}
+            {formatPriceNumber(priceLimit, currency)}). Upgrade to{' '}
             <strong>{upgradePlan}</strong> to list boats at this price.
           </p>
           {upgradeProduct && (
@@ -731,7 +732,7 @@ export default function BoatListingFormV2({
     if (priceBoat <= 0) errors.push('Please enter a valid price');
     if (priceLimit && priceBoat > priceLimit) {
       errors.push(
-        `This price exceeds your plan limit (${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}). Please upgrade your plan.`
+        `This price exceeds your plan limit (${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}). Please upgrade your plan.`
       );
     }
     if (description.length < 20)
@@ -1005,11 +1006,10 @@ export default function BoatListingFormV2({
     });
   };
 
-  const priceString = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: selectedPrice?.currency || 'USD',
-    minimumFractionDigits: 0
-  }).format(Number(selectedPrice?.unitAmount || 0) / 100);
+  const priceString = formatPriceCurrency(
+    Number(selectedPrice?.unitAmount || 0) / 100,
+    selectedPrice?.currency || 'USD'
+  );
 
   if (!products.length || !selectedPrice) {
     return <div>Error: No products available</div>;
@@ -1297,13 +1297,8 @@ export default function BoatListingFormV2({
                         daysUntilExpiration <= 7 &&
                         daysUntilExpiration > 0;
 
-                      // Formate le prix
-                      const formatPrice = (price: number): string => {
-                        return new Intl.NumberFormat('en-US', {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0
-                        }).format(price);
-                      };
+                      const formatPrice = (price: number): string =>
+                        formatPriceNumber(price, boat.currency);
 
                       const isSelected = selectedBoatId === boat.id;
 
@@ -1566,7 +1561,7 @@ export default function BoatListingFormV2({
                     labelPlacement="outside"
                     placeholder={
                       priceLimit
-                        ? `Up to ${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}`
+                        ? `Up to ${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}`
                         : 'Enter price (no limit)'
                     }
                     value={priceBoat}
@@ -1578,6 +1573,7 @@ export default function BoatListingFormV2({
                     isInvalid={
                       (priceBoat <= 0 && touched.price) || isPriceOverLimit
                     }
+                    currency={currency}
                   />
 
                   <Select
@@ -1638,7 +1634,7 @@ export default function BoatListingFormV2({
                         </p>
                         <p className="mt-1">
                           Limit: {getCurrencySymbol(currency)}
-                          {priceLimit.toLocaleString('en-US')}. Upgrade to{' '}
+                          {formatPriceNumber(priceLimit, currency)}. Upgrade to{' '}
                           <strong>{upgradePlan}</strong> to list at this price.
                         </p>
                       </div>
@@ -2025,7 +2021,8 @@ export default function BoatListingFormV2({
                 <p>
                   {getPriceLimitSummaryText(
                     selectedProduct?.name,
-                    getCurrencySymbol(currency)
+                    getCurrencySymbol(currency),
+                    currency
                   )}
                 </p>
               </div>

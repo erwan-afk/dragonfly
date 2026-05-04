@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { getLocaleForCurrency } from '@/utils/format-price';
 
 type ClassNames = {
   label?: string;
@@ -18,7 +19,8 @@ export default function NumberInput({
   isInvalid,
   errorMessage,
   className,
-  classNames
+  classNames,
+  currency
 }: {
   label?: string;
   labelPlacement?: 'outside' | 'inside';
@@ -30,15 +32,16 @@ export default function NumberInput({
   errorMessage?: string;
   className?: string;
   classNames?: ClassNames;
+  currency?: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const formatter = useMemo(
     () =>
-      new Intl.NumberFormat('en-US', {
+      new Intl.NumberFormat(getLocaleForCurrency(currency), {
         maximumFractionDigits: 0
       }),
-    []
+    [currency]
   );
 
   const formatNumber = (n: number) => {

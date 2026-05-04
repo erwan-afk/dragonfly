@@ -11,6 +11,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { getModelLabel, getProductLabel } from '@/utils/constants';
 import { getMaxPhotos, getDuration, getProductFeatures } from '@/lib/product-features';
+import { formatPriceNumber } from '@/utils/format-price';
 import { ArrowUpCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -244,7 +245,7 @@ export default function UpgradeClient({
               {getModelLabel(boat.model)}
             </div>
             <div className="text-gray-600">
-              {boat.price.toLocaleString('en-US')} {boat.currency} - {boat.country}
+              {formatPriceNumber(boat.price, boat.currency)} {boat.currency} - {boat.country}
             </div>
           </div>
           <div className="text-right">

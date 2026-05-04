@@ -23,6 +23,7 @@ import {
   getUpgradePlan,
   getPriceLimitSummaryText
 } from '@/lib/product-features';
+import { formatPriceNumber } from '@/utils/format-price';
 
 import {
   dragonflyModels,
@@ -208,7 +209,7 @@ export default function EditListing({
 
   // Apply plan limitations
   const maxPhotos = getMaxPhotos(currentPlan);
-  const priceLimit = getPriceLimit(currentPlan);
+  const priceLimit = getPriceLimit(currentPlan, currency);
   const upgradePlan = getUpgradePlan(currentPlan);
   const durationData = getDuration(currentPlan);
   const duration =
@@ -299,7 +300,7 @@ export default function EditListing({
               This price exceeds the{' '}
               <strong>{currentPlan.replace('-', ' ')}</strong> limit (
               {getCurrencySymbol(currency)}
-              {priceLimit.toLocaleString('en-US')}). Upgrade to{' '}
+              {formatPriceNumber(priceLimit, currency)}). Upgrade to{' '}
               <strong>{upgradePlan}</strong> to list boats at this price.
             </p>
             <button
@@ -944,7 +945,7 @@ export default function EditListing({
     if (priceBoat <= 0) errors.push('Please enter a valid price');
     if (priceLimit && priceBoat > priceLimit) {
       errors.push(
-        `This price exceeds your plan limit (${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}). Please upgrade your plan.`
+        `This price exceeds your plan limit (${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}). Please upgrade your plan.`
       );
     }
     if (description.length < 20)
@@ -1746,7 +1747,7 @@ export default function EditListing({
                     labelPlacement="outside"
                     placeholder={
                       priceLimit
-                        ? `Up to ${getCurrencySymbol(currency)}${priceLimit.toLocaleString('en-US')}`
+                        ? `Up to ${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}`
                         : 'Enter price (no limit)'
                     }
                     value={priceBoat}
@@ -1758,6 +1759,7 @@ export default function EditListing({
                     isInvalid={
                       (priceBoat <= 0 && touched.price) || isPriceOverLimit
                     }
+                    currency={currency}
                   />
 
                   <Select
@@ -1815,7 +1817,7 @@ export default function EditListing({
                       </p>
                       <p className="mt-1">
                         Limit: {getCurrencySymbol(currency)}
-                        {priceLimit?.toLocaleString('en-US')}. Upgrade to{' '}
+                        {priceLimit ? formatPriceNumber(priceLimit, currency) : ''}. Upgrade to{' '}
                         <strong>{upgradePlan}</strong> to list at this price.
                       </p>
                     </div>

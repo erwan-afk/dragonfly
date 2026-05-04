@@ -3,9 +3,26 @@
  * Cette configuration est utilisée dans la page pricing et le formulaire de création d'annonce
  */
 
+import { formatPriceCurrency } from '@/utils/format-price';
+
+// Limites de prix par devise (équivalent ~30k EUR)
+// Mises à jour manuellement, à ajuster si les taux de change bougent significativement.
+export const START_LINE_LIMIT_BY_CURRENCY: Record<string, number> = {
+  EUR: 30000,
+  USD: 32000,
+  GBP: 25000,
+  CHF: 28000,
+  CAD: 44000,
+  AUD: 50000,
+};
+
+export function getStartLineLimit(currency?: string | null): number {
+  return START_LINE_LIMIT_BY_CURRENCY[(currency ?? 'EUR').toUpperCase()] ?? START_LINE_LIMIT_BY_CURRENCY.EUR;
+}
+
 export interface ProductFeatures {
-  priceLimit: number | null; // Limite de prix en euros (null = pas de limite)
-  priceLimitText: string; // Texte à afficher pour la limite de prix
+  priceLimit: Record<string, number> | null; // Limites de prix par devise (null = pas de limite)
+  priceLimitText: string; // Texte à afficher pour la limite de prix (référence EUR)
   maxPhotos: number; // Nombre maximum de photos
   duration: {
     months: number; // Durée en mois
@@ -24,7 +41,7 @@ export type ProductName = 'start line' | 'mid-course' | 'podium' | 'renewal';
  */
 export const PRODUCT_FEATURES: Record<ProductName, ProductFeatures> = {
   'start line': {
-    priceLimit: 30000,
+    priceLimit: START_LINE_LIMIT_BY_CURRENCY,
     priceLimitText: 'Up to €30,000',
     maxPhotos: 3,
     duration: {
@@ -117,12 +134,16 @@ export function getMaxPhotos(productName: string | null | undefined): number {
 }
 
 /**
- * Obtient la limite de prix pour un produit
+ * Obtient la limite de prix pour un produit dans une devise donnée
  */
 export function getPriceLimit(
-  productName: string | null | undefined
+  productName: string | null | undefined,
+  currency?: string | null
 ): number | null {
-  return getProductFeatures(productName).priceLimit;
+  const limits = getProductFeatures(productName).priceLimit;
+  if (!limits) return null;
+  const code = (currency ?? 'EUR').toUpperCase();
+  return limits[code] ?? limits.EUR ?? null;
 }
 
 /**
@@ -135,20 +156,21 @@ export function getPriceLimitText(
 }
 
 /**
- * Obtient le texte formaté de la limite de prix pour le récapitulatif
- * @param productName - Nom du produit
- * @param currencySymbol - Symbole de la devise (optionnel, pour remplacer €)
- * @returns Texte formaté pour le récapitulatif (ex: "Boats up to €30,000", "All boats")
+ * Obtient le texte formaté de la limite de prix pour le récapitulatif.
+ * Le prix est formaté selon la convention locale de la devise (symbole avant
+ * pour USD/GBP/CAD, symbole après pour EUR/CHF, etc.).
  */
 export function getPriceLimitSummaryText(
   productName: string | null | undefined,
-  currencySymbol?: string
+  _currencySymbol?: string,
+  currency?: string | null
 ): string {
   const features = getProductFeatures(productName);
-  const symbol = currencySymbol || '€';
+  const limit = getPriceLimit(productName, currency);
+  const code = (currency ?? 'EUR').toUpperCase();
 
-  if (features.priceLimit) {
-    return `Boats up to ${symbol}${features.priceLimit.toLocaleString('en-US')}`;
+  if (limit !== null) {
+    return `Boats up to ${formatPriceCurrency(limit, code)}`;
   }
 
   // Pour les produits sans limite, utiliser le texte de la configuration
@@ -156,7 +178,8 @@ export function getPriceLimitSummaryText(
     return 'All boats';
   }
   if (features.priceLimitText === 'Over €30,000') {
-    return `Boats over ${symbol}30,000`;
+    const startLineLimit = getStartLineLimit(currency);
+    return `Boats over ${formatPriceCurrency(startLineLimit, code)}`;
   }
   if (features.priceLimitText === 'Existing ads') {
     return 'Existing ads';

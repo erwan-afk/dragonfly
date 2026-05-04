@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         const { getCurrentBoatPlan } = await import('@/utils/boats/payments');
         const currentPlan = await getCurrentBoatPlan(id);
         const maxPhotosAllowed = getMaxPhotos(currentPlan);
-        const priceLimitAllowed = getPriceLimit(currentPlan);
+        const priceLimitAllowed = getPriceLimit(currentPlan, currency);
 
         // Vérifications de sécurité côté serveur
         if (priceLimitAllowed && parseFloat(price) > priceLimitAllowed) {

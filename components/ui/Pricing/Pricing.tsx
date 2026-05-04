@@ -3,6 +3,7 @@
 import type { ProductWithPrices, StripePrice } from '@/types/database';
 import { checkoutWithStripe } from '@/utils/stripe/server';
 import { getErrorRedirect } from '@/utils/helpers';
+import { formatPriceCurrency } from '@/utils/format-price';
 import { UserSimple as User } from '@/types/database';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -98,11 +99,10 @@ export default function Pricing({ user, products }: Props) {
             const price = product?.prices?.[0];
             if (!price) return null;
 
-            const priceString = new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: price.currency || 'eur',
-              minimumFractionDigits: 0
-            }).format(Number(price?.unitAmount || 0) / 100);
+            const priceString = formatPriceCurrency(
+              Number(price?.unitAmount || 0) / 100,
+              price.currency || 'eur'
+            );
 
             return (
               <div

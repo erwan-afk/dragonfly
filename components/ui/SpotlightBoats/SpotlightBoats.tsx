@@ -48,6 +48,7 @@ import {
 } from '@/utils/constants';
 import FlagIcon from '@/components/icons/Flag';
 import { specificationsData } from '@/utils/specifications';
+import { formatPriceNumber } from '@/utils/format-price';
 import { normalizePhotoUrl } from '@/utils/image-urls.client';
 
 interface SpotlightBoatsProps {
@@ -309,8 +310,8 @@ export default function SpotlightBoats({
     }
   };
 
-  const formatPrice = (price: number): string => {
-    return price.toLocaleString('en-US');
+  const formatPrice = (price: number, currency?: string | null): string => {
+    return formatPriceNumber(price, currency);
   };
 
   const getCurrencySymbol = (currency: string): string => {
@@ -378,6 +379,15 @@ export default function SpotlightBoats({
           });
 
           return filtered.sort((a, b) => {
+            const getTierPriority = (boat: any) => {
+              const name = ((boat as any).productName || '').toLowerCase();
+              if (name.includes('podium')) return 1;
+              if (name.includes('mid-course') || name.includes('mid course')) return 2;
+              return 3;
+            };
+            const tierDiff = getTierPriority(a) - getTierPriority(b);
+            if (tierDiff !== 0) return tierDiff;
+
             switch (selectedSort) {
               case 'price_asc':
                 return (Number(a.price) ?? 0) - (Number(b.price) ?? 0);
@@ -643,7 +653,7 @@ export default function SpotlightBoats({
                       {boat.country}
                     </div>
                     <div className="text-xs sm:text-sm font-medium text-gray-900 mt-0.5">
-                      {formatPrice(Number(boat.price))}{' '}
+                      {formatPrice(Number(boat.price), boat.currency)}{' '}
                       {getCurrencySymbol(boat.currency)}
                     </div>
                   </div>
@@ -831,7 +841,7 @@ export default function SpotlightBoats({
                     {/* Price */}
                     <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 font-medium">
-                        {formatPrice(Number(boat.price))}{' '}
+                        {formatPrice(Number(boat.price), boat.currency)}{' '}
                         {getCurrencySymbol(boat.currency)}
                       </div>
                     </td>
@@ -1006,7 +1016,7 @@ export default function SpotlightBoats({
                             {getModelLabel(boatToDelete.model)}
                           </div>
                           <div className="text-sm text-oceanblue mt-1">
-                            {formatPrice(Number(boatToDelete.price))}{' '}
+                            {formatPrice(Number(boatToDelete.price), boatToDelete.currency)}{' '}
                             {boatToDelete.currency} • {boatToDelete.country}
                           </div>
                         </div>
@@ -2015,7 +2025,7 @@ export default function SpotlightBoats({
                                     Price:{' '}
                                   </span>
                                   <span className="font-semibold text-oceanblue">
-                                    {formatPrice(Number(boat.price))}{' '}
+                                    {formatPrice(Number(boat.price), boat.currency)}{' '}
                                     {getCurrencySymbol(boat.currency)}
                                   </span>
                                 </div>
@@ -2164,7 +2174,7 @@ export default function SpotlightBoats({
                         <div className="flex flex-row items-center gap-2 ">
                           <span className="text-oceanblue">Price: </span>
                           <span className="font-medium text-oceanblue">
-                            {formatPrice(Number(boat.price))}{' '}
+                            {formatPrice(Number(boat.price), boat.currency)}{' '}
                             {getCurrencySymbol(boat.currency)}
                           </span>
                         </div>
@@ -2209,7 +2219,7 @@ export default function SpotlightBoats({
                         <div className="flex items-center">
                           <div className="text-oceanblue text-24">
                             <span className="font-semibold text-oceanblue">
-                              {formatPrice(Number(boat.price))}{' '}
+                              {formatPrice(Number(boat.price), boat.currency)}{' '}
                               {getCurrencySymbol(boat.currency)}
                             </span>
                           </div>

@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import AdminBoatImport from '@/components/ui/AdminBoatImport/AdminBoatImport';
 import { getModelLabel } from '@/utils/constants';
+import { formatPriceNumber } from '@/utils/format-price';
 
 interface SurveyPageStat {
   page: string;
@@ -921,7 +922,7 @@ export default function AdminClient({
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {boat.price.toLocaleString('en-US')} {boat.currency}
+                    {formatPriceNumber(boat.price, boat.currency)} {boat.currency}
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(boat.status, boat.expiresAt)}</td>
                   <td className="px-6 py-4">

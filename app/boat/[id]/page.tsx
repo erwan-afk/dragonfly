@@ -9,6 +9,7 @@ import { ViewTracker } from './ViewTracker';
 import { ViewStats } from './ViewStats';
 import FlagIcon from '@/components/icons/Flag';
 import { normalizeImageUrls } from '@/utils/image-urls';
+import { formatPriceNumber } from '@/utils/format-price';
 
 export default async function BoatPage({ params }: { params: { id: string } }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -115,7 +116,7 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               </h1>
 
               <h2 className="text-oceanblue leading-[100%] text-24 lg:text-32 font-medium">
-                {boat.price.toString()}{' '}
+                {formatPriceNumber(boat.price, boat.currency)}{' '}
                 {currencies.find((currency) => currency.key === boat.currency)
                   ?.symbol || boat.currency}
               </h2>

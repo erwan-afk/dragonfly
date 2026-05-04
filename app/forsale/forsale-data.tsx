@@ -107,7 +107,13 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       LEFT JOIN "user" u ON b.user_id = u.id
       LEFT JOIN "products" p ON b.product_id = p.id
       WHERE ${whereClause}
-      ORDER BY ${orderBy}
+      ORDER BY
+        CASE
+          WHEN LOWER(p.name) LIKE '%podium%' THEN 1
+          WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
+          ELSE 3
+        END ASC,
+        ${orderBy}
     `,
       ...sqlParams
     )) as any[];

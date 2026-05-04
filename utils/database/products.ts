@@ -93,7 +93,13 @@ export const getBoatsFromDatabase = unstable_cache(
           LEFT JOIN "products" p ON b.product_id = p.id
           WHERE b.status IN ('active', 'sold')
           AND (b.expires_at IS NULL OR b.expires_at > NOW())
-          ORDER BY b.created_at DESC
+          ORDER BY
+            CASE
+              WHEN LOWER(p.name) LIKE '%podium%' THEN 1
+              WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
+              ELSE 3
+            END ASC,
+            b.created_at DESC
           LIMIT ${limit}
         ` as any[];
       } else {
@@ -106,7 +112,13 @@ export const getBoatsFromDatabase = unstable_cache(
           LEFT JOIN "products" p ON b.product_id = p.id
           WHERE b.status IN ('active', 'sold')
           AND (b.expires_at IS NULL OR b.expires_at > NOW())
-          ORDER BY b.created_at DESC
+          ORDER BY
+            CASE
+              WHEN LOWER(p.name) LIKE '%podium%' THEN 1
+              WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
+              ELSE 3
+            END ASC,
+            b.created_at DESC
         ` as any[];
       }
 

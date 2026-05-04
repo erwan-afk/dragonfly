@@ -61,7 +61,11 @@
       "Bash(node -e ' *)",
       "Bash(taskkill /F /IM node.exe)",
       "Bash(git push *)",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Applications\\\\dragonfly\" -Depth 2)",
+      "Bash(Select-Object FullName)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }
