@@ -36,7 +36,7 @@ export default async function AdminPage() {
         createdAt: true,
         banned: true,
         _count: {
-          select: { boats: true }
+          select: { boats: true, session: true }
         }
       },
       orderBy: { createdAt: 'desc' },
@@ -91,7 +91,8 @@ export default async function AdminPage() {
   const serializedUsers = users.map((u) => ({
     ...u,
     createdAt: u.createdAt.toISOString(),
-    boatsCount: u._count.boats
+    boatsCount: u._count.boats,
+    sessionCount: u._count.session
   }));
 
   const serializedBoats = boats.map((b) => ({
