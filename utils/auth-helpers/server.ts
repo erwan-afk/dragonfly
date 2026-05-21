@@ -373,7 +373,9 @@ export async function updateListing(formData: FormData): Promise<string> {
   const vat_paid = String(formData.get('vat_paid')).trim();
   const email = String(formData.get('email') || '').trim();
   const condition = String(formData.get('condition') || '').trim();
+  const yearRaw = String(formData.get('year') || '').trim();
   const photos = String(formData.get('photos')).trim();
+  const videoUrlRaw = String(formData.get('video_url') || '').trim();
 
   try {
     const user = await getCurrentUser();
@@ -383,6 +385,35 @@ export async function updateListing(formData: FormData): Promise<string> {
         'You could not be updated.',
         'You are not signed in.'
       );
+    }
+
+    // Validate video URL if provided
+    let videoUrl: string | null = null;
+    if (videoUrlRaw) {
+      const { isValidVideoUrl } = await import('@/utils/video-embed');
+      if (!isValidVideoUrl(videoUrlRaw)) {
+        return getErrorRedirect(
+          '/account',
+          'Your listing could not be updated.',
+          'Video URL must be a valid YouTube, Vimeo or Dailymotion link.'
+        );
+      }
+      videoUrl = videoUrlRaw;
+    }
+
+    // Validate year if provided
+    let yearValue: number | null = null;
+    if (yearRaw) {
+      const yearNum = parseInt(yearRaw, 10);
+      const maxYear = new Date().getFullYear() + 1;
+      if (!Number.isInteger(yearNum) || yearNum < 1960 || yearNum > maxYear) {
+        return getErrorRedirect(
+          '/account',
+          'Your listing could not be updated.',
+          `Year must be between 1960 and ${maxYear}.`
+        );
+      }
+      yearValue = yearNum;
     }
 
     // Update the listing with raw SQL to avoid Prisma client regeneration issues
@@ -399,7 +430,9 @@ export async function updateListing(formData: FormData): Promise<string> {
         vat_paid = ${vat_paid === 'true'},
         email = ${email || null},
         "condition" = ${condition || null},
+        "year" = ${yearValue},
         photos = ${photosArray},
+        video_url = ${videoUrl},
         updated_at = NOW()
       WHERE id = ${id}
     `;

@@ -105,6 +105,7 @@ export default function AdminClient({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('users');
   const [loading, setLoading] = useState<string | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // R2 Storage state
   const [r2Stats, setR2Stats] = useState<R2Stats | null>(null);
@@ -308,6 +309,45 @@ export default function AdminClient({
     }
   };
 
+  const handleAdminBoost = async (boatId: string) => {
+    if (!confirm('Appliquer un boost de 48h à ce bateau ?')) return;
+    setLoading(boatId);
+    try {
+      const response = await fetch(`/api/admin/boats/${boatId}/boost`, { method: 'POST' });
+      if (response.ok) {
+        router.refresh();
+      } else {
+        alert('Failed to apply boost');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleAdminSetVideo = async (boatId: string, currentUrl: string | null) => {
+    const url = window.prompt('URL de la vidéo (laisser vide pour supprimer) :', currentUrl || '');
+    if (url === null) return;
+    setLoading(boatId);
+    try {
+      const response = await fetch(`/api/admin/boats/${boatId}/extras`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoUrl: url.trim() || null })
+      });
+      if (response.ok) {
+        router.refresh();
+      } else {
+        alert('Failed to update video');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(null);
+    }
+  };
+
   // R2 Storage functions
   const loadR2Stats = async () => {
     try {
@@ -496,6 +536,13 @@ export default function AdminClient({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handler = () => setOpenDropdown(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [openDropdown]);
 
   // Load R2 data when storage tab is selected
   useEffect(() => {
@@ -934,21 +981,38 @@ export default function AdminClient({
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(boat.status, boat.expiresAt)}</td>
                   <td className="px-6 py-4">
-                    {boat.product?.name ? (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        boat.product.name.toLowerCase() === 'podium'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : boat.product.name.toLowerCase() === 'mid-course'
-                          ? 'bg-purple-100 text-purple-800'
-                          : boat.product.name.toLowerCase() === 'renewal'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {boat.product.name}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {boat.product?.name ? (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          boat.product.name.toLowerCase() === 'podium'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : boat.product.name.toLowerCase() === 'mid-course'
+                            ? 'bg-purple-100 text-purple-800'
+                            : boat.product.name.toLowerCase() === 'renewal'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {boat.product.name}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                      {boat.boostExpiresAt && new Date(boat.boostExpiresAt) > new Date() && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">
+                          ⚡ Boosted
+                        </span>
+                      )}
+                      {boat.hasExtraPhotos && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                          📷 Extra photos
+                        </span>
+                      )}
+                      {boat.videoUrl && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800">
+                          🎬 Vidéo
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {new Date(boat.createdAt).toLocaleDateString()}
@@ -978,34 +1042,71 @@ export default function AdminClient({
                         className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-900"
                       >
                         <option value="">— Plan —</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
+                        {products
+                          .filter((p) => {
+                            const n = (p.name || '').toLowerCase();
+                            return (
+                              !n.includes('boost') &&
+                              !n.includes('extra') &&
+                              !n.includes('renewal') &&
+                              !n.includes('video')
+                            );
+                          })
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
                       </select>
-                      <button
-                        onClick={() => router.push(`/boat/${boat.id}`)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="View boat"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        onClick={() => router.push(`/edit-listing/${boat.id}`)}
-                        className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                        title="Edit boat"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBoat(boat.id)}
-                        disabled={loading === boat.id}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        title="Delete boat"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === boat.id ? null : boat.id); }}
+                          disabled={loading === boat.id}
+                          className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                          title="Actions"
+                        >
+                          ···
+                        </button>
+                        {openDropdown === boat.id && (
+                          <div className="absolute right-0 top-8 z-50 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                            <button
+                              onClick={() => { setOpenDropdown(null); router.push(`/boat/${boat.id}`); }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              <Eye size={14} /> Voir
+                            </button>
+                            <button
+                              onClick={() => { setOpenDropdown(null); router.push(`/edit-listing/${boat.id}`); }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                            >
+                              <Pencil size={14} /> Modifier
+                            </button>
+                            <hr className="my-1 border-gray-100" />
+                            <button
+                              onClick={() => { setOpenDropdown(null); handleAdminBoost(boat.id); }}
+                              disabled={loading === boat.id}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-teal-700 hover:bg-teal-50 disabled:opacity-50"
+                            >
+                              ⚡ Boost 48h
+                            </button>
+                            <button
+                              onClick={() => { setOpenDropdown(null); handleAdminSetVideo(boat.id, boat.videoUrl); }}
+                              disabled={loading === boat.id}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-pink-700 hover:bg-pink-50 disabled:opacity-50"
+                            >
+                              🎬 Définir vidéo
+                            </button>
+                            <hr className="my-1 border-gray-100" />
+                            <button
+                              onClick={() => { setOpenDropdown(null); handleDeleteBoat(boat.id); }}
+                              disabled={loading === boat.id}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              <Trash2 size={14} /> Supprimer
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -1364,7 +1465,7 @@ export default function AdminClient({
                           className="w-full h-32 object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
-                              '/images/ocean.png';
+                              '/images/No-image.png';
                           }}
                         />
                       </div>

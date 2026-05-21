@@ -429,6 +429,15 @@ export const boatConditions = [
   { key: 'needs_work', label: 'Needs Work' }
 ] as const;
 
+export const MIN_BOAT_YEAR = 1960;
+
+export const getBoatYears = (): number[] => {
+  const max = new Date().getFullYear() + 1;
+  const years: number[] = [];
+  for (let y = max; y >= MIN_BOAT_YEAR; y--) years.push(y);
+  return years;
+};
+
 // Fonction utilitaire pour obtenir le nom complet du modèle
 export const getModelLabel = (modelKey: string): string => {
   const model = dragonflyModels.find((m) => m.key === modelKey);

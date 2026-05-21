@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await req.json();
-    const { priceId, metadata, currentPriceId } = body;
+    const { priceId, metadata, currentPriceId, addOnPriceIds } = body;
 
     if (!priceId) {
       return NextResponse.json(
@@ -75,6 +75,58 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Add-ons: only allow priceIds belonging to whitelisted products (extra photos / video).
+    // Source of truth = local DB (synced from Stripe).
+    const addonNames: string[] = [];
+    if (Array.isArray(addOnPriceIds) && addOnPriceIds.length > 0) {
+      const validAddOnProducts = await prisma.product.findMany({
+        where: {
+          active: true,
+          OR: [
+            { name: { contains: 'extra photos', mode: 'insensitive' } },
+            { name: { contains: 'video', mode: 'insensitive' } }
+          ]
+        },
+        include: {
+          prices: { where: { active: true }, select: { id: true } }
+        }
+      });
+      const allowedPriceMap = new Map<string, string>(); // priceId -> productName
+      for (const p of validAddOnProducts) {
+        for (const pr of p.prices) {
+          allowedPriceMap.set(pr.id, (p.name || '').toLowerCase());
+        }
+      }
+
+      for (const addOnId of addOnPriceIds as string[]) {
+        if (!allowedPriceMap.has(addOnId)) {
+          return NextResponse.json(
+            { error: `Invalid add-on price: ${addOnId}` },
+            { status: 400 }
+          );
+        }
+        let addOnPrice;
+        try {
+          addOnPrice = await stripe.prices.retrieve(addOnId);
+        } catch {
+          return NextResponse.json(
+            { error: 'Invalid add-on price ID' },
+            { status: 400 }
+          );
+        }
+        if (!addOnPrice.unit_amount || addOnPrice.currency !== price.currency) {
+          return NextResponse.json(
+            { error: 'Add-on currency mismatch' },
+            { status: 400 }
+          );
+        }
+        finalAmount += addOnPrice.unit_amount;
+        const name = allowedPriceMap.get(addOnId) || '';
+        if (name.includes('extra')) addonNames.push('extra_photos');
+        else if (name.includes('video')) addonNames.push('video');
+      }
+    }
+
     // Whitelist allowed metadata keys
     const allowedMetadataKeys = ['listing_type', 'user_id', 'boat_id', 'product_id'];
     const safeMetadata: Record<string, string> = {};
@@ -82,6 +134,9 @@ export async function POST(req: NextRequest) {
       for (const key of allowedMetadataKeys) {
         if (metadata[key]) safeMetadata[key] = String(metadata[key]);
       }
+    }
+    if (addonNames.length > 0) {
+      safeMetadata.addons = Array.from(new Set(addonNames)).join(',');
     }
 
     // Verify boat ownership if boat_id is provided

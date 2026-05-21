@@ -20,7 +20,7 @@ async function getUserData(userId: string) {
       WHERE id = ${userId}
     ` as Promise<any[]>,
     prisma.$queryRaw`
-      SELECT id, model, price, country, description, photos, user_id, product_id, created_at, updated_at, currency, specifications, vat_paid, status, expires_at, view_count FROM "boats"
+      SELECT id, model, price, country, description, photos, user_id, product_id, created_at, updated_at, currency, specifications, vat_paid, status, expires_at, view_count, boosted_at, boost_expires_at, has_extra_photos, video_url FROM "boats"
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
     ` as Promise<any[]>,
@@ -71,6 +71,10 @@ export default async function Account() {
       createdAt: boat.created_at, // Convertir created_at en camelCase
       expiresAt: boat.expires_at, // Convertir expires_at en camelCase
       productId: boat.product_id, // Convertir product_id en camelCase
+      boostedAt: boat.boosted_at,
+      boostExpiresAt: boat.boost_expires_at,
+      hasExtraPhotos: !!boat.has_extra_photos,
+      videoUrl: boat.video_url,
       // Ensure client components always get absolute URLs for images
       photos: normalizeImageUrls(
         typeof boat.photos === 'string' ? JSON.parse(boat.photos) : boat.photos,

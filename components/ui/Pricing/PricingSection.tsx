@@ -86,6 +86,7 @@ export default function PricingSection({
 
   const classifyPlan = (name: string): number => {
     const n = (name || '').toLowerCase();
+    if (n.includes('boost')) return 999;
     if (n.includes('start') && n.includes('line')) return 0;
     if (n.includes('mid') || n.includes('course')) return 1;
     if (n.includes('podium')) return 2;
@@ -93,9 +94,9 @@ export default function PricingSection({
     return 999;
   };
 
-  const sortedProducts = [...products].sort(
-    (a, b) => classifyPlan(a.name) - classifyPlan(b.name)
-  );
+  const sortedProducts = [...products]
+    .filter((p) => classifyPlan(p.name) !== 999)
+    .sort((a, b) => classifyPlan(a.name) - classifyPlan(b.name));
 
   return (
     <section

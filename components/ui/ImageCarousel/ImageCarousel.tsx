@@ -107,8 +107,9 @@ export default function ImageCarousel({
                       alt={`Image ${currentIndex + 1}`}
                       className="w-full h-full object-cover rounded-[12px]"
                       onError={(e) => {
-                        e.currentTarget.src = '/images/ocean.png';
+                        e.currentTarget.src = '/images/No-image.png';
                       }}
+                      onContextMenu={(e) => e.preventDefault()}
                     />
                   </div>
 
@@ -139,8 +140,9 @@ export default function ImageCarousel({
                         alt={`Miniature ${index + 1}`}
                         className="w-full h-full object-cover rounded-[10px]"
                         onError={(e) => {
-                          e.currentTarget.src = '/images/ocean.png';
+                          e.currentTarget.src = '/images/No-image.png';
                         }}
+                        onContextMenu={(e) => e.preventDefault()}
                       />
                     </button>
                   ))}

@@ -10,6 +10,8 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { ReCaptchaProvider } from 'next-recaptcha-v3';
 import NavigationLoader from '@/components/ui/NavigationLoader';
 import SurveyWidget from '@/components/ui/SurveyWidget/SurveyWidget';
+import CookieConsent from '@/components/ui/CookieConsent/CookieConsent';
+import Analytics from '@/components/Analytics';
 
 const meta = {
   title: "Dragonfly - The Automated Marketplace You've Been Waiting For",
@@ -116,7 +118,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 interface LayoutsProps {
   children: ReactNode;
-  className?: string;
 }
 
 // Structured Data for SEO
@@ -145,7 +146,7 @@ const structuredData = {
   }
 };
 
-export default function RootLayout({ children, className }: LayoutsProps) {
+export default function RootLayout({ children }: LayoutsProps) {
   return (
     <html lang="en">
       <head>
@@ -157,6 +158,7 @@ export default function RootLayout({ children, className }: LayoutsProps) {
         />
       </head>
       <body className="w-full relative bg-fullwhite overflow-x-hidden">
+        <Analytics />
         <HeroUIProvider>
           <LoadingProvider>
             <ToastProvider>
@@ -210,6 +212,7 @@ export default function RootLayout({ children, className }: LayoutsProps) {
                     </Suspense>
                   </div>
                   <Footer />
+                  <CookieConsent />
                   <SurveyWidget />
                 </main>
               </ReCaptchaProvider>

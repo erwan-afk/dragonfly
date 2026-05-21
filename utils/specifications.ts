@@ -169,3 +169,46 @@ export function normalizeSpecList(raws: string[]): string[] {
   }
   return result;
 }
+
+const KEY_TO_LABEL: Map<string, string> = new Map(
+  specificationsData.flatMap((section) =>
+    section.items.map((item) => [item.key, item.label])
+  )
+);
+
+const KEY_TO_SECTION: Map<string, string> = new Map(
+  specificationsData.flatMap((section) =>
+    section.items.map((item) => [item.key, section.title])
+  )
+);
+
+export function getSpecLabel(key: string): string {
+  return KEY_TO_LABEL.get(key) ?? key;
+}
+
+export interface SpecGroup {
+  title: string;
+  items: { key: string; label: string }[];
+}
+
+/**
+ * Group a boat's spec keys by their catalog section, preserving section order.
+ * Unknown keys are bucketed under "Other".
+ */
+export function groupSpecsBySection(keys: string[]): SpecGroup[] {
+  const buckets = new Map<string, { key: string; label: string }[]>();
+  for (const key of keys) {
+    const section = KEY_TO_SECTION.get(key) ?? 'Other';
+    const label = KEY_TO_LABEL.get(key) ?? key;
+    if (!buckets.has(section)) buckets.set(section, []);
+    buckets.get(section)!.push({ key, label });
+  }
+  const ordered: SpecGroup[] = [];
+  for (const section of specificationsData) {
+    const items = buckets.get(section.title);
+    if (items && items.length) ordered.push({ title: section.title, items });
+  }
+  const other = buckets.get('Other');
+  if (other && other.length) ordered.push({ title: 'Other', items: other });
+  return ordered;
+}

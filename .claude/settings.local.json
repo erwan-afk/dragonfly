@@ -65,7 +65,17 @@
       "Bash(Get-ChildItem -Path \"D:\\\\Applications\\\\dragonfly\" -Depth 2)",
       "Bash(Select-Object FullName)",
       "Bash(echo \"EXIT_CODE=$?\")",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(awk '{files+=$1; ins+=$4; del+=$6} END {print \"Files changed total: \" files \"\\\\nInsertions: \" ins \"\\\\nDeletions: \" del}')",
+      "Bash(grep -E '\\\\.\\(ts|tsx|js|jsx|prisma|sql\\)$')",
+      "Bash(xargs wc *)",
+      "Bash(grep -E '\\\\.\\(ts|tsx\\)$')",
+      "Bash(grep -E '\\\\.tsx?$')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/api/boats)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3002/api/boats)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Applications\\\\dragonfly\\\\app\" -Recurse -Directory | Where-Object {$_.Name -match '\\\\[' -or $_.Name -match 'model'} | Select-Object -ExpandProperty FullName)",
+      "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.product.findMany\\({where:{active:true},select:{name:true}}\\).then\\(r=>{console.log\\(r\\);return p.$disconnect\\(\\)}\\).catch\\(e=>{console.error\\(e.message\\);process.exit\\(1\\)}\\);')",
+      "Bash(grep -v \"\\\\.json$\\\\|\\\\.js\\\\.map$\")"
     ]
   }
 }

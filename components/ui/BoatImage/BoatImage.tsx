@@ -12,7 +12,7 @@ export default function BoatImage({
   src,
   alt,
   className = '',
-  defaultImage = '/images/ocean.png',
+  defaultImage = '/images/No-image.png',
   onClick
 }: BoatImageProps) {
   const handleImageError = (e: any) => {
@@ -26,6 +26,7 @@ export default function BoatImage({
       className={`${className} ${onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
       onError={handleImageError}
       onClick={onClick}
+      onContextMenu={(e) => e.preventDefault()}
     />
   );
 }

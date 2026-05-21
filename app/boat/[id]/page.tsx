@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
+import type { Metadata } from 'next';
 import { dragonflyModels, currencies, countries, boatConditions } from '@/utils/constants';
 import type { Boat } from '@/types/boats';
 import BoatImageGallery from '@/components/ui/BoatImageGallery/BoatImageGallery';
@@ -10,19 +12,66 @@ import { ViewStats } from './ViewStats';
 import FlagIcon from '@/components/icons/Flag';
 import { normalizeImageUrls } from '@/utils/image-urls';
 import { formatPriceNumber } from '@/utils/format-price';
+import { buildBoatJsonLd } from '@/utils/json-ld';
+import { getVideoEmbedUrl } from '@/utils/video-embed';
+import { getURL } from '@/utils/helpers';
+import { groupSpecsBySection } from '@/utils/specifications';
+
+const getBoatRow = cache(async (id: string) => {
+  const [row] = (await prisma.$queryRaw`
+    SELECT b.id, b.model, b.price, b.country, b.description, b.email as boat_email, b.condition, b.year, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.has_extra_photos, b.video_url,
+           u.name as user_name, u.full_name as user_full_name, u.email as user_email, u.avatar_url as user_avatar_url
+    FROM "boats" b
+    LEFT JOIN "user" u ON b.user_id = u.id
+    WHERE b.id = ${id}
+    LIMIT 1
+  `) as any[];
+  return row ?? null;
+});
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const row = await getBoatRow(params.id);
+  if (!row) return { title: 'Listing not found' };
+
+  const modelLabel = dragonflyModels.find((m) => m.key === row.model)?.label || row.model;
+  const price = parseFloat(row.price.toString());
+  const currencySymbol = currencies.find((c) => c.key === row.currency)?.symbol || row.currency;
+  const photos = normalizeImageUrls(row.photos ?? []);
+  const ogImage = photos[0] ?? `${getURL()}/images/dragonfly-boat.webp`;
+  const pageUrl = getURL(`/boat/${row.id}`);
+  const title = row.year
+    ? `${modelLabel} ${row.year} — ${formatPriceNumber(price, row.currency)} ${currencySymbol}`
+    : `${modelLabel} — ${formatPriceNumber(price, row.currency)} ${currencySymbol}`;
+  const description = row.description
+    ? String(row.description).slice(0, 160)
+    : `${modelLabel} trimaran for sale at ${formatPriceNumber(price, row.currency)} ${currencySymbol}.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      type: 'website',
+      url: pageUrl,
+      title,
+      description,
+      siteName: 'Dragonfly',
+      images: [{ url: ogImage, width: 1200, height: 630, alt: modelLabel }]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage]
+    }
+  };
+}
 
 export default async function BoatPage({ params }: { params: { id: string } }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const viewerUserId = session?.user?.id ?? null;
 
-  const [row] = (await prisma.$queryRaw`
-    SELECT b.id, b.model, b.price, b.country, b.description, b.email as boat_email, b.condition, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
-           u.name as user_name, u.full_name as user_full_name, u.email as user_email, u.avatar_url as user_avatar_url
-    FROM "boats" b
-    LEFT JOIN "user" u ON b.user_id = u.id
-    WHERE b.id = ${params.id}
-    LIMIT 1
-  `) as any[];
+  const row = await getBoatRow(params.id);
 
   if (!row) {
     notFound();
@@ -60,7 +109,7 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
     : 'Unknown';
 
   const normalizedPhotos = normalizeImageUrls(boat.photos);
-  const defaultImage = '/images/ocean.png';
+  const defaultImage = '/images/No-image.png';
   const allImages =
     normalizedPhotos.length > 0 ? normalizedPhotos : [defaultImage];
 
@@ -70,8 +119,31 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
     finalImages: allImages
   });
 
+  const jsonLd = buildBoatJsonLd(
+    {
+      id: boat.id,
+      model: boat.model,
+      price: boat.price,
+      currency: boat.currency,
+      country: boat.country,
+      description: boat.description,
+      photos: normalizedPhotos,
+      condition: row.condition,
+      specifications: boat.specifications,
+      status: (boat as any).status,
+      expiresAt: (boat as any).expires_at,
+      createdAt: boat.createdAt,
+      user: boat.user
+    },
+    allImages
+  );
+
   return (
     <section id="Boats" className="w-full pb-[64px] lg:pb-[128px] bg-fullwhite">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ViewTracker boatId={boat.id} />
 
       <div className="mx-auto max-w-screen-xl flex flex-col gap-[32px] lg:gap-[56px]">
@@ -96,6 +168,22 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
 
         <BoatImageGallery images={allImages} boatModel={boat.model} />
 
+        {(() => {
+          const embedUrl = getVideoEmbedUrl((row as any).video_url);
+          if (!embedUrl) return null;
+          return (
+            <div className="w-full mt-16">
+              <iframe
+                src={embedUrl}
+                title="Listing video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full aspect-video rounded-12 border border-stonegrey/30"
+              />
+            </div>
+          );
+        })()}
+
         <div className="flex flex-col lg:flex-row justify-between gap-32">
           <div className="flex-1 flex flex-col gap-24 lg:gap-48">
             <div className="flex flex-row gap-8 items-center px-2.5 py-1.5 w-fit bg-oceanblue rounded-lg uppercase text-fullwhite">
@@ -113,6 +201,7 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               <h1 className="text-articblue leading-[100%] text-32 lg:text-40">
                 {dragonflyModels.find((model) => model.key === boat.model)
                   ?.label || boat.model}
+                {row.year ? ` — ${row.year}` : ''}
               </h1>
 
               <h2 className="text-oceanblue leading-[100%] text-24 lg:text-32 font-medium">
@@ -129,20 +218,41 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
             </div>
             <div className="w-full h-[1px] bg-stonegrey"></div>
             <h1 className="text-oceanblue text-20 lg:text-24">Description</h1>
-            <p className="text-darkgrey text-16 lg:text-20">{boat.description}</p>
+            <p className="text-darkgrey text-16 lg:text-20 whitespace-pre-line break-words">{boat.description}</p>
             <div className="w-full h-[1px] bg-stonegrey"></div>
             <div className="flex flex-col gap-16 lg:gap-32">
               <h1 className="text-oceanblue text-20 lg:text-24">Specifications</h1>
-              <div className="flex flex-row gap-8 lg:gap-16 flex-wrap">
-                {boat.specifications.map((spec: string, index: number) => (
-                  <div
-                    key={index}
-                    className="w-fit px-[8px] py-[5px] bg-lightgrey rounded-[6px] text-oceanblue text-14"
-                  >
-                    {spec}
+              {(() => {
+                const groups = groupSpecsBySection(boat.specifications || []);
+                if (groups.length === 0) {
+                  return (
+                    <p className="text-stonegrey text-14 italic">
+                      No specifications provided.
+                    </p>
+                  );
+                }
+                return (
+                  <div className="flex flex-col gap-24">
+                    {groups.map((group) => (
+                      <div key={group.title} className="flex flex-col gap-12">
+                        <h3 className="text-articblue text-16 lg:text-18 font-medium">
+                          {group.title}
+                        </h3>
+                        <div className="flex flex-row gap-8 lg:gap-12 flex-wrap">
+                          {group.items.map((spec) => (
+                            <div
+                              key={spec.key}
+                              className="w-fit px-[10px] py-[6px] bg-lightgrey rounded-[6px] text-oceanblue text-14"
+                            >
+                              {spec.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
           </div>
 

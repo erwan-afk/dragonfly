@@ -54,6 +54,10 @@ npm run stripe:listen    # Forward webhooks to localhost:3000/api/webhooks
 - `lib/auth-client.ts` - Better Auth client configuration
 - `utils/prisma/` - Prisma client setup (client.ts for client-side, server.ts for server-side)
 - `prisma/schema.prisma` - Database schema
+- `docs/` - Project documentation (auth, Stripe, security, dev guides)
+- `scripts/` - Utility scripts (deploy, DB checks, seeding, migrations)
+- `config/` - Config files not pushed to GitHub (nginx, SQL dumps)
+- `external/` - External/legacy code not pushed to GitHub (phpBB API)
 
 ### API Routes Pattern
 

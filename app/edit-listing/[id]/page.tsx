@@ -24,7 +24,7 @@ export default async function EditListingPage({
 
     // Utilisons SQL brut pour éviter les problèmes de schéma
     const boats = (await prisma.$queryRaw`
-      SELECT b.id, b.model, b.price, b.country, b.description, b.email, b.condition, b.photos, b.currency, b.specifications, b.vat_paid, b.status, b.created_at, b.updated_at, b.user_id, b.product_id, b.expires_at, b.view_count,
+      SELECT b.id, b.model, b.price, b.country, b.description, b.email, b.condition, b.year, b.photos, b.currency, b.specifications, b.vat_paid, b.status, b.created_at, b.updated_at, b.user_id, b.product_id, b.expires_at, b.view_count, b.has_extra_photos, b.video_url,
              u.id as user_id, u.name as user_name, u.email as user_email
       FROM "boats" b
       LEFT JOIN "user" u ON b.user_id = u.id
@@ -71,6 +71,9 @@ export default async function EditListingPage({
         return photosArray.map(photo => normalizeImageUrl(photo)).filter(url => url !== '');
       })(),
       userId: boat.user_id, // Ajouter userId pour l'upgrade
+      hasExtraPhotos: !!boat.has_extra_photos,
+      videoUrl: boat.video_url || null,
+      year: typeof boat.year === 'number' ? boat.year : null,
       user: {
         id: boat.user_id,
         name: boat.user_name,

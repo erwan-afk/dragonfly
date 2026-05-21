@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useReCaptcha } from 'next-recaptcha-v3';
 import Button from '@/components/ui/Button';
 import { FloatingPaths } from '@/components/ui/FloatingPaths';
 import Logo from '@/components/icons/Logo';
@@ -50,6 +51,7 @@ export default function ContactPage() {
   const [lastSubmitTime, setLastSubmitTime] = useState<number>(0);
   const [csrfData, setCsrfData] = useState<CSRFData | null>(null);
   const [isLoadingCSRF, setIsLoadingCSRF] = useState(true);
+  const { executeRecaptcha } = useReCaptcha();
 
   // Validation en temps réel
   const validateField = (
@@ -214,11 +216,19 @@ export default function ContactPage() {
     }
 
     try {
-      // Préparation des données avec tokens CSRF
+      const recaptchaToken = await executeRecaptcha('contact');
+      if (!recaptchaToken) {
+        setErrors({ general: 'reCAPTCHA verification failed. Please try again.' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Préparation des données avec tokens CSRF + reCAPTCHA
       const submitData = {
         ...formData,
         csrfToken: csrfData.token,
-        sessionId: csrfData.sessionId
+        sessionId: csrfData.sessionId,
+        recaptchaToken
       };
 
       const response = await fetch('/api/contact', {

@@ -5,6 +5,7 @@ import { signIn } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
+import { useReCaptcha } from 'next-recaptcha-v3';
 import Button from '../Button/Button';
 import Input from '../Input/Input';
 
@@ -21,6 +22,7 @@ export default function PasswordSignIn({
   const router = redirectMethod === 'client' ? useRouter() : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { executeRecaptcha } = useReCaptcha();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,6 +33,25 @@ export default function PasswordSignIn({
       const formData = new FormData(e.currentTarget);
       const email = String(formData.get('email')).trim();
       const password = String(formData.get('password')).trim();
+
+      const token = await executeRecaptcha('signin');
+      if (!token) {
+        setError('Please complete the reCAPTCHA verification.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const captchaValidation = await fetch('/api/auth/validate-captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+
+      if (!captchaValidation.ok) {
+        setError('reCAPTCHA verification failed. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
 
       console.log('🔍 Better Auth SignIn started for email:', email);
       console.log('📝 Using Better Auth signIn.email method');

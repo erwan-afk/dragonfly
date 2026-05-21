@@ -32,7 +32,7 @@ export function formatPriceCurrency(
     style: 'currency',
     currency: currency.toUpperCase(),
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
     ...options,
   }).format(amount);
 }

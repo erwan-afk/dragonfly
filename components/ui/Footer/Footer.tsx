@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Logo from '@/components/icons/Logo';
 import GitHub from '@/components/icons/GitHub';
 import Button from '../Button/Button';
+import CookieSettingsButton from '../CookieConsent/CookieSettingsButton';
 
 export default function Footer() {
   return (
@@ -70,6 +71,19 @@ export default function Footer() {
             >
               Cookies
             </Link>
+            <Link
+              href="/legal-notice"
+              className="w-fit font-light text-white hover:underline"
+            >
+              Legal notice
+            </Link>
+            <Link
+              href="/sales-terms"
+              className="w-fit font-light text-white hover:underline"
+            >
+              Sales terms
+            </Link>
+            <CookieSettingsButton />
           </div>
           <div className="flex flex-col gap-16 sm:gap-24">
             <div className="font-medium">Navigation</div>

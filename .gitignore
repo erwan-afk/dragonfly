@@ -138,3 +138,16 @@ temp/
 secrets/
 .env.dev
 prompt
+
+# Database dumps (may contain credentials)
+config/init.sql
+config/schema.sql
+
+# Dev-only config
+config/nginx-dev.conf
+
+# External/legacy code
+external/
+
+# Debug snapshots
+snapshot*.txt

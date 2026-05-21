@@ -30,10 +30,13 @@ import {
   currencies,
   countries,
   boatConditions,
-  getModelLabel
+  getModelLabel,
+  getBoatYears
 } from '@/utils/constants';
 import { specificationsData } from '@/utils/specifications';
-import { CheckCircle, ArrowUpCircle } from 'lucide-react';
+import { CheckCircle, ArrowUpCircle, Rocket, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { isValidVideoUrl } from '@/utils/video-embed';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
@@ -207,8 +210,10 @@ export default function EditListing({
     (boat as any).plan || 'start line'
   );
 
-  // Apply plan limitations
-  const maxPhotos = getMaxPhotos(currentPlan);
+  // Apply plan limitations (extras add 5 photo slots when purchased)
+  const planMaxPhotos = getMaxPhotos(currentPlan);
+  const hasExtraPhotos = !!(boat as any).hasExtraPhotos;
+  const maxPhotos = planMaxPhotos + (hasExtraPhotos ? 5 : 0);
   const priceLimit = getPriceLimit(currentPlan, currency);
   const upgradePlan = getUpgradePlan(currentPlan);
   const durationData = getDuration(currentPlan);
@@ -224,8 +229,14 @@ export default function EditListing({
   const [condition, setCondition] = useState(
     typeof (boat as any).condition === 'string' ? (boat as any).condition : ''
   );
+  const [year, setYear] = useState<number | null>(
+    typeof (boat as any).year === 'number' ? (boat as any).year : null
+  );
   const [description, setDescription] = useState(
     typeof boat.description === 'string' ? boat.description : ''
+  );
+  const [videoUrlInput, setVideoUrlInput] = useState<string>(
+    (boat as any).videoUrl || ''
   );
 
   const PRICE_LIMIT_TOAST_ID = 'price-limit-upgrade';
@@ -948,8 +959,8 @@ export default function EditListing({
         `This price exceeds your plan limit (${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}). Please upgrade your plan.`
       );
     }
-    if (description.length < 20)
-      errors.push('Description must be at least 20 characters');
+    if (description.length < 300)
+      errors.push('Description must be at least 300 characters');
     if (description.length > 2000)
       errors.push('Description must be less than 2000 characters');
     if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
@@ -985,7 +996,7 @@ export default function EditListing({
             block: 'center'
           });
         } else if (
-          (description.length < 20 || description.length > 2000) &&
+          (description.length < 300 || description.length > 2000) &&
           descriptionFieldRef.current
         ) {
           descriptionFieldRef.current.scrollIntoView({
@@ -1184,7 +1195,14 @@ export default function EditListing({
       formData.append('vat_paid', vatPaid ? 'true' : 'false');
       formData.append('email', contactEmail);
       formData.append('condition', condition);
+      formData.append('year', year ? year.toString() : '');
       formData.append('photos', allPhotoUrls.join(','));
+      // Video URL — only meaningful when the video add-on was purchased.
+      // Otherwise we always send empty string so server keeps it null.
+      formData.append(
+        'video_url',
+        (boat as any).videoUrl ? videoUrlInput.trim() : ''
+      );
 
       // Call the update function
       const result = await handleRequest(
@@ -1896,7 +1914,7 @@ export default function EditListing({
                 <Textarea
                   classNames={{
                     label: '!text-oceanblue text-md font-medium ',
-                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 20 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
+                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 300 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
                     input: 'placeholder:text-oceanblue',
                     base: ' border-oceanblue/10 data-[hover=true]:border-articblue   data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors rounded-lg'
                   }}
@@ -1918,15 +1936,70 @@ export default function EditListing({
               <div className="pt-8">
                 <ValidationCheckbox
                   isValid={
-                    description.length >= 20 && description.length <= 2000
+                    description.length >= 300 && description.length <= 2000
                   }
                   shouldPulse={
                     shouldPulseInvalid &&
-                    (description.length < 20 || description.length > 2000)
+                    (description.length < 300 || description.length > 2000)
                   }
                 />
               </div>
             </div>
+
+            {/* Video URL field — only when the video add-on was purchased */}
+            {(boat as any).videoUrl !== undefined && (boat as any).videoUrl !== null && (
+              <div className="flex flex-row gap-4 items-center">
+                <div className="flex-1 flex flex-col gap-1">
+                  <label className="text-oceanblue text-md font-medium">
+                    Video link
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={videoUrlInput}
+                    onChange={(e) => setVideoUrlInput(e.target.value)}
+                    disabled={isLoading || isProcessingUpgrade}
+                    className={`w-full h-[48px] px-3 text-oceanblue bg-fullwhite border-2 rounded-lg outline-none transition-colors placeholder:text-oceanblue/40 ${
+                      videoUrlInput && !isValidVideoUrl(videoUrlInput)
+                        ? 'border-red-500'
+                        : 'border-oceanblue/10 hover:border-articblue hover:bg-articblue/10'
+                    }`}
+                  />
+                  {videoUrlInput && !isValidVideoUrl(videoUrlInput) && (
+                    <span className="text-red-500 text-xs">
+                      Must be a valid YouTube, Vimeo or Dailymotion URL.
+                    </span>
+                  )}
+                </div>
+                <div className="pt-6">
+                  <ValidationCheckbox
+                    isValid={isValidVideoUrl(videoUrlInput)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Add extras CTA — show when at least one add-on is missing */}
+            {boat.status === 'active' &&
+              (!((boat as any).hasExtraPhotos) || !((boat as any).videoUrl)) && (
+                <div className="rounded-lg border border-articblue/30 bg-articblue/5 p-4 flex flex-row items-center justify-between gap-3">
+                  <div className="flex flex-col">
+                    <div className="text-oceanblue font-medium text-sm">
+                      Need more photo slots or a video?
+                    </div>
+                    <div className="text-xs text-oceanblue/70">
+                      Purchase optional add-ons for this listing.
+                    </div>
+                  </div>
+                  <Link
+                    href={`/extras/${boat.id}`}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-articblue text-fullwhite text-sm font-medium hover:bg-oceanblue transition-colors"
+                  >
+                    <Plus size={14} />
+                    Add extras
+                  </Link>
+                </div>
+              )}
 
             {/* Email avec checkbox de validation */}
             <div className="flex flex-row gap-4 items-center">
@@ -2011,6 +2084,49 @@ export default function EditListing({
               </div>
               <div className="pt-8">
                 <ValidationCheckbox isValid={!!condition} optional />
+              </div>
+            </div>
+
+            {/* Year avec checkbox de validation */}
+            <div className="flex flex-row gap-4 items-center">
+              <div className="flex-1">
+                <Select
+                  className="text-oceanblue h-[40px]"
+                  label="Year"
+                  size="lg"
+                  classNames={{
+                    label: '!text-oceanblue text-md font-medium',
+                    trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg`,
+                    value: 'text-oceanblue',
+                    listbox: 'bg-fullwhite',
+                    popoverContent: 'bg-fullwhite'
+                  }}
+                  labelPlacement="outside"
+                  placeholder="Select year"
+                  selectedKeys={year ? [String(year)] : []}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setYear(v ? parseInt(v, 10) : null);
+                  }}
+                  isDisabled={isLoading || isProcessingUpgrade}
+                >
+                  {getBoatYears().map((y) => (
+                    <SelectItem
+                      key={String(y)}
+                      classNames={{
+                        base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                        title:
+                          '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                        selectedIcon: '!text-articblue'
+                      }}
+                    >
+                      {String(y)}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="pt-8">
+                <ValidationCheckbox isValid={!!year} optional />
               </div>
             </div>
 

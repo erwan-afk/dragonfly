@@ -52,6 +52,9 @@ export default async function AdminPage() {
         status: true,
         createdAt: true,
         expiresAt: true,
+        boostExpiresAt: true,
+        hasExtraPhotos: true,
+        videoUrl: true,
         productId: true,
         product: {
           select: { id: true, name: true }
@@ -100,6 +103,9 @@ export default async function AdminPage() {
     price: parseFloat(b.price.toString()),
     createdAt: b.createdAt.toISOString(),
     expiresAt: b.expiresAt?.toISOString() || null,
+    boostExpiresAt: b.boostExpiresAt?.toISOString() || null,
+    hasExtraPhotos: b.hasExtraPhotos,
+    videoUrl: b.videoUrl || null,
     product: b.product || null
   }));
 

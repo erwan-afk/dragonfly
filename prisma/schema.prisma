@@ -84,6 +84,7 @@ model boat {
   description    String     @db.VarChar(2000)
   email          String?    @db.VarChar(255)
   condition      String?    @db.VarChar(50)
+  year           Int?
   photos         String[]
   userId         String     @map("user_id")
   productId      String?    @map("product_id")
@@ -95,6 +96,10 @@ model boat {
   status         BoatStatus @default(pending)
   expiresAt      DateTime?  @map("expires_at") @db.Timestamp(6)
   viewCount      Int        @default(0) @map("view_count")
+  boostedAt      DateTime?  @map("boosted_at") @db.Timestamp(6)
+  boostExpiresAt DateTime?  @map("boost_expires_at") @db.Timestamp(6)
+  hasExtraPhotos Boolean    @default(false) @map("has_extra_photos")
+  videoUrl       String?    @map("video_url") @db.VarChar(500)
   user           user       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   product        product?   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   payments       payment[]
@@ -105,6 +110,7 @@ model boat {
   @@index([status])
   @@index([expiresAt])
   @@index([status, expiresAt])
+  @@index([boostExpiresAt])
   @@map("boats")
 }
 

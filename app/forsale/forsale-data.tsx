@@ -9,6 +9,10 @@ interface ForSalePageProps {
     maxPrice?: string;
     attributes?: string;
     sort?: string;
+    condition?: string;
+    year?: string;
+    yearMin?: string;
+    yearMax?: string;
   }>;
 }
 
@@ -53,6 +57,45 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       paramIndex++;
     }
 
+    if (params.year) {
+      const yearNum = parseInt(params.year, 10);
+      if (Number.isInteger(yearNum)) {
+        conditions.push(`b.year = $${paramIndex}`);
+        sqlParams.push(yearNum);
+        paramIndex++;
+      }
+    }
+
+    if (params.yearMin) {
+      const n = parseInt(params.yearMin, 10);
+      if (Number.isInteger(n)) {
+        conditions.push(`b.year >= $${paramIndex}`);
+        sqlParams.push(n);
+        paramIndex++;
+      }
+    }
+
+    if (params.yearMax) {
+      const n = parseInt(params.yearMax, 10);
+      if (Number.isInteger(n)) {
+        conditions.push(`b.year <= $${paramIndex}`);
+        sqlParams.push(n);
+        paramIndex++;
+      }
+    }
+
+    if (params.condition) {
+      const allowed = params.condition
+        .split(',')
+        .map((c) => c.trim())
+        .filter((c) => /^[a-z_]+$/.test(c));
+      if (allowed.length > 0) {
+        const placeholders = allowed.map(() => `$${paramIndex++}`).join(',');
+        conditions.push(`b.condition IN (${placeholders})`);
+        sqlParams.push(...allowed);
+      }
+    }
+
     // Filtre par attributs (spécifications)
     if (params.attributes) {
       const attributesList = params.attributes
@@ -91,6 +134,12 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
         case 'model_desc':
           orderBy = 'b.model DESC';
           break;
+        case 'year_asc':
+          orderBy = 'b.year ASC NULLS LAST';
+          break;
+        case 'year_desc':
+          orderBy = 'b.year DESC NULLS LAST';
+          break;
         default:
           orderBy = 'b.created_at DESC';
       }
@@ -100,7 +149,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     // Ne récupérer que les bateaux avec le statut 'active' (payés)
     const boats = (await prisma.$queryRawUnsafe(
       `
-      SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+      SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at, b.condition, b.year,
              u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
              p.name as product_name
       FROM "boats" b
@@ -110,9 +159,11 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       ORDER BY
         CASE
           WHEN LOWER(p.name) LIKE '%podium%' THEN 1
-          WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
-          ELSE 3
+          WHEN b.boost_expires_at > NOW() THEN 2
+          WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 3
+          ELSE 4
         END ASC,
+        b.boosted_at DESC NULLS LAST,
         ${orderBy}
     `,
       ...sqlParams
@@ -129,12 +180,16 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       params.country ||
       params.minPrice ||
       params.maxPrice ||
-      params.attributes;
+      params.attributes ||
+      params.year ||
+      params.yearMin ||
+      params.yearMax ||
+      params.condition;
 
     if (boats.length === 0 && hasUrlFilters) {
       suggestedBoats = (await prisma.$queryRawUnsafe(
         `
-        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at, b.condition, b.year,
                u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
                p.name as product_name
         FROM "boats" b
@@ -158,6 +213,10 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       createdAt: boat.created_at,
       viewCount: boat.view_count,
       productName: boat.product_name || null,
+      boostedAt: boat.boosted_at,
+      boostExpiresAt: boat.boost_expires_at,
+      condition: boat.condition,
+      year: typeof boat.year === 'number' ? boat.year : null,
       user: {
         name: boat.user_name,
         email: boat.user_email,
@@ -175,6 +234,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       params.minPrice ||
       params.maxPrice ||
       params.attributes ||
+      params.year ||
       params.sort;
 
     let filterDescription = '';
@@ -185,6 +245,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       );
 
       if (params.model) parts.push(`for ${params.model}`);
+      if (params.condition) parts.push(`(${params.condition})`);
       if (params.country) parts.push(`in ${params.country}`);
       if (params.minPrice || params.maxPrice) {
         parts.push(
@@ -195,6 +256,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
         const attrCount = params.attributes.split(',').length;
         parts.push(`with ${attrCount} attribute${attrCount > 1 ? 's' : ''}`);
       }
+      if (params.year) parts.push(`from ${params.year}`);
 
       // Ajouter l'information de tri
       if (params.sort) {
@@ -217,6 +279,12 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
             break;
           case 'model_desc':
             sortDescription = 'sorted by model (Z-A)';
+            break;
+          case 'year_asc':
+            sortDescription = 'sorted by year (oldest first)';
+            break;
+          case 'year_desc':
+            sortDescription = 'sorted by year (newest first)';
             break;
         }
         if (sortDescription) {

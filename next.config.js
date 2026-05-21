@@ -91,7 +91,7 @@ const nextConfig = {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https:",
             // Stripe elements run in iframes.
-            "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com",
+            "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com",
             // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT) + reCAPTCHA.
             "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://forum.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com",
             "font-src 'self' data: https:",

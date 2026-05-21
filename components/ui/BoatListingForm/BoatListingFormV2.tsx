@@ -18,7 +18,8 @@ import {
   dragonflyModels,
   currencies,
   countries,
-  boatConditions
+  boatConditions,
+  getBoatYears
 } from '@/utils/constants';
 import { specificationsData } from '@/utils/specifications';
 import { getModelLabel } from '@/utils/constants';
@@ -30,6 +31,7 @@ import {
   getPriceLimitSummaryText
 } from '@/lib/product-features';
 import { formatPriceNumber, formatPriceCurrency } from '@/utils/format-price';
+import { isValidVideoUrl } from '@/utils/video-embed';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
@@ -138,9 +140,9 @@ export default function BoatListingFormV2({
       renewal: 3,
       other: 999
     };
-    return [...products].sort(
-      (a, b) => order[classifyPlan(a.name)] - order[classifyPlan(b.name)]
-    );
+    return [...products]
+      .filter((p) => classifyPlan(p.name) !== 'other')
+      .sort((a, b) => order[classifyPlan(a.name)] - order[classifyPlan(b.name)]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products]);
 
@@ -172,6 +174,7 @@ export default function BoatListingFormV2({
   const [description, setDescription] = useState('');
   const [contactEmail, setContactEmail] = useState(user?.email || '');
   const [condition, setCondition] = useState<string>('');
+  const [year, setYear] = useState<number | null>(null);
 
   // Photo upload state
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
@@ -203,11 +206,44 @@ export default function BoatListingFormV2({
   const [clientSecret, setClientSecret] = useState<string>('');
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
 
+  // Add-ons state
+  const [wantExtraPhotos, setWantExtraPhotos] = useState(false);
+  const [wantVideo, setWantVideo] = useState(false);
+  const [videoUrlInput, setVideoUrlInput] = useState('');
+
+  const addOnProducts = useMemo(() => {
+    const photoProduct = products.find((p) =>
+      (p.name || '').toLowerCase().includes('extra photos')
+    );
+    const videoProduct = products.find((p) =>
+      (p.name || '').toLowerCase().includes('video')
+    );
+    return { photoProduct, videoProduct };
+  }, [products]);
+
+  const photoAddOnPrice = addOnProducts.photoProduct?.prices?.[0];
+  const videoAddOnPrice = addOnProducts.videoProduct?.prices?.[0];
+  const photoAddOnPriceId = photoAddOnPrice?.id;
+  const videoAddOnPriceId = videoAddOnPrice?.id;
+  const photoAddOnAmount = Number(photoAddOnPrice?.unitAmount || 0);
+  const videoAddOnAmount = Number(videoAddOnPrice?.unitAmount || 0);
+
+  // Disable add-ons in renewal mode (renewal is duration-only)
+  const addOnsAllowed = !isRenewalMode;
+
   // Créer le PaymentIntent au chargement
   useEffect(() => {
     const createPaymentIntent = async () => {
       if (!selectedPrice || !selectedPrice.unitAmount || !user) {
         return;
+      }
+
+      const addOnPriceIds: string[] = [];
+      if (addOnsAllowed && wantExtraPhotos && photoAddOnPriceId) {
+        addOnPriceIds.push(photoAddOnPriceId);
+      }
+      if (addOnsAllowed && wantVideo && videoAddOnPriceId) {
+        addOnPriceIds.push(videoAddOnPriceId);
       }
 
       try {
@@ -219,6 +255,7 @@ export default function BoatListingFormV2({
             amount: Number(selectedPrice.unitAmount),
             currency: selectedPrice.currency || 'eur',
             priceId: selectedPrice.id,
+            addOnPriceIds,
             metadata: {
               listing_type: 'boat',
               user_id: user.id
@@ -250,10 +287,20 @@ export default function BoatListingFormV2({
     };
 
     createPaymentIntent();
-  }, [selectedPrice, user]);
+  }, [
+    selectedPrice,
+    user,
+    addOnsAllowed,
+    wantExtraPhotos,
+    wantVideo,
+    photoAddOnPriceId,
+    videoAddOnPriceId
+  ]);
 
   // Utiliser les fonctions importées depuis la configuration partagée
-  const maxPhotos = getMaxPhotos(selectedProduct?.name);
+  const planMaxPhotos = getMaxPhotos(selectedProduct?.name);
+  const maxPhotos =
+    planMaxPhotos + (addOnsAllowed && wantExtraPhotos ? 5 : 0);
   const priceLimit = getPriceLimit(selectedProduct?.name, currency);
   const upgradePlan = getUpgradePlan(selectedProduct?.name);
   const duration = getDuration(selectedProduct?.name);
@@ -332,7 +379,7 @@ export default function BoatListingFormV2({
             block: 'center'
           });
         } else if (
-          (description.length < 20 || description.length > 2000) &&
+          (description.length < 300 || description.length > 2000) &&
           descriptionFieldRef.current
         ) {
           descriptionFieldRef.current.scrollIntoView({
@@ -735,14 +782,17 @@ export default function BoatListingFormV2({
         `This price exceeds your plan limit (${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}). Please upgrade your plan.`
       );
     }
-    if (description.length < 20)
-      errors.push('Description must be at least 20 characters');
+    if (description.length < 300)
+      errors.push('Description must be at least 300 characters');
     if (description.length > 2000)
       errors.push('Description must be less than 2000 characters');
     if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
       errors.push('Please enter a valid contact email');
     if (maxPhotos > 0 && photoFiles.length === 0)
       errors.push('Please add at least one photo');
+    if (addOnsAllowed && wantVideo && !isValidVideoUrl(videoUrlInput)) {
+      errors.push('Video URL must be a valid YouTube, Vimeo or Dailymotion link');
+    }
 
     return {
       isValid: errors.length === 0,
@@ -875,7 +925,16 @@ export default function BoatListingFormV2({
           error: 'Failed to upload images'
         });
 
-        await uploadPromise;
+        if (process.env.NODE_ENV === 'development') {
+          try {
+            await uploadPromise;
+          } catch (uploadErr) {
+            console.warn('⚠️ Photo upload failed (skipped in dev):', uploadErr);
+            tempImageKeys = [];
+          }
+        } else {
+          await uploadPromise;
+        }
         setUploadingPhotos(false);
       } else {
         console.log('ℹ️ No photos to upload');
@@ -893,11 +952,17 @@ export default function BoatListingFormV2({
           description,
           email: contactEmail,
           condition: condition || null,
+          year: year ?? null,
           photos: tempImageKeys,
           currency,
           specifications,
           vatPaid,
-          productId: selectedProductId
+          productId: selectedProductId,
+          hasExtraPhotos: addOnsAllowed && wantExtraPhotos,
+          videoUrl:
+            addOnsAllowed && wantVideo && isValidVideoUrl(videoUrlInput)
+              ? videoUrlInput.trim()
+              : null
         })
       });
 
@@ -1006,8 +1071,18 @@ export default function BoatListingFormV2({
     });
   };
 
+  const planAmountCents = Number(selectedPrice?.unitAmount || 0);
+  const addOnsAmountCents =
+    (addOnsAllowed && wantExtraPhotos ? photoAddOnAmount : 0) +
+    (addOnsAllowed && wantVideo ? videoAddOnAmount : 0);
+  const totalAmountCents = planAmountCents + addOnsAmountCents;
+
   const priceString = formatPriceCurrency(
-    Number(selectedPrice?.unitAmount || 0) / 100,
+    totalAmountCents / 100,
+    selectedPrice?.currency || 'USD'
+  );
+  const planPriceString = formatPriceCurrency(
+    planAmountCents / 100,
     selectedPrice?.currency || 'USD'
   );
 
@@ -1203,7 +1278,15 @@ export default function BoatListingFormV2({
                     font-medium text-center
                   `}
                 >
-                  {product.name}
+                  <span>{product.name}</span>
+                  {product.prices[0] && (
+                    <span className={`text-xs font-normal mt-0.5 block ${selectedProductId === product.id ? 'text-white/80' : 'text-stonegrey'}`}>
+                      {formatPriceCurrency(
+                        Number(product.prices[0].unitAmount ?? 0) / 100,
+                        (product.prices[0].currency || 'eur').toUpperCase()
+                      )}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -1724,7 +1807,7 @@ export default function BoatListingFormV2({
                 <Textarea
                   classNames={{
                     label: '!text-oceanblue text-md font-medium ',
-                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 20 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
+                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 300 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
                     input: 'placeholder:text-oceanblue',
                     base: ' border-oceanblue/10 data-[hover=true]:border-articblue   data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors rounded-lg'
                   }}
@@ -1746,11 +1829,11 @@ export default function BoatListingFormV2({
               <div className="pt-8">
                 <ValidationCheckbox
                   isValid={
-                    description.length >= 20 && description.length <= 2000
+                    description.length >= 300 && description.length <= 2000
                   }
                   shouldPulse={
                     shouldPulseInvalid &&
-                    (description.length < 20 || description.length > 2000)
+                    (description.length < 300 || description.length > 2000)
                   }
                 />
               </div>
@@ -1830,6 +1913,50 @@ export default function BoatListingFormV2({
                   isValid={!!condition}
                   optional
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Year avec checkbox de validation */}
+          {!isRenewalMode && (
+            <div className="flex flex-row gap-4 items-center">
+              <div className="flex-1">
+                <Select
+                  className="text-oceanblue h-[40px]"
+                  label="Year"
+                  size="lg"
+                  classNames={{
+                    label: '!text-oceanblue text-md font-medium',
+                    trigger: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:border-articblue data-[hover=true]:bg-articblue/10 transition-colors rounded-lg`,
+                    value: 'text-oceanblue',
+                    listbox: 'bg-fullwhite',
+                    popoverContent: 'bg-fullwhite'
+                  }}
+                  labelPlacement="outside"
+                  placeholder="Select year"
+                  selectedKeys={year ? [String(year)] : []}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setYear(v ? parseInt(v, 10) : null);
+                  }}
+                  isDisabled={isLoading}
+                >
+                  {getBoatYears().map((y) => (
+                    <SelectItem
+                      key={String(y)}
+                      classNames={{
+                        base: '!text-oceanblue data-[hover=true]:!bg-articblue/10 !transition-colors',
+                        title: '!text-oceanblue data-[hover=true]:!text-articblue !transition-colors',
+                        selectedIcon: '!text-articblue'
+                      }}
+                    >
+                      {String(y)}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+              <div className="pt-8">
+                <ValidationCheckbox isValid={!!year} optional />
               </div>
             </div>
           )}
@@ -2031,7 +2158,11 @@ export default function BoatListingFormV2({
                 <Valide />
                 <p>
                   {maxPhotos > 0
-                    ? `Includes ${maxPhotos} photo${maxPhotos > 1 ? 's' : ''}`
+                    ? `Includes ${maxPhotos} photo${maxPhotos > 1 ? 's' : ''}${
+                        wantExtraPhotos && addOnsAllowed
+                          ? ` (${planMaxPhotos} + 5 extras)`
+                          : ''
+                      }`
                     : 'No photos included'}
                 </p>
               </div>
@@ -2040,13 +2171,124 @@ export default function BoatListingFormV2({
                 <Valide />
                 <p>Duration of {duration.text}</p>
               </div>
+              {wantVideo && addOnsAllowed && (
+                <div className="flex flex-row gap-[10px] items-center text-oceanblue">
+                  <Valide />
+                  <p>Video link included</p>
+                </div>
+              )}
             </div>
             <div className="w-full h-[1px] bg-stonegrey"></div>
+            {addOnsAmountCents > 0 && (
+              <div className="flex flex-col gap-1 text-sm text-stonegrey">
+                <div className="flex flex-row justify-between">
+                  <span>Plan</span>
+                  <span>{planPriceString}</span>
+                </div>
+                {wantExtraPhotos && addOnsAllowed && photoAddOnPrice && (
+                  <div className="flex flex-row justify-between">
+                    <span>+5 photos</span>
+                    <span>
+                      {formatPriceCurrency(
+                        photoAddOnAmount / 100,
+                        photoAddOnPrice.currency || 'eur'
+                      )}
+                    </span>
+                  </div>
+                )}
+                {wantVideo && addOnsAllowed && videoAddOnPrice && (
+                  <div className="flex flex-row justify-between">
+                    <span>Video</span>
+                    <span>
+                      {formatPriceCurrency(
+                        videoAddOnAmount / 100,
+                        videoAddOnPrice.currency || 'eur'
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex flex-row gap-[10px] text-18 justify-between text-darkgrey font-semibold">
               <p>Total</p>
               <p>{priceString}</p>
             </div>
           </div>
+
+          {/* Optional add-ons */}
+          {addOnsAllowed && (photoAddOnPrice || videoAddOnPrice) && (
+            <div className="flex flex-col gap-3 px-3 sm:px-[20px] border-2 border-oceanblue/20 rounded-lg p-3 sm:p-4 text-oceanblue">
+              <div className="text-oceanblue text-18 font-medium">
+                Optional add-ons
+              </div>
+              {photoAddOnPrice && (
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={wantExtraPhotos}
+                    onChange={(e) => setWantExtraPhotos(e.target.checked)}
+                    className="mt-1 w-4 h-4 accent-articblue"
+                  />
+                  <div className="flex-1 flex flex-row justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-medium">+5 extra photos</div>
+                      <div className="text-xs text-stonegrey">
+                        Add 5 more photo slots
+                      </div>
+                    </div>
+                    <div className="text-sm font-semibold">
+                      {formatPriceCurrency(
+                        photoAddOnAmount / 100,
+                        photoAddOnPrice.currency || 'eur'
+                      )}
+                    </div>
+                  </div>
+                </label>
+              )}
+              {videoAddOnPrice && (
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={wantVideo}
+                      onChange={(e) => setWantVideo(e.target.checked)}
+                      className="mt-1 w-4 h-4 accent-articblue"
+                    />
+                    <div className="flex-1 flex flex-row justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-medium">Video link</div>
+                        <div className="text-xs text-stonegrey">
+                          Embed YouTube, Vimeo or Dailymotion
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold">
+                        {formatPriceCurrency(
+                          videoAddOnAmount / 100,
+                          videoAddOnPrice.currency || 'eur'
+                        )}
+                      </div>
+                    </div>
+                  </label>
+                  {wantVideo && (
+                    <input
+                      type="url"
+                      value={videoUrlInput}
+                      onChange={(e) => setVideoUrlInput(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="w-full px-3 py-2 text-sm border border-stonegrey/30 rounded-md focus:outline-none focus:border-articblue"
+                    />
+                  )}
+                  {wantVideo &&
+                    videoUrlInput &&
+                    !isValidVideoUrl(videoUrlInput) && (
+                      <p className="text-xs text-orange-600">
+                        Must be a valid YouTube, Vimeo or Dailymotion URL.
+                      </p>
+                    )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Payment Element */}
           {user &&
@@ -2055,6 +2297,7 @@ export default function BoatListingFormV2({
           selectedPrice.unitAmount > BigInt(0) &&
           clientSecret ? (
             <Elements
+              key={clientSecret}
               stripe={stripePromise}
               options={{
                 clientSecret: clientSecret,

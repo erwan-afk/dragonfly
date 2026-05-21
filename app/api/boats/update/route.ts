@@ -31,6 +31,21 @@ export async function POST(request: NextRequest) {
         const specifications = formData.get('specifications') as string;
         const vat_paid = formData.get('vat_paid') as string;
         const photos = formData.get('photos') as string;
+        const yearRaw = formData.get('year') as string | null;
+
+        // Year validation (optional)
+        let parsedYear: number | null = null;
+        if (yearRaw && yearRaw.trim() !== '') {
+            const yearNum = parseInt(yearRaw, 10);
+            const maxYear = new Date().getFullYear() + 1;
+            if (!Number.isInteger(yearNum) || yearNum < 1960 || yearNum > maxYear) {
+                return NextResponse.json(
+                    { error: `Year must be between 1960 and ${maxYear}` },
+                    { status: 400 }
+                );
+            }
+            parsedYear = yearNum;
+        }
 
         // Validation
         if (!id || !model || !price || !country || !description) {
@@ -123,8 +138,9 @@ export async function POST(request: NextRequest) {
                 currency: currency || 'EUR',
                 specifications: parsedSpecifications,
                 vatPaid: vat_paid === 'true',
+                year: parsedYear,
                 updatedAt: new Date()
-            }
+            } as any
         });
 
         console.log('✅ Boat updated successfully:', updatedBoat.id);

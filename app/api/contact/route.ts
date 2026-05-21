@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import validator from 'validator';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { validateCSRFToken } from '@/utils/csrf';
+import { validateRecaptcha } from '@/utils/recaptcha';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -196,6 +197,23 @@ export async function POST(request: NextRequest) {
       logSuspiciousActivity(ip, userAgent, 'Honeypot triggered');
       return NextResponse.json(
         { error: 'Bot detected' },
+        { status: 400 }
+      );
+    }
+
+    // reCAPTCHA verification
+    if (!data.recaptchaToken) {
+      logSuspiciousActivity(ip, userAgent, 'Missing reCAPTCHA token');
+      return NextResponse.json(
+        { error: 'reCAPTCHA token missing' },
+        { status: 400 }
+      );
+    }
+
+    if (!await validateRecaptcha(data.recaptchaToken)) {
+      logSuspiciousActivity(ip, userAgent, 'reCAPTCHA verification failed');
+      return NextResponse.json(
+        { error: 'reCAPTCHA verification failed' },
         { status: 400 }
       );
     }

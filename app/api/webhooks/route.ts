@@ -194,8 +194,134 @@ const webhookHandlers: Record<string, WebhookHandler> = {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     const boatId = paymentIntent.metadata?.boat_id;
     const userId = paymentIntent.metadata?.user_id;
+    const paymentType = paymentIntent.metadata?.type;
 
     if (!boatId) {
+      return;
+    }
+
+    // Extras: enable purchased add-ons on an already-active listing
+    if (paymentType === 'extras') {
+      try {
+        const boat = await prisma.boat.findUnique({
+          where: { id: boatId },
+          select: {
+            id: true,
+            status: true,
+            userId: true,
+            hasExtraPhotos: true,
+            videoUrl: true
+          } as any
+        }) as any;
+
+        if (!boat) {
+          throw new Error(`Boat ${boatId} not found`);
+        }
+
+        if (boat.status !== 'active') {
+          console.warn(
+            `⚠️ Extras paid for non-active boat ${boatId} (status: ${boat.status})`
+          );
+        }
+
+        const existingPayment = await prisma.payment.findUnique({
+          where: { stripeSessionId: paymentIntent.id },
+          select: { id: true }
+        });
+        if (existingPayment) return;
+
+        const addons = (paymentIntent.metadata?.addons || '').split(',').filter(Boolean);
+        const newVideoUrl = paymentIntent.metadata?.video_url || null;
+
+        const update: any = {};
+        if (addons.includes('extra_photos')) update.hasExtraPhotos = true;
+        if (addons.includes('video') && newVideoUrl) update.videoUrl = newVideoUrl;
+
+        if (Object.keys(update).length > 0) {
+          await prisma.boat.update({ where: { id: boatId }, data: update });
+        }
+
+        const productMetadata = paymentIntent.metadata?.product_id || '';
+        const firstProductId = productMetadata.split(',')[0] || null;
+        await prisma.payment.create({
+          data: {
+            userId: userId || boat.userId,
+            boatId,
+            productId: firstProductId || null,
+            amount: paymentIntent.amount / 100,
+            status: 'completed',
+            stripeSessionId: paymentIntent.id,
+            createdAt: new Date()
+          }
+        });
+
+        try {
+          revalidateTag('boats');
+          revalidateTag('user-data');
+        } catch (cacheError) {
+          console.error(`⚠️ Error invalidating cache: ${cacheError}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error processing extras payment for ${boatId}:`, error);
+      }
+      return;
+    }
+
+    // Boost: activate boost window without touching the listing status/expiry
+    if (paymentType === 'boost') {
+      try {
+        const boat = await prisma.boat.findUnique({
+          where: { id: boatId },
+          select: { id: true, status: true, userId: true, boostExpiresAt: true }
+        });
+
+        if (!boat) {
+          throw new Error(`Boat ${boatId} not found`);
+        }
+
+        if (boat.status !== 'active') {
+          console.warn(
+            `⚠️ Boost paid for non-active boat ${boatId} (status: ${boat.status})`
+          );
+        }
+
+        // Idempotence: skip if we already recorded this payment
+        const existingPayment = await prisma.payment.findUnique({
+          where: { stripeSessionId: paymentIntent.id },
+          select: { id: true }
+        });
+        if (existingPayment) return;
+
+        const now = new Date();
+        const boostExpiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+        await prisma.boat.update({
+          where: { id: boatId },
+          data: { boostedAt: now, boostExpiresAt }
+        });
+
+        const productId = paymentIntent.metadata?.product_id || null;
+        await prisma.payment.create({
+          data: {
+            userId: userId || boat.userId,
+            boatId,
+            productId: productId || null,
+            amount: paymentIntent.amount / 100,
+            status: 'completed',
+            stripeSessionId: paymentIntent.id,
+            createdAt: now
+          }
+        });
+
+        try {
+          revalidateTag('boats');
+          revalidateTag('user-data');
+        } catch (cacheError) {
+          console.error(`⚠️ Error invalidating cache: ${cacheError}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error processing boost payment for ${boatId}:`, error);
+      }
       return;
     }
 

@@ -27,6 +27,7 @@ export default function BoatImageGallery({
     (url) =>
       url &&
       url.trim() !== '' &&
+      url !== '/images/No-image.png' &&
       url !== '/images/ocean.png' &&
       url !== '/images/default-boat-image.png'
   );

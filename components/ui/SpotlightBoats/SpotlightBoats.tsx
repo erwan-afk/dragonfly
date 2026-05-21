@@ -20,7 +20,7 @@ import {
   ModalFooter,
   useDisclosure
 } from '@heroui/modal';
-import { ArrowUpCircle } from 'lucide-react';
+import { ArrowUpCircle, Rocket, Plus } from 'lucide-react';
 import { Button } from '@heroui/button';
 import {
   EditIcon,
@@ -44,7 +44,9 @@ import {
   getModelLabel,
   getProductLabel,
   dragonflyModels,
-  currencies
+  currencies,
+  boatConditions,
+  getBoatYears
 } from '@/utils/constants';
 import FlagIcon from '@/components/icons/Flag';
 import { specificationsData } from '@/utils/specifications';
@@ -135,6 +137,15 @@ export default function SpotlightBoats({
   const [selectedSort, setSelectedSort] = useState<string>(
     () => searchParams.get('sort') || 'created_desc'
   );
+  const [selectedCondition, setSelectedCondition] = useState<string | null>(
+    () => searchParams.get('condition')
+  );
+  const [selectedYearMin, setSelectedYearMin] = useState<string | null>(
+    () => searchParams.get('yearMin') || searchParams.get('year') || null
+  );
+  const [selectedYearMax, setSelectedYearMax] = useState<string | null>(
+    () => searchParams.get('yearMax') || searchParams.get('year') || null
+  );
 
   // Ref to track if we're initializing from URL
   const isInitializing = useRef(true);
@@ -156,6 +167,9 @@ export default function SpotlightBoats({
     if (selectedCurrency !== 'EUR') params.set('currency', selectedCurrency);
     if (selectedSpecs.length > 0)
       params.set('attributes', selectedSpecs.join(','));
+    if (selectedCondition) params.set('condition', selectedCondition);
+    if (selectedYearMin) params.set('yearMin', selectedYearMin);
+    if (selectedYearMax) params.set('yearMax', selectedYearMax);
     if (selectedSort !== 'created_desc') params.set('sort', selectedSort);
 
     const queryString = params.toString();
@@ -191,6 +205,9 @@ export default function SpotlightBoats({
     selectedPrice,
     selectedCurrency,
     selectedSpecs,
+    selectedCondition,
+    selectedYearMin,
+    selectedYearMax,
     selectedSort,
     accountTable,
     maxPrice,
@@ -355,9 +372,21 @@ export default function SpotlightBoats({
     ? boats
     : gridView
       ? [...boats].sort((a, b) => {
-          const aIsPodium = (a as any).productName?.toLowerCase() === 'podium';
-          const bIsPodium = (b as any).productName?.toLowerCase() === 'podium';
-          if (aIsPodium !== bIsPodium) return aIsPodium ? -1 : 1;
+          const isBoosted = (boat: any) => {
+            const raw =
+              (boat as any).boostExpiresAt || (boat as any).boost_expires_at;
+            return !!raw && new Date(raw).getTime() > Date.now();
+          };
+          const tier = (boat: any) => {
+            const name = ((boat as any).productName || '').toLowerCase();
+            if (name === 'podium') return 1;
+            if (isBoosted(boat)) return 2;
+            if (name.includes('mid-course') || name.includes('mid course'))
+              return 3;
+            return 4;
+          };
+          const tierDiff = tier(a) - tier(b);
+          if (tierDiff !== 0) return tierDiff;
           return ((b as any).viewCount ?? 0) - ((a as any).viewCount ?? 0);
         })
       : (() => {
@@ -373,20 +402,54 @@ export default function SpotlightBoats({
               selectedSpecs.every((spec) =>
                 boat.specifications?.includes(spec)
               );
+            const matchesCondition =
+              !selectedCondition ||
+              (boat as any).condition === selectedCondition;
+            const boatYear = Number((boat as any).year);
+            const yMin = selectedYearMin ? parseInt(selectedYearMin, 10) : null;
+            const yMax = selectedYearMax ? parseInt(selectedYearMax, 10) : null;
+            const matchesYear =
+              (!yMin && !yMax) ||
+              (Number.isFinite(boatYear) &&
+                (yMin === null || boatYear >= yMin) &&
+                (yMax === null || boatYear <= yMax));
             return (
-              inPriceRange && matchesModel && matchesCountry && matchesSpecs
+              inPriceRange &&
+              matchesModel &&
+              matchesCountry &&
+              matchesSpecs &&
+              matchesCondition &&
+              matchesYear
             );
           });
 
           return filtered.sort((a, b) => {
+            const isBoostActive = (boat: any) => {
+              const raw =
+                (boat as any).boostExpiresAt || (boat as any).boost_expires_at;
+              return !!raw && new Date(raw).getTime() > Date.now();
+            };
             const getTierPriority = (boat: any) => {
               const name = ((boat as any).productName || '').toLowerCase();
               if (name.includes('podium')) return 1;
-              if (name.includes('mid-course') || name.includes('mid course')) return 2;
-              return 3;
+              if (isBoostActive(boat)) return 2;
+              if (name.includes('mid-course') || name.includes('mid course'))
+                return 3;
+              return 4;
             };
             const tierDiff = getTierPriority(a) - getTierPriority(b);
             if (tierDiff !== 0) return tierDiff;
+
+            // Within boost tier, most recently boosted first
+            if (isBoostActive(a) && isBoostActive(b)) {
+              const aBoost = new Date(
+                (a as any).boostedAt || (a as any).boosted_at || 0
+              ).getTime();
+              const bBoost = new Date(
+                (b as any).boostedAt || (b as any).boosted_at || 0
+              ).getTime();
+              if (aBoost !== bBoost) return bBoost - aBoost;
+            }
 
             switch (selectedSort) {
               case 'price_asc':
@@ -407,6 +470,22 @@ export default function SpotlightBoats({
                 return a.model.localeCompare(b.model);
               case 'model_desc':
                 return b.model.localeCompare(a.model);
+              case 'year_asc': {
+                const ay = (a as any).year;
+                const by = (b as any).year;
+                if (ay == null && by == null) return 0;
+                if (ay == null) return 1;
+                if (by == null) return -1;
+                return ay - by;
+              }
+              case 'year_desc': {
+                const ay = (a as any).year;
+                const by = (b as any).year;
+                if (ay == null && by == null) return 0;
+                if (ay == null) return 1;
+                if (by == null) return -1;
+                return by - ay;
+              }
               default:
                 return (
                   new Date(b.createdAt).getTime() -
@@ -473,6 +552,30 @@ export default function SpotlightBoats({
       const productId = (boat as any).productId || (boat as any).product_id;
       const isSold = (boat as any).status === 'sold';
 
+      const boostExpiresRaw =
+        (boat as any).boostExpiresAt || (boat as any).boost_expires_at;
+      const boostExpirationDate = boostExpiresRaw
+        ? new Date(boostExpiresRaw)
+        : null;
+      const isBoostActive = boostExpirationDate
+        ? boostExpirationDate.getTime() > Date.now()
+        : false;
+      const formattedBoostExpiration = boostExpirationDate
+        ? boostExpirationDate.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : null;
+
+      const hasExtraPhotos = !!(
+        (boat as any).hasExtraPhotos ?? (boat as any).has_extra_photos
+      );
+      const videoUrl =
+        (boat as any).videoUrl || (boat as any).video_url || null;
+      const allExtrasPurchased = hasExtraPhotos && !!videoUrl;
+
       return {
         hasValidImages,
         imageUrl,
@@ -483,7 +586,12 @@ export default function SpotlightBoats({
         isExpired,
         expiresSoon,
         productId,
-        isSold
+        isSold,
+        isBoostActive,
+        formattedBoostExpiration,
+        hasExtraPhotos,
+        videoUrl,
+        allExtrasPurchased
       };
     };
 
@@ -626,8 +734,19 @@ export default function SpotlightBoats({
                 {/* Top row: details + actions */}
                 <div className="flex items-start gap-2 sm:gap-3">
                   <div className="relative w-16 h-12 sm:w-20 sm:h-14 overflow-hidden rounded-lg bg-gray-100 flex-shrink-0 hidden sm:block">
-                    {d.hasValidImages && d.imageUrl && !failedImages.has(boat.id) ? (
+                    {d.hasValidImages &&
+                    d.imageUrl &&
+                    !failedImages.has(boat.id) ? (
                       <img
+                        ref={(node) => {
+                          if (
+                            node &&
+                            node.complete &&
+                            node.naturalWidth === 0
+                          ) {
+                            handleImageError(boat.id, d.imageUrl as string);
+                          }
+                        }}
                         src={d.imageUrl}
                         alt={`${getModelLabel(boat.model)} photo`}
                         className="w-full h-full object-cover"
@@ -635,7 +754,9 @@ export default function SpotlightBoats({
                         onLoad={() =>
                           logImageEvent('load', boat.id, d.imageUrl as string)
                         }
-                        onError={() => handleImageError(boat.id, d.imageUrl as string)}
+                        onError={() =>
+                          handleImageError(boat.id, d.imageUrl as string)
+                        }
                       />
                     ) : (
                       <img
@@ -686,6 +807,15 @@ export default function SpotlightBoats({
                             : 'Active'}
                       </span>
                     )}
+                    {d.isBoostActive && (
+                      <span
+                        className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 font-semibold rounded-full border bg-articblue/10 text-articblue border-articblue/30 text-xs"
+                        title={`Boost active until ${d.formattedBoostExpiration}`}
+                      >
+                        <Rocket size={10} />
+                        Boosted
+                      </span>
+                    )}
                     <span className="font-medium text-gray-700">
                       {getProductLabel(d.productId, products)}
                     </span>
@@ -726,6 +856,33 @@ export default function SpotlightBoats({
                         />
                         Renew
                       </Link>
+                      {!d.isBoostActive && !d.isExpired && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/boost/${boat.id}`);
+                          }}
+                          className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md text-articblue border border-articblue/40 hover:bg-articblue/10 transition-colors"
+                        >
+                          <Rocket
+                            size={8}
+                            className="sm:w-[10px] sm:h-[10px]"
+                          />
+                          Boost
+                        </button>
+                      )}
+                      {!d.allExtrasPurchased && !d.isExpired && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/extras/${boat.id}`);
+                          }}
+                          className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 font-medium rounded-md text-articblue border border-articblue/40 hover:bg-articblue/10 transition-colors"
+                        >
+                          <Plus size={8} className="sm:w-[10px] sm:h-[10px]" />
+                          Extras
+                        </button>
+                      )}
                       {upgradeOptions.length > 0 && (
                         <button
                           onClick={(e) => {
@@ -751,202 +908,241 @@ export default function SpotlightBoats({
 
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-articblue to-oceanblue border-b border-gray-200">
-              <tr>
-                <th className="hidden xl:table-cell px-3 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Image
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Boat Details
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="hidden xl:table-cell px-3 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Expires
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Plan
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-right text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Upgrade
-                </th>
-                <th className="px-2 xl:px-6 py-3 xl:py-4 text-right text-xs font-medium text-fullwhite uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {boats.map((boat) => {
-                const d = getBoatDisplayData(boat);
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-articblue to-oceanblue border-b border-gray-200">
+                <tr>
+                  <th className="hidden xl:table-cell px-3 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Boat Details
+                  </th>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Plan
+                  </th>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-left text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Expires
+                  </th>
 
-                return (
-                  <tr
-                    key={boat.id}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/boat/${boat.id}`);
-                    }}
-                  >
-                    {/* Image */}
-                    <td className="hidden xl:table-cell px-3 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      <div className="relative w-30 h-20 overflow-hidden rounded-lg bg-gray-100">
-                        {d.hasValidImages && d.imageUrl && !failedImages.has(boat.id) ? (
-                          <img
-                            src={d.imageUrl}
-                            alt={`${getModelLabel(boat.model)} photo`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onLoad={() =>
-                              logImageEvent(
-                                'load',
-                                boat.id,
-                                d.imageUrl as string
-                              )
-                            }
-                            onError={() => handleImageError(boat.id, d.imageUrl as string)}
-                          />
-                        ) : (
-                          <img
-                            src="/images/No-image.png"
-                            alt="No image available"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                    </td>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-center text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Boost
+                  </th>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-center text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Upgrade
+                  </th>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-center text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Extras
+                  </th>
+                  <th className="px-2 xl:px-6 py-3 xl:py-4 text-right text-xs font-medium text-fullwhite uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {boats.map((boat) => {
+                  const d = getBoatDisplayData(boat);
 
-                    {/* Boat Details */}
-                    <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {getModelLabel(boat.model)}
-                          </div>
-                          <div className="text-sm text-gray-500 flex items-center gap-2">
-                            <span>{boat.country}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Price */}
-                    <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 font-medium">
-                        {formatPrice(Number(boat.price), boat.currency)}{' '}
-                        {getCurrencySymbol(boat.currency)}
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      {d.isSold ? (
-                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full border bg-gray-100 text-gray-700 border-gray-300 uppercase tracking-wide">
-                          Vendu
-                        </span>
-                      ) : (
-                        <span
-                          className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${
-                            d.isExpired
-                              ? 'bg-red-50 text-red-700 border-red-200'
-                              : d.expiresSoon
-                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                : 'bg-green-50 text-green-700 border-green-200'
-                          }`}
-                        >
-                          {d.isExpired
-                            ? 'Expired'
-                            : d.expiresSoon
-                              ? 'Expiring Soon'
-                              : 'Active'}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Created */}
-                    <td className="hidden xl:table-cell px-3 xl:px-6 py-3 xl:py-4 whitespace-nowrap text-sm text-gray-500">
-                      {d.formattedDate}
-                    </td>
-
-                    {/* Expires */}
-                    <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      <div className="flex flex-col gap-1.5">
-                        {d.expirationDate ? (
-                          <span
-                            className={`text-sm ${
-                              d.isExpired
-                                ? 'text-red-600 font-medium'
-                                : d.expiresSoon
-                                  ? 'text-orange-600 font-medium'
-                                  : 'text-gray-500'
-                            }`}
-                          >
-                            {d.formattedExpirationDate}
-                            {d.daysUntilExpiration !== null && !d.isExpired && (
-                              <span className="ml-1">
-                                ({d.daysUntilExpiration}d left)
+                  return (
+                    <tr
+                      key={boat.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/boat/${boat.id}`);
+                      }}
+                    >
+                      {/* Image */}
+                      <td className="hidden xl:table-cell px-3 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
+                        <div className="relative w-30 h-20 overflow-hidden rounded-lg bg-gray-100">
+                          {d.hasValidImages &&
+                          d.imageUrl &&
+                          !failedImages.has(boat.id) ? (
+                            <img
+                              ref={(node) => {
+                                if (
+                                  node &&
+                                  node.complete &&
+                                  node.naturalWidth === 0
+                                ) {
+                                  handleImageError(
+                                    boat.id,
+                                    d.imageUrl as string
+                                  );
+                                }
+                              }}
+                              src={d.imageUrl}
+                              alt={`${getModelLabel(boat.model)} photo`}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onLoad={() =>
+                                logImageEvent(
+                                  'load',
+                                  boat.id,
+                                  d.imageUrl as string
+                                )
+                              }
+                              onError={() =>
+                                handleImageError(boat.id, d.imageUrl as string)
+                              }
+                            />
+                          ) : (
+                            <img
+                              src="/images/No-image.png"
+                              alt="No image available"
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          {/* Status indicator — top right */}
+                          <div className="absolute top-1.5 right-1.5">
+                            {d.isSold ? (
+                              <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-gray-700/80 text-white uppercase">
+                                Sold
+                              </span>
+                            ) : d.isExpired ? (
+                              <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-600/80 text-white uppercase">
+                                Expired
+                              </span>
+                            ) : d.expiresSoon ? (
+                              <span className="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-yellow-500/80 text-white uppercase">
+                                Soon
+                              </span>
+                            ) : (
+                              <span
+                                title="Active"
+                                className="relative flex h-2.5 w-2.5"
+                              >
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                               </span>
                             )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Boat Details */}
+                      <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {getModelLabel(boat.model)}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {boat.country}
+                            </div>
+                            <div className="text-sm text-gray-900 font-medium mt-0.5">
+                              {formatPrice(Number(boat.price), boat.currency)}{' '}
+                              {getCurrencySymbol(boat.currency)}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Plan + Created */}
+                      <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm text-gray-900 font-medium">
+                            {getProductLabel(d.productId, products)}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {d.formattedDate}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Expires */}
+                      <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1.5">
+                          {d.expirationDate ? (
+                            <span
+                              className={`text-sm ${
+                                d.isExpired
+                                  ? 'text-red-600 font-medium'
+                                  : d.expiresSoon
+                                    ? 'text-orange-600 font-medium'
+                                    : 'text-gray-500'
+                              }`}
+                            >
+                              {d.formattedExpirationDate}
+                              {d.daysUntilExpiration !== null &&
+                                !d.isExpired && (
+                                  <span className="ml-1">
+                                    ({d.daysUntilExpiration}d left)
+                                  </span>
+                                )}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-400">—</span>
+                          )}
+                          {!d.isSold && (
+                            <Link
+                              href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className={`inline-flex items-center gap-1 w-fit px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                                d.isExpired
+                                  ? 'bg-red-500 text-white hover:bg-red-600'
+                                  : d.expiresSoon
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                    : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
+                              }`}
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
+                              </svg>
+                              {d.isExpired ? 'Renew Now' : 'Renew'}
+                            </Link>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Boost */}
+                      <td className="text-center px-2 py-3 xl:py-4 whitespace-nowrap">
+                        {d.isSold || d.isExpired ? (
+                          <span className="text-xs text-gray-400">—</span>
+                        ) : d.isBoostActive ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-articblue/10 text-articblue border border-articblue/30"
+                            title={`Until ${d.formattedBoostExpiration}`}
+                          >
+                            <Rocket size={10} />
+                            Boosted
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-400">—</span>
-                        )}
-                        {!d.isSold && (
-                          <Link
-                            href={`/list-boat?preference=Renewal&boatId=${boat.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className={`inline-flex items-center gap-1 w-fit px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                              d.isExpired
-                                ? 'bg-red-500 text-white hover:bg-red-600'
-                                : d.expiresSoon
-                                  ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                  : 'text-articblue border border-articblue/40 hover:bg-articblue/10'
-                            }`}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/boost/${boat.id}`);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-articblue/40 text-xs font-medium rounded-md text-articblue hover:bg-articblue/10 transition-colors duration-200"
                           >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                            {d.isExpired ? 'Renew Now' : 'Renew'}
-                          </Link>
+                            <Rocket size={12} />
+                            Boost
+                          </button>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Plan */}
-                    <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-900 font-medium">
-                          {getProductLabel(d.productId, products)}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Upgrade */}
-                    <td className="text-center px-2 xl:px-0 py-3 xl:py-4 whitespace-nowrap">
-                      {d.isSold ? (
-                        <span className="text-xs text-gray-400">—</span>
-                      ) : (
-                        (() => {
+                      {/* Upgrade */}
+                      <td className="text-center px-2 py-3 xl:py-4 whitespace-nowrap">
+                        {(() => {
+                          if (d.isSold || d.isExpired)
+                            return (
+                              <span className="text-xs text-gray-400">—</span>
+                            );
                           const upgradeOptions = getUpgradeOptions(d.productId);
-                          return upgradeOptions.length > 0 ? (
+                          if (!upgradeOptions.length)
+                            return (
+                              <span className="text-xs text-gray-400">—</span>
+                            );
+                          return (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -954,28 +1150,45 @@ export default function SpotlightBoats({
                               }}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-articblue hover:bg-oceanblue transition-colors duration-200"
                             >
-                              <ArrowUpCircle size={14} />
+                              <ArrowUpCircle size={12} />
                               Upgrade
                             </button>
-                          ) : (
-                            <span className="text-xs text-gray-400">
-                              Max plan
-                            </span>
                           );
-                        })()
-                      )}
-                    </td>
+                        })()}
+                      </td>
 
-                    {/* Actions */}
-                    <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap text-sm font-medium text-center">
-                      {renderActionsDropdown(boat)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      {/* Extras */}
+                      <td className="text-center px-2 py-3 xl:py-4 whitespace-nowrap">
+                        {d.isSold || d.isExpired ? (
+                          <span className="text-xs text-gray-400">—</span>
+                        ) : d.allExtrasPurchased ? (
+                          <span className="text-xs text-green-600 font-medium">
+                            ✓ All added
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/extras/${boat.id}`);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-articblue/40 text-xs font-medium rounded-md text-articblue hover:bg-articblue/10 transition-colors duration-200"
+                          >
+                            <Plus size={12} />
+                            Extras
+                          </button>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-2 xl:px-6 py-3 xl:py-4 whitespace-nowrap text-sm font-medium text-center">
+                        {renderActionsDropdown(boat)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
       </div>
     );
   };
@@ -1016,7 +1229,10 @@ export default function SpotlightBoats({
                             {getModelLabel(boatToDelete.model)}
                           </div>
                           <div className="text-sm text-oceanblue mt-1">
-                            {formatPrice(Number(boatToDelete.price), boatToDelete.currency)}{' '}
+                            {formatPrice(
+                              Number(boatToDelete.price),
+                              boatToDelete.currency
+                            )}{' '}
                             {boatToDelete.currency} • {boatToDelete.country}
                           </div>
                         </div>
@@ -1194,6 +1410,8 @@ export default function SpotlightBoats({
               if (selectedCountry) count++;
               if (selectedPrice[0] > 0 || selectedPrice[1] < maxPrice) count++;
               if (selectedSpecs.length > 0) count += selectedSpecs.length;
+              if (selectedCondition) count++;
+              if (selectedYearMin || selectedYearMax) count++;
               return count > 0 ? ` (${count})` : '';
             })()}
           </button>
@@ -1232,7 +1450,8 @@ export default function SpotlightBoats({
                 <Dropdown>
                   <DropdownTrigger>
                     <button className="flex items-center gap-1 rounded-full px-3 h-7 bg-lightgrey text-oceanblue font-medium text-14">
-                      {currencies.find((c) => c.key === selectedCurrency)?.symbol || selectedCurrency}
+                      {currencies.find((c) => c.key === selectedCurrency)
+                        ?.symbol || selectedCurrency}
                       <ArrowDropdown className="w-3 h-3" />
                     </button>
                   </DropdownTrigger>
@@ -1264,7 +1483,10 @@ export default function SpotlightBoats({
                 onChange={(value) =>
                   setSelectedPrice(value as [number, number])
                 }
-                formatOptions={{ style: 'currency', currency: selectedCurrency }}
+                formatOptions={{
+                  style: 'currency',
+                  currency: selectedCurrency
+                }}
                 label="Price"
                 maxValue={maxPrice}
                 minValue={0}
@@ -1343,6 +1565,92 @@ export default function SpotlightBoats({
               </div>
             </div>
 
+            {/* Year Range Filter */}
+            <div>
+              <h3 className="text-16 font-medium text-oceanblue mb-3">
+                Year of build
+              </h3>
+              <div className="flex flex-row gap-8 items-center">
+                <select
+                  value={selectedYearMin ?? ''}
+                  onChange={(e) =>
+                    setSelectedYearMin(e.target.value || null)
+                  }
+                  className="flex-1 h-[36px] px-3 rounded-lg bg-lightgrey text-oceanblue text-14 font-medium border-2 border-transparent focus:border-articblue outline-none"
+                  aria-label="Year from"
+                >
+                  <option value="">From</option>
+                  {getBoatYears().map((y) => {
+                    const key = String(y);
+                    const disabled =
+                      !!selectedYearMax &&
+                      parseInt(selectedYearMax, 10) < y;
+                    return (
+                      <option key={key} value={key} disabled={disabled}>
+                        {key}
+                      </option>
+                    );
+                  })}
+                </select>
+                <span className="text-stonegrey text-14">–</span>
+                <select
+                  value={selectedYearMax ?? ''}
+                  onChange={(e) =>
+                    setSelectedYearMax(e.target.value || null)
+                  }
+                  className="flex-1 h-[36px] px-3 rounded-lg bg-lightgrey text-oceanblue text-14 font-medium border-2 border-transparent focus:border-articblue outline-none"
+                  aria-label="Year to"
+                >
+                  <option value="">To</option>
+                  {getBoatYears().map((y) => {
+                    const key = String(y);
+                    const disabled =
+                      !!selectedYearMin &&
+                      parseInt(selectedYearMin, 10) > y;
+                    return (
+                      <option key={key} value={key} disabled={disabled}>
+                        {key}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+
+            {/* Condition Filter */}
+            <div>
+              <h3 className="text-16 font-medium text-oceanblue mb-3">État</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedCondition(null)}
+                  className={`px-4 py-2 rounded-full text-14 font-medium transition-colors ${
+                    !selectedCondition
+                      ? 'bg-articblue text-fullwhite'
+                      : 'bg-lightgrey text-oceanblue'
+                  }`}
+                >
+                  Tous
+                </button>
+                {boatConditions.map((cond) => (
+                  <button
+                    key={cond.key}
+                    onClick={() =>
+                      setSelectedCondition(
+                        selectedCondition === cond.key ? null : cond.key
+                      )
+                    }
+                    className={`px-4 py-2 rounded-full text-14 font-medium transition-colors ${
+                      selectedCondition === cond.key
+                        ? 'bg-articblue text-fullwhite'
+                        : 'bg-lightgrey text-oceanblue'
+                    }`}
+                  >
+                    {cond.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Specifications Filter */}
             <div>
               <h3 className="text-16 font-medium text-oceanblue mb-3">
@@ -1390,6 +1698,9 @@ export default function SpotlightBoats({
                 setSelectedCountry(null);
                 setSelectedPrice([0, maxPrice]);
                 setSelectedSpecs([]);
+                setSelectedCondition(null);
+                setSelectedYearMin(null);
+                setSelectedYearMax(null);
               }}
               className="flex-1 py-3 rounded-xl border-2 border-oceanblue text-oceanblue font-medium text-16"
             >
@@ -1452,6 +1763,16 @@ export default function SpotlightBoats({
                 key: 'model_desc',
                 label: 'Model: Z-A',
                 desc: 'Reverse alphabetical'
+              },
+              {
+                key: 'year_desc',
+                label: 'Year: Newest First',
+                desc: 'Most recent year'
+              },
+              {
+                key: 'year_asc',
+                label: 'Year: Oldest First',
+                desc: 'Oldest year first'
               }
             ].map((option) => (
               <button
@@ -1517,7 +1838,10 @@ export default function SpotlightBoats({
                         onChange={(value) =>
                           setSelectedPrice(value as [number, number])
                         }
-                        formatOptions={{ style: 'currency', currency: selectedCurrency }}
+                        formatOptions={{
+                          style: 'currency',
+                          currency: selectedCurrency
+                        }}
                         label="Price Range"
                         maxValue={maxPrice}
                         minValue={0}
@@ -1530,7 +1854,8 @@ export default function SpotlightBoats({
                   <DropdownTrigger>
                     <button className="rounded-[100px] px-[14px] h-[30px] flex flex-row gap-1 items-center hover:bg-smokygrey bg-lightgrey text-oceanblue">
                       <span className="font-medium text-14">
-                        {currencies.find((c) => c.key === selectedCurrency)?.symbol || selectedCurrency}
+                        {currencies.find((c) => c.key === selectedCurrency)
+                          ?.symbol || selectedCurrency}
                       </span>
                       <ArrowDropdown className="w-3 h-3" />
                     </button>
@@ -1614,6 +1939,114 @@ export default function SpotlightBoats({
                     </AutocompleteItem>
                   ))}
                 </Autocomplete>
+              </div>
+
+              {/* Filtre par année — From */}
+              <div className="flex flex-row items-center">
+                <Dropdown>
+                  <DropdownTrigger>
+                    <button className="rounded-[100px] px-[20px] h-[30px] flex flex-row gap-2 items-center hover:bg-smokygrey bg-lightgrey text-oceanblue">
+                      <div className="font-medium text-14">
+                        {selectedYearMin
+                          ? `From: ${selectedYearMin}`
+                          : 'Year from'}
+                      </div>
+                      <ArrowDropdown />
+                    </button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    aria-label="Select year from"
+                    classNames={{
+                      base: 'bg-fullwhite max-h-[320px] overflow-y-auto',
+                      list: 'bg-fullwhite'
+                    }}
+                    onAction={(key) => {
+                      const k = key as string;
+                      setSelectedYearMin(k === 'all' ? null : k);
+                    }}
+                  >
+                    {(
+                      [{ key: 'all', label: 'Any' }] as {
+                        key: string;
+                        label: string;
+                      }[]
+                    )
+                      .concat(
+                        getBoatYears().map((y) => ({
+                          key: String(y),
+                          label: String(y)
+                        }))
+                      )
+                      .map((item) => (
+                        <DropdownItem
+                          key={item.key}
+                          classNames={{
+                            base:
+                              (item.key === 'all' && !selectedYearMin) ||
+                              selectedYearMin === item.key
+                                ? 'bg-lightgrey text-oceanblue font-medium data-[hover=true]:bg-lightgrey'
+                                : 'text-oceanblue data-[hover=true]:bg-lightgrey data-[hover=true]:text-oceanblue'
+                          }}
+                        >
+                          {item.label}
+                        </DropdownItem>
+                      ))}
+                  </DropdownMenu>
+                </Dropdown>
+              </div>
+
+              {/* Filtre par année — To */}
+              <div className="flex flex-row items-center">
+                <Dropdown>
+                  <DropdownTrigger>
+                    <button className="rounded-[100px] px-[20px] h-[30px] flex flex-row gap-2 items-center hover:bg-smokygrey bg-lightgrey text-oceanblue">
+                      <div className="font-medium text-14">
+                        {selectedYearMax
+                          ? `To: ${selectedYearMax}`
+                          : 'Year to'}
+                      </div>
+                      <ArrowDropdown />
+                    </button>
+                  </DropdownTrigger>
+                  <DropdownMenu
+                    aria-label="Select year to"
+                    classNames={{
+                      base: 'bg-fullwhite max-h-[320px] overflow-y-auto',
+                      list: 'bg-fullwhite'
+                    }}
+                    onAction={(key) => {
+                      const k = key as string;
+                      setSelectedYearMax(k === 'all' ? null : k);
+                    }}
+                  >
+                    {(
+                      [{ key: 'all', label: 'Any' }] as {
+                        key: string;
+                        label: string;
+                      }[]
+                    )
+                      .concat(
+                        getBoatYears().map((y) => ({
+                          key: String(y),
+                          label: String(y)
+                        }))
+                      )
+                      .map((item) => (
+                        <DropdownItem
+                          key={item.key}
+                          classNames={{
+                            base:
+                              (item.key === 'all' && !selectedYearMax) ||
+                              selectedYearMax === item.key
+                                ? 'bg-lightgrey text-oceanblue font-medium data-[hover=true]:bg-lightgrey'
+                                : 'text-oceanblue data-[hover=true]:bg-lightgrey data-[hover=true]:text-oceanblue'
+                          }}
+                        >
+                          {item.label}
+                        </DropdownItem>
+                      ))}
+                  </DropdownMenu>
+                </Dropdown>
               </div>
 
               {/* Filtre par localisation */}
@@ -1724,6 +2157,59 @@ export default function SpotlightBoats({
                     ))}
                 </DropdownMenu>
               </Dropdown>
+
+              {/* Filtre par état */}
+              <Dropdown
+                classNames={{ content: 'bg-fullwhite' }}
+                closeOnSelect={false}
+              >
+                <DropdownTrigger>
+                  <button className="rounded-[100px] px-[20px] h-[30px] flex flex-row gap-2 items-center hover:bg-smokygrey bg-lightgrey text-oceanblue">
+                    <div className="font-medium text-14">
+                      {selectedCondition
+                        ? boatConditions.find((c) => c.key === selectedCondition)
+                            ?.label
+                        : 'État'}
+                    </div>
+                    <ArrowDropdown />
+                  </button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="État filter"
+                  classNames={{ base: 'bg-fullwhite', list: 'bg-fullwhite' }}
+                >
+                  {([{ key: 'all', label: 'Tous' }, ...boatConditions] as {
+                    key: string;
+                    label: string;
+                  }[]).map((cond) => (
+                    <DropdownItem
+                      key={cond.key}
+                      classNames={{
+                        base: `text-oceanblue data-[hover=true]:bg-articblue/10 ${
+                          cond.key === 'all'
+                            ? !selectedCondition
+                              ? 'font-semibold'
+                              : ''
+                            : selectedCondition === cond.key
+                              ? 'bg-articblue/20 font-semibold'
+                              : ''
+                        }`
+                      }}
+                      onClick={() =>
+                        setSelectedCondition(
+                          cond.key === 'all'
+                            ? null
+                            : selectedCondition === cond.key
+                              ? null
+                              : cond.key
+                        )
+                      }
+                    >
+                      {cond.label}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
             </div>
 
             {/* Tri */}
@@ -1829,6 +2315,34 @@ export default function SpotlightBoats({
                     </span>
                   </div>
                 </DropdownItem>
+                <DropdownItem
+                  key="year_desc"
+                  classNames={{
+                    base: 'data-[hover]:bg-fullwhite cursor-pointer text-oceanblue'
+                  }}
+                  onClick={() => setSelectedSort('year_desc')}
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">Year: Newest First</span>
+                    <span className="text-xs text-gray-500">
+                      Most recent year
+                    </span>
+                  </div>
+                </DropdownItem>
+                <DropdownItem
+                  key="year_asc"
+                  classNames={{
+                    base: 'data-[hover]:bg-fullwhite cursor-pointer text-oceanblue'
+                  }}
+                  onClick={() => setSelectedSort('year_asc')}
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">Year: Oldest First</span>
+                    <span className="text-xs text-gray-500">
+                      Oldest year first
+                    </span>
+                  </div>
+                </DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </div>
@@ -1837,48 +2351,63 @@ export default function SpotlightBoats({
 
       {/* Informations sur les résultats de recherche */}
       {!spotlight && !gridView && (
-        <div className=" flex flex-row items-center justify-between gap-4 ">
-          <p className="text-oceanblue text-16 ">
+        <div className="flex flex-row items-center justify-between gap-4">
+          {/* Résumé des filtres actifs */}
+          <div className="flex flex-wrap items-center gap-2">
             {(() => {
-              // Si on a des infos de recherche URL, les utiliser
-              if (searchResultsInfo) {
-                return searchResultsInfo;
-              }
-
-              // Sinon, utiliser les filtres client
-              const activeFilters = [];
+              const chips: { key: string; label: string; onClear: () => void }[] = [];
               if (selectedModel) {
-                const model = dragonflyModels.find(
-                  (m) => m.key === selectedModel
-                );
-                activeFilters.push(`${model?.label}`);
+                const model = dragonflyModels.find((m) => m.key === selectedModel);
+                if (model) chips.push({ key: 'model', label: model.label, onClear: () => setSelectedModel(null) });
               }
-              if (selectedCountry) activeFilters.push(`${selectedCountry}`);
+              if (selectedCountry) chips.push({ key: 'country', label: selectedCountry, onClear: () => setSelectedCountry(null) });
+              if (selectedCondition) {
+                const cond = boatConditions.find((c) => c.key === selectedCondition);
+                if (cond) chips.push({ key: 'condition', label: cond.label, onClear: () => setSelectedCondition(null) });
+              }
               if (selectedPrice[0] > 0 || selectedPrice[1] < maxPrice) {
-                activeFilters.push(`${selectedPrice[0]} - ${selectedPrice[1]}`);
+                chips.push({ key: 'price', label: `${Math.round(selectedPrice[0]).toLocaleString()} – ${Math.round(selectedPrice[1]).toLocaleString()}`, onClear: () => setSelectedPrice([0, maxPrice]) });
               }
               if (selectedSpecs.length > 0) {
-                const specLabels = selectedSpecs.map((key) => {
-                  const spec = specificationsData
-                    .flatMap((s) => s.items)
-                    .find((item) => item.key === key);
-                  return spec?.label || key;
+                selectedSpecs.forEach((key) => {
+                  const spec = specificationsData.flatMap((s) => s.items).find((item) => item.key === key);
+                  if (spec) chips.push({ key: `spec_${key}`, label: spec.label, onClear: () => setSelectedSpecs((prev) => prev.filter((k) => k !== key)) });
                 });
-                activeFilters.push(...specLabels);
               }
-
-              return activeFilters.length > 0
-                ? `Search for: ${activeFilters.join(', ')}`
-                : '';
+              if (selectedYearMin || selectedYearMax) {
+                const label =
+                  selectedYearMin && selectedYearMax
+                    ? `${selectedYearMin} – ${selectedYearMax}`
+                    : selectedYearMin
+                      ? `≥ ${selectedYearMin}`
+                      : `≤ ${selectedYearMax}`;
+                chips.push({
+                  key: 'year',
+                  label,
+                  onClear: () => {
+                    setSelectedYearMin(null);
+                    setSelectedYearMax(null);
+                  }
+                });
+              }
+              return chips.length > 0
+                ? chips.map((chip) => (
+                    <button
+                      key={chip.key}
+                      onClick={chip.onClear}
+                      className="inline-flex items-center gap-1.5 px-3 h-[26px] rounded-full bg-articblue/10 text-articblue text-13 font-medium hover:bg-articblue/20 transition-colors"
+                    >
+                      {chip.label}
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  ))
+                : null;
             })()}
+          </div>
+          {/* Compteur de résultats */}
+          <p className="text-oceanblue text-16 shrink-0">
+            {filteredBoats.length} result{filteredBoats.length !== 1 ? 's' : ''}
           </p>
-          {/* N'afficher le nombre de résultats que si on n'a pas searchResultsInfo (qui le contient déjà) */}
-          {!searchResultsInfo && (
-            <p className="text-oceanblue text-16 ">
-              {filteredBoats.length} result
-              {filteredBoats.length !== 1 ? 's' : ''}
-            </p>
-          )}
         </div>
       )}
 
@@ -1915,6 +2444,8 @@ export default function SpotlightBoats({
                         setSelectedCountry(null);
                         setSelectedSpecs([]);
                         setSelectedPrice([0, maxPrice]);
+                        setSelectedCondition(null);
+                        setSelectedYear(null);
                       }}
                       className="mt-4 px-6 py-2 bg-articblue text-fullwhite rounded-full hover:bg-oceanblue transition-colors"
                     >
@@ -1961,6 +2492,13 @@ export default function SpotlightBoats({
                           })
                         : 'Unknown';
 
+                      const suggestedBoostRaw =
+                        (boat as any).boostExpiresAt ||
+                        (boat as any).boost_expires_at;
+                      const suggestedIsBoosted =
+                        suggestedBoostRaw &&
+                        new Date(suggestedBoostRaw).getTime() > Date.now();
+
                       return (
                         <Link href={`/boat/${boat.id}`} key={boat.id}>
                           <div
@@ -1971,6 +2509,12 @@ export default function SpotlightBoats({
                           >
                             {/* Image */}
                             <div className="w-full sm:w-1/3 relative overflow-hidden min-h-[180px]">
+                              {suggestedIsBoosted && (
+                                <div className="absolute top-3 left-3 z-20 bg-articblue text-fullwhite text-xs font-medium px-3 py-1.5 rounded-md shadow-lg flex items-center gap-1">
+                                  <Rocket size={12} />
+                                  Boosted
+                                </div>
+                              )}
                               <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
                                 {countries.find(
                                   (country) => country.key === boat.country
@@ -1984,8 +2528,22 @@ export default function SpotlightBoats({
                                 />
                               </div>
 
-                              {hasValidImages && imageUrl && !failedImages.has(boat.id) ? (
+                              {hasValidImages &&
+                              imageUrl &&
+                              !failedImages.has(boat.id) ? (
                                 <img
+                                  ref={(node) => {
+                                    if (
+                                      node &&
+                                      node.complete &&
+                                      node.naturalWidth === 0
+                                    ) {
+                                      handleImageError(
+                                        boat.id,
+                                        imageUrl as string
+                                      );
+                                    }
+                                  }}
                                   src={imageUrl}
                                   alt={`${getModelLabel(boat.model)} photo`}
                                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -1997,7 +2555,12 @@ export default function SpotlightBoats({
                                       imageUrl as string
                                     )
                                   }
-                                  onError={() => handleImageError(boat.id, imageUrl as string)}
+                                  onError={() =>
+                                    handleImageError(
+                                      boat.id,
+                                      imageUrl as string
+                                    )
+                                  }
                                 />
                               ) : (
                                 <img
@@ -2025,7 +2588,10 @@ export default function SpotlightBoats({
                                     Price:{' '}
                                   </span>
                                   <span className="font-semibold text-oceanblue">
-                                    {formatPrice(Number(boat.price), boat.currency)}{' '}
+                                    {formatPrice(
+                                      Number(boat.price),
+                                      boat.currency
+                                    )}{' '}
                                     {getCurrencySymbol(boat.currency)}
                                   </span>
                                 </div>
@@ -2079,6 +2645,10 @@ export default function SpotlightBoats({
 
             const isPodium =
               (boat as any).productName?.toLowerCase() === 'podium';
+            const boostRaw =
+              (boat as any).boostExpiresAt || (boat as any).boost_expires_at;
+            const isBoosted =
+              boostRaw && new Date(boostRaw).getTime() > Date.now();
 
             return (
               <Link
@@ -2095,7 +2665,13 @@ export default function SpotlightBoats({
                   >
                     {isPodium && (
                       <div className="absolute top-3 left-3 z-20 bg-articblue text-fullwhite text-xs font-medium px-3 py-1.5 rounded-md shadow-2xl drop-shadow-2xl">
-                        À ne pas manquer
+                        Don’t miss
+                      </div>
+                    )}
+                    {isBoosted && !isPodium && (
+                      <div className="absolute top-3 left-3 z-20 bg-articblue text-fullwhite text-xs font-medium px-3 py-1.5 rounded-md shadow-lg flex items-center gap-1">
+                        <Rocket size={12} />
+                        Boosted
                       </div>
                     )}
                     {(boat as any).status === 'sold' && (
@@ -2115,8 +2691,19 @@ export default function SpotlightBoats({
                       />
                     </div>
 
-                    {hasValidImages && imageUrl && !failedImages.has(boat.id) ? (
+                    {hasValidImages &&
+                    imageUrl &&
+                    !failedImages.has(boat.id) ? (
                       <img
+                        ref={(node) => {
+                          if (
+                            node &&
+                            node.complete &&
+                            node.naturalWidth === 0
+                          ) {
+                            handleImageError(boat.id, imageUrl as string);
+                          }
+                        }}
                         src={imageUrl}
                         alt={`${getModelLabel(boat.model)} photo`}
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -2124,7 +2711,9 @@ export default function SpotlightBoats({
                         onLoad={() =>
                           logImageEvent('load', boat.id, imageUrl as string)
                         }
-                        onError={() => handleImageError(boat.id, imageUrl as string)}
+                        onError={() =>
+                          handleImageError(boat.id, imageUrl as string)
+                        }
                       />
                     ) : (
                       <img

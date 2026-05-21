@@ -10,6 +10,7 @@ export interface Boat {
   currency: string;
   specifications: string[];
   vat_paid: boolean;
+  year?: number | null;
   user?: {
     name: string | null;
     email: string | null;

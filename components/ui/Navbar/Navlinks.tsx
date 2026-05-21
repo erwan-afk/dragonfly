@@ -70,6 +70,7 @@ export default function Navlinks({
   const navLinks = [
     { href: '/forsale', label: 'For Sale' },
     { href: '/forum', label: 'Forum' },
+    { href: '/models', label: 'Models' },
     { href: '/useful-links', label: 'Useful Links' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/contact', label: 'Contact' }

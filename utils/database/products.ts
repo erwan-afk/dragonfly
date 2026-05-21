@@ -85,7 +85,7 @@ export const getBoatsFromDatabase = unstable_cache(
       // Ne récupérer que les bateaux avec le statut 'active' (payés)
       if (limit) {
         boats = await prisma.$queryRaw`
-          SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+          SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at,
                  u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
                  p.name as product_name
           FROM "boats" b
@@ -96,15 +96,17 @@ export const getBoatsFromDatabase = unstable_cache(
           ORDER BY
             CASE
               WHEN LOWER(p.name) LIKE '%podium%' THEN 1
-              WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
-              ELSE 3
+              WHEN b.boost_expires_at > NOW() THEN 2
+              WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 3
+              ELSE 4
             END ASC,
+            b.boosted_at DESC NULLS LAST,
             b.created_at DESC
           LIMIT ${limit}
         ` as any[];
       } else {
         boats = await prisma.$queryRaw`
-          SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count,
+          SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at,
                  u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
                  p.name as product_name
           FROM "boats" b
@@ -115,9 +117,11 @@ export const getBoatsFromDatabase = unstable_cache(
           ORDER BY
             CASE
               WHEN LOWER(p.name) LIKE '%podium%' THEN 1
-              WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
-              ELSE 3
+              WHEN b.boost_expires_at > NOW() THEN 2
+              WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 3
+              ELSE 4
             END ASC,
+            b.boosted_at DESC NULLS LAST,
             b.created_at DESC
         ` as any[];
       }
@@ -130,6 +134,8 @@ export const getBoatsFromDatabase = unstable_cache(
         viewCount: boat.view_count,
         specifications: boat.specifications,
         productName: boat.product_name || null,
+        boostedAt: boat.boosted_at,
+        boostExpiresAt: boat.boost_expires_at,
         user: {
           name: boat.user_name,
           email: boat.user_email,
@@ -152,6 +158,54 @@ export const getBoatsFromDatabase = unstable_cache(
     revalidate: 60, // Cache pendant 1 minute
     tags: ['boats']
   }
+);
+
+export const getBoatsByModel = unstable_cache(
+  async (modelKey: string, limit = 6) => {
+    try {
+      const boats = await prisma.$queryRaw`
+        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at,
+               u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
+               p.name as product_name
+        FROM "boats" b
+        LEFT JOIN "user" u ON b.user_id = u.id
+        LEFT JOIN "products" p ON b.product_id = p.id
+        WHERE b.status IN ('active', 'sold')
+        AND b.model = ${modelKey}
+        AND (b.expires_at IS NULL OR b.expires_at > NOW())
+        ORDER BY
+          CASE
+            WHEN LOWER(p.name) LIKE '%podium%' THEN 1
+            WHEN b.boost_expires_at > NOW() THEN 2
+            WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 3
+            ELSE 4
+          END ASC,
+          b.boosted_at DESC NULLS LAST,
+          b.created_at DESC
+        LIMIT ${limit}
+      ` as any[];
+
+      return boats.map((boat: any) => ({
+        ...boat,
+        price: parseFloat(boat.price.toString()),
+        createdAt: boat.created_at,
+        viewCount: boat.view_count,
+        productName: boat.product_name || null,
+        boostedAt: boat.boosted_at,
+        boostExpiresAt: boat.boost_expires_at,
+        user: {
+          name: boat.user_name,
+          email: boat.user_email,
+          avatar_url: boat.user_avatar_url
+        }
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching boats by model:', error);
+      return [];
+    }
+  },
+  ['boats-by-model'],
+  { revalidate: 60, tags: ['boats'] }
 );
 
 export async function getBoatById(id: string) {
