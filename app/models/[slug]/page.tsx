@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import ModelImage from '@/components/ui/ModelImage/ModelImage';
 import { notFound } from 'next/navigation';
 import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
 import Button from '@/components/ui/Button/Button';
@@ -61,7 +61,7 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
           </div>
         </div>
         <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-lightgrey">
-          <Image
+          <ModelImage
             src={model.image}
             alt={model.name}
             fill
@@ -177,7 +177,7 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
               className="group flex flex-row items-center gap-16 border border-stonegrey/30 hover:border-articblue/60 rounded-xl p-16 transition-colors duration-300"
             >
               <div className="relative w-[80px] h-[60px] rounded-md overflow-hidden flex-shrink-0">
-                <Image
+                <ModelImage
                   src={related.image}
                   alt={related.name}
                   fill

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import ModelImage from '@/components/ui/ModelImage/ModelImage';
 import { allModels } from '@/utils/models-data';
 
 export const metadata = {
@@ -31,7 +31,7 @@ export default function ModelsIndexPage() {
             className="group flex flex-col border border-stonegrey/30 hover:border-articblue/60 rounded-xl overflow-hidden transition-colors duration-300"
           >
             <div className="relative w-full aspect-[4/3] bg-stonegrey/20">
-              <Image
+              <ModelImage
                 src={model.image}
                 alt={model.name}
                 fill
