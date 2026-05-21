@@ -2445,7 +2445,8 @@ export default function SpotlightBoats({
                         setSelectedSpecs([]);
                         setSelectedPrice([0, maxPrice]);
                         setSelectedCondition(null);
-                        setSelectedYear(null);
+                        setSelectedYearMin(null);
+                        setSelectedYearMax(null);
                       }}
                       className="mt-4 px-6 py-2 bg-articblue text-fullwhite rounded-full hover:bg-oceanblue transition-colors"
                     >
