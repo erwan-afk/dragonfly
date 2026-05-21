@@ -1,7 +1,5 @@
-import LegalLayout, {
-  Section,
-  Placeholder
-} from '@/components/ui/LegalLayout/LegalLayout';
+import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
+import { legalConfig as c } from '@/utils/legal-config';
 
 export const metadata = {
   title: 'Legal Notice',
@@ -34,33 +32,28 @@ export default function LegalNoticePage() {
     >
       <Section id="publisher" title="1. Publisher of the website">
         <p>
-          The website is published by <Placeholder>Legal entity name</Placeholder>,
-          a <Placeholder>company form, e.g. SAS / SARL / sole proprietor</Placeholder>{' '}
-          with a share capital of <Placeholder>amount</Placeholder>, registered
-          under SIRET <Placeholder>SIRET number</Placeholder>, with its
-          registered office located at{' '}
-          <Placeholder>full postal address</Placeholder>.
+          The website is published by <strong>{c.entityName}</strong>, a{' '}
+          {c.companyForm} with a share capital of {c.shareCapital}, registered
+          under SIRET <strong>{c.siret}</strong>, with its registered office
+          located at {c.address}.
         </p>
         <ul>
           <li>
-            <strong>Director of publication:</strong>{' '}
-            <Placeholder>Full name</Placeholder>
+            <strong>Director of publication:</strong> {c.publicationDirector}
           </li>
           <li>
-            <strong>Email:</strong> <Placeholder>contact email</Placeholder>
+            <strong>Email:</strong> {c.contactEmail}
           </li>
           <li>
-            <strong>VAT number:</strong>{' '}
-            <Placeholder>intra-EU VAT number if applicable</Placeholder>
+            <strong>VAT number:</strong> {c.vatNumber}
           </li>
         </ul>
       </Section>
 
       <Section id="host" title="2. Hosting provider">
         <p>
-          The website is hosted by <Placeholder>hosting company name</Placeholder>,
-          located at <Placeholder>full address of host</Placeholder>. Contact:{' '}
-          <Placeholder>support contact / website</Placeholder>.
+          The website is hosted by <strong>{c.hostName}</strong>, located at{' '}
+          {c.hostAddress}. Contact: {c.hostContact}.
         </p>
       </Section>
 
@@ -100,9 +93,8 @@ export default function LegalNoticePage() {
         <p>
           The structure, design, graphics, logos, and content of the site (apart
           from user-submitted content) are the exclusive property of{' '}
-          <Placeholder>Legal entity name</Placeholder> or its licensors.
-          Reproduction, even partial, is prohibited without prior written
-          permission.
+          <strong>{c.entityName}</strong> or its licensors. Reproduction, even
+          partial, is prohibited without prior written permission.
         </p>
         <p>
           Listings published by users (text, photos, videos) remain the property
@@ -130,12 +122,6 @@ export default function LegalNoticePage() {
           <a href="/contact">contact form</a>.
         </p>
       </Section>
-
-      <p className="text-13 text-darkgrey italic">
-        Note: this document is a template provided for compliance purposes. It
-        must be reviewed and completed by a qualified professional before being
-        published.
-      </p>
     </LegalLayout>
   );
 }

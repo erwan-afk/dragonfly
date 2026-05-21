@@ -1,7 +1,5 @@
-import LegalLayout, {
-  Section,
-  Placeholder
-} from '@/components/ui/LegalLayout/LegalLayout';
+import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
+import { legalConfig as c } from '@/utils/legal-config';
 
 export const metadata = {
   title: 'Privacy Policy',
@@ -39,14 +37,13 @@ export default function PrivacyPage() {
     >
       <Section id="controller" title="1. Data controller">
         <p>
-          The data controller is <Placeholder>Legal entity name</Placeholder>,
-          located at <Placeholder>full postal address</Placeholder>. You can
-          contact us at <Placeholder>privacy contact email</Placeholder> or via
-          our <a href="/contact">contact form</a>.
+          The data controller is <strong>{c.entityName}</strong>, located at{' '}
+          {c.address}. You can contact us at {c.privacyEmail} or via our{' '}
+          <a href="/contact">contact form</a>.
         </p>
         <p>
           We have not appointed a Data Protection Officer (DPO) as we are not
-          legally required to do so. <Placeholder>Adjust if you have a DPO</Placeholder>
+          legally required to do so.
         </p>
       </Section>
 
@@ -83,9 +80,7 @@ export default function PrivacyPage() {
         </ul>
         <h3>Communication data</h3>
         <ul>
-          <li>
-            Messages you send through the contact form or by email
-          </li>
+          <li>Messages you send through the contact form or by email</li>
         </ul>
       </Section>
 
@@ -160,10 +155,7 @@ export default function PrivacyPage() {
             Google OAuth sign-in
           </li>
           <li>
-            <strong>
-              <Placeholder>hosting provider, e.g. Hostinger</Placeholder>
-            </strong>{' '}
-            — VM hosting via Coolify
+            <strong>{c.hostName}</strong> — VM hosting via Coolify
           </li>
         </ul>
       </Section>
@@ -234,12 +226,6 @@ export default function PrivacyPage() {
           top reflects the latest version.
         </p>
       </Section>
-
-      <p className="text-13 text-darkgrey italic">
-        Note: this document is a template provided for compliance purposes. It
-        must be reviewed and completed by a qualified professional before being
-        published.
-      </p>
     </LegalLayout>
   );
 }

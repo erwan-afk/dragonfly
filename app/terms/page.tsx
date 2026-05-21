@@ -1,7 +1,5 @@
-import LegalLayout, {
-  Section,
-  Placeholder
-} from '@/components/ui/LegalLayout/LegalLayout';
+import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
+import { legalConfig as c } from '@/utils/legal-config';
 
 export const metadata = {
   title: 'Terms of Use',
@@ -96,9 +94,7 @@ export default function TermsPage() {
             unrelated to Dragonfly trimarans or to legitimate boat-related
             activity;
           </li>
-          <li>
-            duplicate of an existing active listing for the same boat.
-          </li>
+          <li>duplicate of an existing active listing for the same boat.</li>
         </ul>
       </Section>
 
@@ -114,10 +110,10 @@ export default function TermsPage() {
       <Section id="ip" title="7. Intellectual property">
         <p>
           The structure, graphics and software of the Service are the property
-          of <Placeholder>Legal entity name</Placeholder>. By publishing
-          content on the Service, you grant us a non-exclusive, royalty-free,
-          worldwide license to host, display and promote your listing within
-          the Service for as long as the listing remains online.
+          of <strong>{c.entityName}</strong>. By publishing content on the
+          Service, you grant us a non-exclusive, royalty-free, worldwide
+          license to host, display and promote your listing within the Service
+          for as long as the listing remains online.
         </p>
       </Section>
 
@@ -161,12 +157,6 @@ export default function TermsPage() {
           shall have exclusive jurisdiction.
         </p>
       </Section>
-
-      <p className="text-13 text-darkgrey italic">
-        Note: this document is a template provided for compliance purposes. It
-        must be reviewed and completed by a qualified professional before being
-        published.
-      </p>
     </LegalLayout>
   );
 }

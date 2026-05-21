@@ -1,7 +1,5 @@
-import LegalLayout, {
-  Section,
-  Placeholder
-} from '@/components/ui/LegalLayout/LegalLayout';
+import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
+import { legalConfig as c } from '@/utils/legal-config';
 
 export const metadata = {
   title: 'Sales Terms',
@@ -47,10 +45,8 @@ export default function SalesTermsPage() {
 
       <Section id="seller" title="2. Seller identification">
         <p>
-          Seller: <Placeholder>Legal entity name</Placeholder>, SIRET{' '}
-          <Placeholder>SIRET</Placeholder>, registered office at{' '}
-          <Placeholder>full address</Placeholder>. Contact:{' '}
-          <Placeholder>email</Placeholder>.
+          Seller: <strong>{c.entityName}</strong>, SIRET <strong>{c.siret}</strong>,
+          registered office at {c.address}. Contact: {c.contactEmail}.
         </p>
       </Section>
 
@@ -117,24 +113,21 @@ export default function SalesTermsPage() {
       <Section id="invoice" title="8. Invoicing">
         <p>
           An electronic invoice is issued for every paid order and made
-          available in your account dashboard or by email.{' '}
-          <Placeholder>
-            Adjust if invoices are not yet automated
-          </Placeholder>
-          .
+          available in your account dashboard or by email. {c.invoiceNote}.
         </p>
       </Section>
 
       <Section id="complaints" title="9. Complaints and mediation">
         <p>
-          For any complaint, please first contact us at{' '}
-          <Placeholder>contact email</Placeholder> or via the{' '}
-          <a href="/contact">contact form</a>. If no satisfactory solution is
-          found within 60 days, consumers domiciled in the European Union may
-          refer the dispute to a consumer mediator:
+          For any complaint, please first contact us at {c.contactEmail} or
+          via the <a href="/contact">contact form</a>. If no satisfactory
+          solution is found within 60 days, consumers domiciled in the
+          European Union may refer the dispute to a consumer mediator:
         </p>
         <p>
-          <Placeholder>Mediator name and URL</Placeholder>
+          <a href={c.mediatorUrl} target="_blank" rel="noopener noreferrer">
+            {c.mediatorName}
+          </a>
         </p>
         <p>
           Consumers may also use the European Online Dispute Resolution
@@ -157,12 +150,6 @@ export default function SalesTermsPage() {
           jurisdiction.
         </p>
       </Section>
-
-      <p className="text-13 text-darkgrey italic">
-        Note: this document is a template provided for compliance purposes. It
-        must be reviewed and completed by a qualified professional before being
-        published.
-      </p>
     </LegalLayout>
   );
 }
