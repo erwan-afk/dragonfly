@@ -145,32 +145,51 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
       }
     }
 
-    // Utilisons SQL brut pour éviter les problèmes de schéma
-    // Ne récupérer que les bateaux avec le statut 'active' (payés)
-    const boats = (await prisma.$queryRawUnsafe(
-      `
-      SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at, b.condition, b.year,
-             u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
-             p.name as product_name
-      FROM "boats" b
-      LEFT JOIN "user" u ON b.user_id = u.id
-      LEFT JOIN "products" p ON b.product_id = p.id
-      WHERE ${whereClause}
-      ORDER BY
-        CASE
+    // Detect whether new columns exist (added in migration 20260521)
+    let hasNewColumns = false;
+    try {
+      await prisma.$queryRawUnsafe(`SELECT b.year FROM "boats" b LIMIT 1`);
+      hasNewColumns = true;
+    } catch {
+      hasNewColumns = false;
+    }
+
+    const selectCols = hasNewColumns
+      ? `b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at, b.condition, b.year`
+      : `b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, NULL::timestamp as boosted_at, NULL::timestamp as boost_expires_at, b.condition, NULL::int as year`;
+
+    const orderByClause = hasNewColumns
+      ? `CASE
           WHEN LOWER(p.name) LIKE '%podium%' THEN 1
           WHEN b.boost_expires_at > NOW() THEN 2
           WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 3
           ELSE 4
         END ASC,
         b.boosted_at DESC NULLS LAST,
-        ${orderBy}
+        ${orderBy}`
+      : `CASE
+          WHEN LOWER(p.name) LIKE '%podium%' THEN 1
+          WHEN LOWER(p.name) LIKE '%mid-course%' OR LOWER(p.name) LIKE '%mid course%' THEN 2
+          ELSE 3
+        END ASC,
+        ${orderBy}`;
+
+    const boats = (await prisma.$queryRawUnsafe(
+      `
+      SELECT ${selectCols},
+             u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
+             p.name as product_name
+      FROM "boats" b
+      LEFT JOIN "user" u ON b.user_id = u.id
+      LEFT JOIN "products" p ON b.product_id = p.id
+      WHERE ${whereClause}
+      ORDER BY ${orderByClause}
     `,
       ...sqlParams
     )) as any[];
 
     if (isDev) {
-      console.log('✅ Boats loaded:', boats.length);
+      console.log('✅ Boats loaded:', boats.length, hasNewColumns ? '(full schema)' : '(compat mode)');
     }
 
     // Si aucun résultat avec les filtres, récupérer des bateaux suggérés
@@ -189,7 +208,7 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     if (boats.length === 0 && hasUrlFilters) {
       suggestedBoats = (await prisma.$queryRawUnsafe(
         `
-        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at, b.condition, b.year,
+        SELECT ${selectCols},
                u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
                p.name as product_name
         FROM "boats" b
