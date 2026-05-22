@@ -151,3 +151,4 @@ external/
 
 # Debug snapshots
 snapshot*.txt
+docs/

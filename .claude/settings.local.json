@@ -75,7 +75,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3002/api/boats)",
       "PowerShell(Get-ChildItem -Path \"D:\\\\Applications\\\\dragonfly\\\\app\" -Recurse -Directory | Where-Object {$_.Name -match '\\\\[' -or $_.Name -match 'model'} | Select-Object -ExpandProperty FullName)",
       "Bash(node -e 'const{PrismaClient}=require\\('\\\\''@prisma/client'\\\\''\\);const p=new PrismaClient\\(\\);p.product.findMany\\({where:{active:true},select:{name:true}}\\).then\\(r=>{console.log\\(r\\);return p.$disconnect\\(\\)}\\).catch\\(e=>{console.error\\(e.message\\);process.exit\\(1\\)}\\);')",
-      "Bash(grep -v \"\\\\.json$\\\\|\\\\.js\\\\.map$\")"
+      "Bash(grep -v \"\\\\.json$\\\\|\\\\.js\\\\.map$\")",
+      "Bash(git show *)"
     ]
   }
 }
