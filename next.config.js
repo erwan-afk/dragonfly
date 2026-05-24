@@ -82,8 +82,8 @@ const nextConfig = {
         // Next.js needs unsafe-eval in dev for React Fast Refresh; keep it out of production.
         const isDev = process.env.NODE_ENV !== 'production';
         const scriptSrc = isDev
-            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.google.com https://www.gstatic.com"
-            : "'self' 'unsafe-inline' https://js.stripe.com https://www.google.com https://www.gstatic.com";
+            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com"
+            : "'self' 'unsafe-inline' https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com";
 
         const csp = [
             "default-src 'self'",
@@ -93,7 +93,7 @@ const nextConfig = {
             // Stripe elements run in iframes.
             "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com",
             // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT) + reCAPTCHA.
-            "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://forum.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com",
+            "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://forum.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com",
             "font-src 'self' data: https:",
             "object-src 'none'",
             "base-uri 'self'",
