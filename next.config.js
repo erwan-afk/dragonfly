@@ -93,7 +93,7 @@ const nextConfig = {
             // Stripe elements run in iframes.
             "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com",
             // Stripe telemetry + APIs + direct-to-R2 uploads (signed URL PUT) + reCAPTCHA.
-            "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://forum.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com",
+            "connect-src 'self' https://dragonfly-trimarans.org https://www.dragonfly-trimarans.org https://forum.dragonfly-trimarans.org https://api.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com https://*.stripe.network https://*.r2.cloudflarestorage.com https://www.google.com https://www.gstatic.com https://accounts.google.com https://*.google-analytics.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com",
             "font-src 'self' data: https:",
             "object-src 'none'",
             "base-uri 'self'",
