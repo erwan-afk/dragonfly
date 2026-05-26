@@ -12,9 +12,9 @@ import {
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Pricing - Dragonfly Trimarans',
+  title: 'Pricing - 3Hulls',
   description:
-    'View our pricing plans for advertising your Dragonfly trimaran. Choose the best package that suits your needs and budget.'
+    'View our pricing plans for advertising your trimaran. Choose the best package that suits your needs and budget.'
 };
 
 export default async function PricingPage() {

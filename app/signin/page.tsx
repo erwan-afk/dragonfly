@@ -3,7 +3,7 @@ import SignInWrapper from '@/components/ui/SignInWrapper';
 
 // Add metadata to help with loading
 export const metadata = {
-  title: 'Sign In - Dragonfly'
+  title: 'Sign In - 3Hulls'
 };
 
 export default function SignIn({

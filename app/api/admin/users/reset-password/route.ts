@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.BETTER_AUTH_URL;
 
     await transporter.sendMail({
-      from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
+      from: `"3Hulls" <${process.env.SMTP_USER}>`,
       to: targetUser.email,
-      subject: 'Your password has been reset - Dragonfly Trimarans',
+      subject: 'Your password has been reset - 3Hulls',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #1e3a5f;">Password Reset</h2>
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           <p>Please <a href="${baseUrl}/signin" style="color: #1e3a5f; font-weight: bold;">sign in</a> with this temporary password and change it immediately in your account settings.</p>
           <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;" />
           <p style="color: #888; font-size: 12px;">If you did not expect this email, please contact our support team.</p>
-          <p style="color: #888; font-size: 12px;">Dragonfly Trimarans</p>
+          <p style="color: #888; font-size: 12px;">3Hulls</p>
         </div>
       `
     });

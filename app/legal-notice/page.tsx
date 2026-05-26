@@ -3,7 +3,7 @@ import { legalConfig as c } from '@/utils/legal-config';
 
 export const metadata = {
   title: 'Legal Notice',
-  description: 'Legal information about the Dragonfly Trimarans Marketplace.'
+  description: 'Legal information about the 3Hulls Marketplace.'
 };
 
 const sections = [
@@ -24,7 +24,7 @@ export default function LegalNoticePage() {
       intro={
         <p>
           This page provides legal information about the publisher and host of
-          the Dragonfly Trimarans Marketplace website, in compliance with the
+          the 3Hulls Marketplace website, in compliance with the
           French Law for Confidence in the Digital Economy (LCEN) of June 21,
           2004.
         </p>

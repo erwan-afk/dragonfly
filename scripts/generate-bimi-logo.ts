@@ -45,7 +45,7 @@ async function main() {
 
   const bimiSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 512 512">
-  <title>Dragonfly Trimarans</title>
+  <title>3Hulls</title>
   <rect width="512" height="512" fill="#235B68"/>
   <g transform="translate(${tx.toFixed(2)},${ty.toFixed(2)}) scale(${scale.toFixed(4)})" fill="#FDFDFD">
 ${paths.map((d) => `    <path d="${d}"/>`).join('\n')}

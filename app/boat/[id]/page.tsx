@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       url: pageUrl,
       title,
       description,
-      siteName: 'Dragonfly',
+      siteName: '3Hulls',
       images: [{ url: ogImage, width: 1200, height: 630, alt: modelLabel }]
     },
     twitter: {

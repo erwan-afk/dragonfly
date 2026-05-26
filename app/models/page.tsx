@@ -3,7 +3,7 @@ import ModelImage from '@/components/ui/ModelImage/ModelImage';
 import { allModels } from '@/utils/models-data';
 
 export const metadata = {
-  title: 'Dragonfly Models | Dragonfly Trimarans Marketplace',
+  title: 'Dragonfly Models | 3Hulls',
   description:
     'Discover the full range of Dragonfly folding trimarans, from the compact Dragonfly 25 to the offshore-capable Dragonfly 40.'
 };

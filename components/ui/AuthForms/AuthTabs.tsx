@@ -38,7 +38,7 @@ export default function AuthTabs({
         </h1>
         <p className="text-base text-darkgrey text-center">
           {mode === 'signup'
-            ? 'Create your Dragonfly account'
+            ? 'Create your 3Hulls account'
             : mode === 'forgot_password'
               ? "Enter your email and we'll send you a reset link"
               : 'Sign in to your account'}
@@ -92,7 +92,7 @@ export default function AuthTabs({
                   </button>
                 </p>
                 <p className="text-16 text-darkgrey">
-                  New to Dragonfly?{' '}
+                  New to 3Hulls?{' '}
                   <button
                     type="button"
                     className="text-articblue cursor-pointer hover:underline bg-transparent border-none p-0"

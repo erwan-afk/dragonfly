@@ -5,9 +5,9 @@ import ForumSection from '@/components/ForumSection';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Forum - Dragonfly Trimarans',
+  title: 'Forum - 3Hulls',
   description:
-    'Engage with fellow Dragonfly trimaran enthusiasts, share insights, and get answers to your questions about sailing, maintenance, and more.'
+    'Engage with fellow trimaran enthusiasts, share insights, and get answers to your questions about sailing, maintenance, and more.'
 };
 
 export default function ForumPage() {

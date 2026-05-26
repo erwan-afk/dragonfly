@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
 
     // Préparation de l'email
     const mailOptions = {
-      from: `"Contact Dragonfly" <${process.env.SMTP_USER}>`,
+      from: `"Contact 3Hulls" <${process.env.SMTP_USER}>`,
       to: process.env.CONTACT_EMAIL,
       subject: `[Contact] ${sanitizedData.subject}`,
       replyTo: sanitizedData.email,
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
 
           <p style="color: #6b7280; font-size: 12px; margin: 0; text-align: center;">
-            Sent from the Dragonfly Trimarans contact form
+            Sent from the 3Hulls contact form
           </p>
         </div>
       `,

@@ -95,16 +95,16 @@ export const auth = betterAuth({
           </div>
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; font-size: 12px; text-align: center;">
-            This email was sent automatically by Dragonfly Trimarans.
+            This email was sent automatically by 3Hulls.
           </p>
         </div>
       `;
 
-      const text = `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\nDragonfly Trimarans`;
+      const text = `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\n3Hulls`;
 
       try {
         await transporter.sendMail({
-          from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
+          from: `"3Hulls" <${process.env.SMTP_USER}>`,
           to: user.email,
           subject: 'Reset your password',
           html,
@@ -139,10 +139,10 @@ export const auth = betterAuth({
 
       try {
         await transporter.sendMail({
-          from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
+          from: `"3Hulls" <${process.env.SMTP_USER}>`,
           to: user.email,
           subject: 'Verify your email address',
-          text: `Hello ${user.name || 'there'},\n\nPlease verify your email address by clicking the link below:\n${url}\n\nDragonfly Trimarans`,
+          text: `Hello ${user.name || 'there'},\n\nPlease verify your email address by clicking the link below:\n${url}\n\n3Hulls`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <h1 style="color: #1e3a8a; text-align: center;">Verify your email</h1>
@@ -162,7 +162,7 @@ export const auth = betterAuth({
               </div>
               <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
               <p style="color: #6b7280; font-size: 12px; text-align: center;">
-                This email was sent automatically by Dragonfly Trimarans.
+                This email was sent automatically by 3Hulls.
               </p>
             </div>
           `,

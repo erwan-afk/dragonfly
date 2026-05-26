@@ -4,7 +4,7 @@ import CookieSettingsButton from '@/components/ui/CookieConsent/CookieSettingsBu
 export const metadata = {
   title: 'Cookie Policy',
   description:
-    'How Dragonfly Trimarans Marketplace uses cookies and how you can manage them.'
+    'How 3Hulls uses cookies and how you can manage them.'
 };
 
 const sections = [
@@ -25,7 +25,7 @@ export default function CookiePolicyPage() {
       intro={
         <p>
           This Cookie Policy explains what cookies are, which ones we use on
-          the Dragonfly Trimarans Marketplace, and how you can manage them.
+          3Hulls, and how you can manage them.
           See our <a href="/privacy">Privacy Policy</a> for more on personal
           data processing.
         </p>
@@ -91,7 +91,7 @@ export default function CookiePolicyPage() {
                   Authentication session
                 </td>
                 <td className="p-8 border border-stonegrey/20">7 days</td>
-                <td className="p-8 border border-stonegrey/20">Dragonfly</td>
+                <td className="p-8 border border-stonegrey/20">3Hulls</td>
               </tr>
               <tr>
                 <td className="p-8 border border-stonegrey/20 font-mono">
@@ -102,7 +102,7 @@ export default function CookiePolicyPage() {
                   Stores your cookie preferences (local storage)
                 </td>
                 <td className="p-8 border border-stonegrey/20">12 months</td>
-                <td className="p-8 border border-stonegrey/20">Dragonfly</td>
+                <td className="p-8 border border-stonegrey/20">3Hulls</td>
               </tr>
               <tr>
                 <td className="p-8 border border-stonegrey/20 font-mono">

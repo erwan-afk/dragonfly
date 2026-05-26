@@ -4,7 +4,7 @@ import { legalConfig as c } from '@/utils/legal-config';
 export const metadata = {
   title: 'Terms of Use',
   description:
-    'Terms governing the use of the Dragonfly Trimarans Marketplace.'
+    'Terms governing the use of the 3Hulls Marketplace.'
 };
 
 const sections = [
@@ -28,8 +28,7 @@ export default function TermsPage() {
       sections={sections}
       intro={
         <p>
-          These Terms of Use govern the use of the Dragonfly Trimarans
-          Marketplace website (the "Service"). By creating an account or using
+          These Terms of Use govern the use of the 3Hulls Marketplace website (the "Service"). By creating an account or using
           the Service, you accept these Terms in full. For sales of paid plans,
           see also our <a href="/sales-terms">Sales Terms</a>.
         </p>

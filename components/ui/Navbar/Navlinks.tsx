@@ -86,11 +86,11 @@ export default function Navlinks({
         <div className="flex justify-between items-center flex-1 font-medium">
           <div className="flex flex-row gap-[20px] md:gap-[50px] items-center">
             <Link href="/" aria-label="Logo">
-              <span className="sm:hidden">
-                <Logo small />
+              <span className="sm:hidden ">
+                <Logo small className="text-articblue" />
               </span>
               <span className="hidden sm:inline">
-                <Logo />
+                <Logo className="text-articblue" />
               </span>
             </Link>
             {/* Desktop nav */}

@@ -33,7 +33,7 @@ export function buildBoatJsonLd(
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: boat.model,
-    description: boat.description || `${boat.model} listed on Dragonfly Yachts`,
+    description: boat.description || `${boat.model} listed on 3Hulls`,
     image: images.length > 0 ? images : undefined,
     sku: boat.id,
     offers: {

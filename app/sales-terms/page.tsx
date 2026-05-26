@@ -4,7 +4,7 @@ import { legalConfig as c } from '@/utils/legal-config';
 export const metadata = {
   title: 'Sales Terms',
   description:
-    'Terms of sale for advertising plans on Dragonfly Trimarans Marketplace.'
+    'Terms of sale for advertising plans on 3Hulls.'
 };
 
 const sections = [
@@ -29,7 +29,7 @@ export default function SalesTermsPage() {
       intro={
         <p>
           These Sales Terms govern the purchase of paid advertising plans on
-          the Dragonfly Trimarans Marketplace. They are accepted by the buyer
+          3Hulls. They are accepted by the buyer
           upon confirmation of the order. They complete, without replacing,
           our <a href="/terms">Terms of Use</a>.
         </p>

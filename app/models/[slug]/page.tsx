@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: ModelPageProps) {
   const model = getModelData(params.slug);
   if (!model) return { title: 'Model not found' };
   return {
-    title: `${model.name} | Dragonfly Trimarans Marketplace`,
+    title: `${model.name} | 3Hulls`,
     description: model.tagline
   };
 }

@@ -4,7 +4,7 @@ import { legalConfig as c } from '@/utils/legal-config';
 export const metadata = {
   title: 'Privacy Policy',
   description:
-    'How Dragonfly Trimarans Marketplace collects, uses and protects your personal data.'
+    'How 3Hulls collects, uses and protects your personal data.'
 };
 
 const sections = [
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       sections={sections}
       intro={
         <p>
-          This Privacy Policy explains how Dragonfly Trimarans Marketplace
+          This Privacy Policy explains how 3Hulls
           collects, uses, shares and protects your personal data in accordance
           with Regulation (EU) 2016/679 (GDPR) and the French Data Protection
           Act.

@@ -14,7 +14,7 @@ import CookieConsent from '@/components/ui/CookieConsent/CookieConsent';
 import Analytics from '@/components/Analytics';
 
 const meta = {
-  title: "Dragonfly - The Automated Marketplace You've Been Waiting For",
+  title: "3Hulls - The Automated Marketplace You've Been Waiting For",
   description:
     'Transform your business with our automated marketplace platform. Streamline workflows, boost productivity, and scale effortlessly with AI-powered automation tools.',
   cardImage: '/images/dragonfly-boat.webp',
@@ -23,7 +23,7 @@ const meta = {
   url: getURL(),
   locale: 'en_US',
   type: 'website',
-  siteName: 'Dragonfly'
+  siteName: '3Hulls'
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: {
       default: meta.title,
-      template: '%s | Dragonfly'
+      template: '%s | 3Hulls'
     },
     description: meta.description,
     keywords: [
@@ -50,9 +50,9 @@ export async function generateMetadata(): Promise<Metadata> {
       'digital marketplace',
       'business automation'
     ],
-    authors: [{ name: 'Dragonfly Team' }],
-    creator: 'Dragonfly',
-    publisher: 'Dragonfly',
+    authors: [{ name: '3Hulls Team' }],
+    creator: '3Hulls',
+    publisher: '3Hulls',
     formatDetection: {
       email: false,
       address: false,
@@ -87,13 +87,13 @@ export async function generateMetadata(): Promise<Metadata> {
       url: canonicalUrl,
       title: meta.title,
       description: meta.description,
-      siteName: 'Dragonfly',
+      siteName: '3Hulls',
       images: [
         {
           url: meta.cardImage,
           width: 1200,
           height: 630,
-          alt: 'Dragonfly - The Automated Marketplace'
+          alt: '3Hulls - The Automated Marketplace'
         }
       ]
     },
@@ -124,7 +124,7 @@ interface LayoutsProps {
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'Dragonfly',
+  name: '3Hulls',
   description: "The Automated Marketplace You've Been Waiting For",
   url: meta.url,
   potentialAction: {
@@ -137,7 +137,7 @@ const structuredData = {
   },
   publisher: {
     '@type': 'Organization',
-    name: 'Dragonfly',
+    name: '3Hulls',
     url: meta.url,
     logo: {
       '@type': 'ImageObject',

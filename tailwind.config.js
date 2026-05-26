@@ -32,7 +32,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans]
+        sans: ['var(--font-sans)', ...fontFamily.sans],
+        oswald: ['Oswald', ...fontFamily.sans]
       },
       spacing: {
         64: '64px',

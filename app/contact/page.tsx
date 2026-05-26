@@ -318,11 +318,11 @@ export default function ContactPage() {
         <div className="z-10 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-xl">
-              &ldquo;The Dragonfly team responded quickly and helped me find the
+              &ldquo;The 3Hulls team responded quickly and helped me find the
               perfect trimaran. Excellent support!&rdquo;
             </p>
             <footer className="font-mono font-semibold text-sm">
-              ~ Dragonfly User
+              ~ 3Hulls User
             </footer>
           </blockquote>
         </div>

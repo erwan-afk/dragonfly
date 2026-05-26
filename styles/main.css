@@ -25,7 +25,14 @@ html {
 @font-face {
   font-family: 'General Sans';
   src: url('/fonts/GeneralSans-Variable.ttf') format('truetype');
-  font-weight: 100 900; /* Vous pouvez ajuster les poids si nécessaire */
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  src: url('/fonts/Oswald-VariableFont_wght.ttf') format('truetype');
+  font-weight: 200 700;
   font-style: normal;
 }
 

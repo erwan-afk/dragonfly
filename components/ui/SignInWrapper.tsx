@@ -46,7 +46,7 @@ export default function SignInWrapper({ children }: SignInWrapperProps) {
               clients faster than ever before.&rdquo;
             </p>
             <footer className="font-mono font-semibold text-sm">
-              ~ Dragonfly User
+              ~ 3Hulls User
             </footer>
           </blockquote>
         </div>

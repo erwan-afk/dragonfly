@@ -41,7 +41,7 @@ function emailWrapper(content: string): string {
       ${content}
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
       <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-        This email was sent automatically by Dragonfly Trimarans.
+        This email was sent automatically by 3Hulls.
       </p>
     </div>
   `;
@@ -132,7 +132,7 @@ function templateExpired(userName: string, boatModel: string, expiryDate: Date, 
 async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
   try {
     await transporter.sendMail({
-      from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
+      from: `"3Hulls" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
@@ -188,7 +188,7 @@ async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
 
     const daysLeft = Math.ceil((boat.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     const html = template7d(boat.user.name || 'there', boat.model, boat.expiresAt, daysLeft, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expires on ${formatDate(boat.expiresAt)} (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\nDragonfly Trimarans`;
+    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expires on ${formatDate(boat.expiresAt)} (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
     const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`, html, text);
 
     if (ok) {
@@ -229,7 +229,7 @@ async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
     }
 
     const html = template1d(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nLast reminder: your listing for the ${boat.model} expires tomorrow (${formatDate(boat.expiresAt)}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\nDragonfly Trimarans`;
+    const text = `Hello ${boat.user.name || 'there'},\n\nLast reminder: your listing for the ${boat.model} expires tomorrow (${formatDate(boat.expiresAt)}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
     const ok = await sendEmail(boat.user.email, `Last chance: your listing "${boat.model}" expires tomorrow`, html, text);
 
     if (ok) {
@@ -275,7 +275,7 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
     }
 
     const html = templateExpired(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expired on ${formatDate(boat.expiresAt)} and is no longer visible on the site.\n\nRe-publish it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\nDragonfly Trimarans`;
+    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expired on ${formatDate(boat.expiresAt)} and is no longer visible on the site.\n\nRe-publish it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
     const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" has expired`, html, text);
 
     if (ok) {

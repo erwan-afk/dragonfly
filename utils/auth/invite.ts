@@ -129,7 +129,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
 
       <!-- Header -->
       <div style="background-color: #235B68; padding: 28px 24px; text-align: center; border-radius: 12px 12px 0 0;">
-        <img src="${baseUrl}/logo-white.png" alt="Dragonfly Trimarans" width="130" height="60"
+        <img src="${baseUrl}/logo-white.png" alt="3Hulls" width="130" height="60"
              style="display: inline-block; max-width: 130px; height: auto;" />
       </div>
 
@@ -137,7 +137,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
       <div style="padding: 32px 28px;">
 
         <h1 style="color: #235B68; text-align: center; font-size: 22px; font-weight: 700; margin: 0 0 28px; line-height: 1.3;">
-          Your listing is now live on the new Dragonfly Trimarans platform
+          Your listing is now live on the new 3Hulls platform
         </h1>
 
         <div style="background-color: #ECEFF5; padding: 28px; border-radius: 12px;">
@@ -145,7 +145,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
             Hello <strong>${firstName}</strong>,
           </p>
           <p style="font-size: 16px; line-height: 1.6; margin: 0 0 16px; color: #26282A;">
-            The Dragonfly Trimarans User Forum has a new home. We've upgraded our marketplace to make it easier to buy and sell Dragonfly trimarans — and your listing has already been transferred over.
+            The 3Hulls User Forum has a new home. We've upgraded our marketplace to make it easier to buy and sell Dragonfly trimarans — and your listing has already been transferred over.
           </p>
           <p style="font-size: 16px; line-height: 1.6; margin: 0 0 24px; color: #26282A;">
             To manage your listing, update its details, or renew it when the time comes, simply create your password below. Your account is ready and waiting for you.
@@ -183,7 +183,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
       <!-- Footer -->
       <div style="background-color: #26282A; padding: 36px 24px; border-radius: 0 0 12px 12px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <img src="${baseUrl}/logo-white.png" alt="Dragonfly Trimarans" width="100" height="46"
+          <img src="${baseUrl}/logo-white.png" alt="3Hulls" width="100" height="46"
                style="display: inline-block; max-width: 100px; height: auto; opacity: 0.85;" />
         </div>
         <div style="text-align: center; margin-bottom: 20px;">
@@ -194,11 +194,11 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
           <a href="${baseUrl}/privacy" style="color: #A4B4BB; font-size: 13px; text-decoration: none; margin: 0 10px;">Privacy</a>
         </div>
         <p style="color: #CCD5DB; font-size: 12px; text-align: center; margin: 0 0 12px;">
-          You received this because your listing was transferred from the Dragonfly Trimarans User Forum.<br>
+          You received this because your listing was transferred from the 3Hulls User Forum.<br>
           Questions? <a href="mailto:administrator@dragonfly-trimarans.org" style="color: #58A4A7; text-decoration: none;">administrator@dragonfly-trimarans.org</a>
         </p>
         <p style="color: #A4B4BB; font-size: 11px; text-align: center; margin: 0;">
-          All rights reserved by Dragonfly Trimarans Marketplace &nbsp;·&nbsp; © 2026 Dragonfly
+          All rights reserved by 3Hulls &nbsp;·&nbsp; © 2026 Dragonfly
         </p>
       </div>
 
@@ -208,7 +208,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
   const text = [
     `Hello ${firstName},`,
     '',
-    `The Dragonfly Trimarans User Forum has a new home. We've upgraded our marketplace to make it easier to buy and sell Dragonfly trimarans — and your listing has already been transferred over.`,
+    `The 3Hulls User Forum has a new home. We've upgraded our marketplace to make it easier to buy and sell Dragonfly trimarans — and your listing has already been transferred over.`,
     '',
     `To manage your listing, update its details, or renew it when the time comes, simply create your password below. Your account is ready and waiting for you.`,
     '',
@@ -216,7 +216,7 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
     '',
     `This link expires in 7 days. If you don't activate your account, your listing will remain visible but you won't be able to manage it online.`,
     '',
-    `— The Dragonfly Trimarans team`,
+    `— The 3Hulls team`,
     `This email was sent automatically. If you have any questions, contact us at administrator@dragonfly-trimarans.org.`,
   ].join('\n');
 
@@ -229,10 +229,10 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
 
   try {
     await transporter.sendMail({
-      from: `"Dragonfly Trimarans" <${process.env.SMTP_USER}>`,
+      from: `"3Hulls" <${process.env.SMTP_USER}>`,
       replyTo: 'administrator@dragonfly-trimarans.org',
       to: normalized,
-      subject: 'Dragonfly Trimarans User Forum — Your listing is now on the new platform',
+      subject: '3Hulls User Forum — Your listing is now on the new platform',
       html,
       text,
     });

@@ -18,10 +18,10 @@ export default function Footer() {
           </h1>
           <div className="w-full lg:w-2/3 text-center text-14 lg:text-16">
             Whether you're looking to sell your trimaran quickly and profitably,
-            or searching for your dream Dragonfly, our community provides the
+            or searching for your dream trimaran, our community provides the
             tools and connections you need. Sign up today to unlock the full
             potential of our automated marketplace and join a network of
-            dedicated Dragonfly enthusiasts.
+            dedicated trimaran enthusiasts.
           </div>
           <div className="flex flex-row gap-24">
             <Button
@@ -38,7 +38,7 @@ export default function Footer() {
         <div className="flex flex-col gap-24 md:gap-0 md:justify-between">
           <Logo footer />
           <p className="font-light max-w-[530px] text-14 lg:text-16">
-            Dragonfly Trimarans Marketplace. All rights reserved. Content
+            3Hulls. All rights reserved. Content
             submitted by users is the sole responsibility of the respective
             submitters. All trademarks and copyrights mentioned herein are
             acknowledged as the property of their respective owners.
@@ -138,9 +138,9 @@ export default function Footer() {
 
       <div className="mx-auto max-w-screen-xl w-full border-t-[0.5px] border-stonegrey text-smokygrey flex flex-col sm:flex-row justify-between py-24 lg:py-40 gap-8 px-16 xl:px-0">
         <div className="text-14">
-          All rights reserved by Dragonfly Trimarans Marketplace
+          All rights reserved by 3Hulls
         </div>
-        <div className="text-14">&copy; 2026 Dragonfly</div>
+        <div className="text-14">&copy; 2026 3Hulls</div>
       </div>
     </footer>
   );

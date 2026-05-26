@@ -75,7 +75,7 @@ export default async function SignIn({
               clients faster than ever before.&rdquo;
             </p>
             <footer className="font-mono font-semibold text-sm">
-              ~ Dragonfly User
+              ~ 3Hulls User
             </footer>
           </blockquote>
         </div>
