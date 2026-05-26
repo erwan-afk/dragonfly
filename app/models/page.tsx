@@ -13,7 +13,7 @@ export default function ModelsIndexPage() {
     <div className="max-w-screen-xl mx-auto px-16 xl:px-0 py-[40px] lg:py-[80px]">
       <div className="flex flex-col gap-16 mb-48">
         <h1 className="text-oceanblue text-32 lg:text-40 font-medium">
-          The <span className="text-articblue">Dragonfly</span> range
+          The <span className="text-articblue">Multihull</span> Experience
         </h1>
         <p className="text-darkgrey text-16 max-w-2xl">
           From the compact Dragonfly 25 to the flagship Dragonfly 40, every
