@@ -7,7 +7,14 @@ import CookieSettingsButton from '../CookieConsent/CookieSettingsButton';
 
 export default function Footer() {
   return (
-    <footer className="w-full pt-[60px] lg:pt-[96px] bg-darkgrey flex flex-col justify-center items-center gap-[40px] lg:gap-[80px] px-4 sm:px-32 xl:px-0">
+    <footer
+      className="w-full pt-[60px] lg:pt-[96px] bg-darkgrey flex flex-col justify-center items-center gap-[40px] lg:gap-[80px] px-4 sm:px-32 xl:px-0"
+      style={{
+        backgroundImage: `url('/images/motif_noir.jpg')`,
+        backgroundRepeat: 'repeat',
+        backgroundSize: '500px'
+      }}
+    >
       <div
         className="max-w-screen-xl w-full bg-cover bg-center rounded-16"
         style={{ backgroundImage: `url('images/vagues.png')` }}
@@ -38,10 +45,10 @@ export default function Footer() {
         <div className="flex flex-col gap-24 md:gap-0 md:justify-between">
           <Logo footer />
           <p className="font-light max-w-[530px] text-14 lg:text-16">
-            3Hulls. All rights reserved. Content
-            submitted by users is the sole responsibility of the respective
-            submitters. All trademarks and copyrights mentioned herein are
-            acknowledged as the property of their respective owners.
+            3Hulls. All rights reserved. Content submitted by users is the sole
+            responsibility of the respective submitters. All trademarks and
+            copyrights mentioned herein are acknowledged as the property of
+            their respective owners.
           </p>
         </div>
         <div className="flex flex-row gap-24 sm:gap-40 flex-wrap">
@@ -137,9 +144,7 @@ export default function Footer() {
       </div>
 
       <div className="mx-auto max-w-screen-xl w-full border-t-[0.5px] border-stonegrey text-smokygrey flex flex-col sm:flex-row justify-between py-24 lg:py-40 gap-8 px-16 xl:px-0">
-        <div className="text-14">
-          All rights reserved by 3Hulls
-        </div>
+        <div className="text-14">All rights reserved by 3Hulls</div>
         <div className="text-14">&copy; 2026 3Hulls</div>
       </div>
     </footer>
