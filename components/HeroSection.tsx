@@ -88,14 +88,14 @@ export default function HeroSection() {
             </div>
           </Link>
           <Link
-            href="/forsale?model=df40"
+            href="/forsale?model=df920"
             target="_self"
             rel="noopener noreferrer"
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
             <img
-              src="/images/Dragonfly_40.png"
-              alt="Dragonfly 40"
+              src="/images/Dragonfly_920.png"
+              alt="Dragonfly 920"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />
 
@@ -104,7 +104,7 @@ export default function HeroSection() {
                   bg-fullwhite text-oceanblue text-14 lg:text-16
                   px-2 py-1 rounded-8 font-medium"
             >
-              Dragonfly 40
+              Dragonfly 920
             </div>
           </Link>
         </div>

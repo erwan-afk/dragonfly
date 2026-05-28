@@ -6,7 +6,7 @@ const nextConfig = {
     // Désactiver React Strict Mode pour éviter les doubles rendus en dev
     reactStrictMode: false,
     experimental: {
-        webpackBuildWorker: true,
+        webpackBuildWorker: false,
         missingSuspenseWithCSRBailout: false,
         serverComponentsExternalPackages: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner']
     },
