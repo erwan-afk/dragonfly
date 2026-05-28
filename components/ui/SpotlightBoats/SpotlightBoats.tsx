@@ -2662,7 +2662,7 @@ export default function SpotlightBoats({
                 >
                   {/* Image */}
                   <div
-                    className={`relative overflow-hidden ${gridView ? 'w-full min-h-[200px]' : 'w-1/2 min-h-[220px] self-stretch'}`}
+                    className={`relative overflow-hidden ${gridView ? 'w-full min-h-[200px]' : 'w-full sm:w-1/2 min-h-[220px] self-stretch'}`}
                   >
                     {isPodium && (
                       <div className="absolute top-3 left-3 z-20 bg-articblue text-fullwhite text-xs font-medium px-3 py-1.5 rounded-md shadow-2xl drop-shadow-2xl">
