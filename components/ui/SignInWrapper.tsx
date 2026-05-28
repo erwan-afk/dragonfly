@@ -37,7 +37,7 @@ export default function SignInWrapper({ children }: SignInWrapperProps) {
   }, [searchParams, pathname, router]);
 
   return (
-    <div className="relative h-[700px] md:overflow-hidden lg:grid lg:grid-cols-2 max-w-screen-xl mx-auto mt-[60px] mb-[120px]">
+    <div className="relative lg:h-[700px] md:overflow-hidden lg:grid lg:grid-cols-2 max-w-screen-xl mx-auto mt-[60px] mb-[60px] lg:mb-[120px]">
       <div className="relative hidden h-full flex-col border-r bg-oceanblue p-10 lg:flex rounded-xl">
         <div className="z-10 mt-auto">
           <blockquote className="space-y-2">
@@ -65,7 +65,7 @@ export default function SignInWrapper({ children }: SignInWrapperProps) {
           <div className="-translate-y-87.5 absolute top-0 right-0 h-320 w-60 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,--theme(--color-foreground/.04)_0,--theme(--color-foreground/.01)_80%,transparent_100%)]" />
         </div>
 
-        <div className="mx-auto space-y-4 sm:w-sm">
+        <div className="mx-auto space-y-4 w-full sm:max-w-sm">
           <Logo className="h-5 lg:hidden" />
 
           {/* Status message banner */}

@@ -45,7 +45,7 @@ export default function AuthTabs({
         </p>
       </div>
 
-      <div className="max-w-full w-[420px] overflow-hidden">
+      <div className="w-full max-w-[420px] overflow-hidden">
         <div className="overflow-hidden p-8">
           <div className="flex flex-col gap-4">
             {/* OAuth buttons */}
