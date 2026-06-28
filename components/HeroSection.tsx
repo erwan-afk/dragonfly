@@ -49,7 +49,7 @@ export default function HeroSection() {
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
             <img
-              src="/images/Dragonfly_25.png"
+              src="/models/df25.jpg"
               alt="Dragonfly 25"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />
@@ -64,7 +64,7 @@ export default function HeroSection() {
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
             <img
-              src="/images/Dragonfly_28.png"
+              src="/models/df28.jpg"
               alt="Dragonfly 28"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />
@@ -79,7 +79,7 @@ export default function HeroSection() {
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
             <img
-              src="/images/Dragonfly_32.png"
+              src="/models/df32.jpg"
               alt="Dragonfly 32"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />
@@ -94,7 +94,7 @@ export default function HeroSection() {
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
             <img
-              src="/images/Dragonfly_920.png"
+              src="/models/df920.jpg"
               alt="Dragonfly 920"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
             />

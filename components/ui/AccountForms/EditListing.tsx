@@ -2322,7 +2322,7 @@ export default function EditListing({
               disabled={isMarkingSold}
               className="border border-gray-300 bg-gray-50 text-gray-700 font-medium px-6 py-4 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isMarkingSold ? 'Traitement...' : 'Marquer comme vendu'}
+              {isMarkingSold ? 'Processing...' : 'Mark as sold'}
             </button>
           )}
 
@@ -2330,10 +2330,10 @@ export default function EditListing({
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-gray-300 bg-gray-100">
                 <span className="font-semibold text-sm uppercase tracking-wide text-gray-700">
-                  Vendu
+                  Sold
                 </span>
                 <span className="text-14 text-gray-500">
-                  Cette annonce est marquée comme vendue.
+                  This listing is marked as sold.
                 </span>
               </div>
               <button

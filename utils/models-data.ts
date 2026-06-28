@@ -24,7 +24,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The compact trailerable trimaran that started a new era.',
     yearsProduced: '2009 – present',
     designer: 'Jens Quorning',
-    image: '/models/df25.png',
+    image: '/models/df25.jpg',
     overview: [
       'The Dragonfly 25 is the smallest model in the modern Dragonfly range, but it punches well above its weight. Designed as a fully trailerable trimaran, it brings the legendary Dragonfly sailing experience to owners who want the freedom of cruising different sailing grounds without ever needing a marina berth.',
       'Despite its compact length, the boat offers a surprisingly spacious cockpit, a clever interior with two berths and basic galley facilities, and the unmistakable Dragonfly Swing Wing system that lets the amas fold in just minutes. With a beam reduced from over five metres on the water down to a road-legal 2.5 metres on the trailer, the boat is genuinely ready to go anywhere.',
@@ -54,7 +54,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The benchmark folding trimaran for fast family cruising.',
     yearsProduced: '2007 – present',
     designer: 'Jens Quorning',
-    image: '/models/df28.png',
+    image: '/models/df28.jpg',
     overview: [
       'The Dragonfly 28 is widely regarded as the model that perfected the folding trimaran formula. Combining serious cruising comfort with the kind of acceleration usually reserved for racing boats, it has become the reference point against which other small multihulls are measured.',
       'Available in Touring, Sport and Performance configurations, the 28 lets each owner choose the balance between speed and cruising-friendly handling. The interior offers headroom rare for a boat of this size, a real galley, an enclosed head and proper sea berths — turning weekend escapes into long summer cruises without compromise.',
@@ -84,7 +84,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'Fast, comfortable, and ready for serious passage-making.',
     yearsProduced: '2010 – present',
     designer: 'Jens Quorning',
-    image: '/models/df32.png',
+    image: '/models/df32.jpg',
     overview: [
       'The Dragonfly 32 is where folding trimaran design steps clearly into the cruising-yacht category. Long enough to offer genuine offshore comfort, light enough to deliver the speed Dragonfly is known for, it is the model many owners eventually upgrade to after a smaller Dragonfly proves to be everything they hoped — and they want more of it.',
       'The interior is a major step forward: standing headroom throughout, a U-shaped saloon, a forward owner’s cabin, an aft double, and a fully enclosed head with shower. Yet the boat still folds to under three metres of beam at the marina, and can be transported on a low-loader for winter storage or a season abroad.',
@@ -114,7 +114,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The flagship folding trimaran — luxury at speed.',
     yearsProduced: '2014 – present',
     designer: 'Jens Quorning',
-    image: '/models/df35.png',
+    image: '/models/df35.jpg',
     overview: [
       'The Dragonfly 35 is the yard’s flagship trimaran, designed for owners who refuse to compromise between performance, comfort and aesthetics. Every detail — from the sweeping deck lines to the joinery in the saloon — reflects the higher level of finish the 35 brings to the range.',
       'It offers two interior layouts, a generous owner’s cabin forward, a true offshore galley and a comfortable navigation station. With the right sail wardrobe it is fully capable of long ocean passages, while still folding for marina berthing — a unique proposition in this size range.',
@@ -144,7 +144,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The ultimate cruising trimaran — fast, folding, fully equipped.',
     yearsProduced: '2020 – present',
     designer: 'Jens Quorning',
-    image: '/models/df40.png',
+    image: '/models/df40.jpg',
     overview: [
       'The Dragonfly 40 is the most ambitious project ever undertaken by Quorning Boats. It brings the folding-trimaran concept to a true 40-foot cruising yacht, with the volume, equipment and autonomy needed for blue-water sailing — yet still able to fold for marina berthing.',
       'Two layout versions are offered: an Ultimate performance configuration with carbon mast and lightweight construction, and a Touring layout with a more traditional cruising interior including three cabins, two heads, a forward-facing galley and a generous saloon.',
@@ -174,7 +174,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The classic that introduced a generation to fast trimaran sailing.',
     yearsProduced: '1986 – 1995',
     designer: 'Børge Quorning',
-    image: '/models/df800.png',
+    image: '/models/df800.jpg',
     overview: [
       'The Dragonfly 800 is one of the foundation models of the modern Dragonfly story. Built between 1986 and 1995, it introduced thousands of sailors to the unique experience of fast, stable multihull cruising on a boat that could still be folded and trailered.',
       'Its blend of speed, stability and simplicity made it an instant classic. Many of the earlier hulls are still actively sailed today, often passed down or refit by enthusiastic owners — a testament to the strength of the original design and build quality.',
@@ -204,7 +204,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The mid-sized Dragonfly that defined family trimaran cruising in the 1990s.',
     yearsProduced: '1995 – 2007',
     designer: 'Børge Quorning',
-    image: '/models/df920.png',
+    image: '/models/df920.jpg',
     overview: [
       'The Dragonfly 920 is the model that made folding trimarans a mainstream choice for cruising families in the 1990s and 2000s. Larger and more comfortable than the 800, it offered standing headroom, real cruising accommodation and a serious sail plan — without losing the brand’s trademark folding ability.',
       'Hundreds of 920s were built over a 12-year production run, and the boat remains one of the most popular Dragonflies on the second-hand market. Many are still being sailed actively today, often by their original owners.',
@@ -234,7 +234,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'A cruising trimaran built for serious distance.',
     yearsProduced: '1996 – 2010',
     designer: 'Børge Quorning',
-    image: '/models/df1000.png',
+    image: '/models/df1000.jpg',
     overview: [
       'The Dragonfly 1000 was developed in the late 1990s as the larger sister to the Dragonfly 920, aimed at owners who wanted more interior volume, more carrying capacity and the comfort needed for longer cruises. It offered a notable step up in liveability without losing the folding-trimaran DNA.',
       'With proper standing headroom throughout, a real galley, enclosed heads with shower and a comfortable saloon, the 1000 was a true cruising boat — one that could spend weeks on board without the crew feeling cramped. Many were sold to owners planning long Mediterranean or transatlantic adventures.',
@@ -264,7 +264,7 @@ export const modelsData: Record<string, ModelData> = {
     tagline: 'The original luxury folding trimaran flagship.',
     yearsProduced: '2003 – 2014',
     designer: 'Børge Quorning',
-    image: '/models/df1200.png',
+    image: '/models/df1200.jpg',
     overview: [
       'When it was introduced, the Dragonfly 1200 was the largest folding trimaran the yard had ever built — a true flagship aimed at experienced cruisers who wanted the ultimate combination of comfort, autonomy and performance.',
       'Its generous interior offered three sleeping areas, a true offshore galley, and a fully equipped navigation station. With its proven Swing Wing system scaled up for the size, it could still take advantage of regular marina berths despite its impressive sailing beam.',

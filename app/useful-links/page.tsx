@@ -273,11 +273,6 @@ export default function UsefulLinkPage() {
           <h1 className="text-oceanblue text-32 lg:text-56">
             <span className="text-articblue">Spare parts</span> directory
           </h1>
-          <p className="text-darkgrey w-full md:w-1/2 text-16 font-light">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi
-            consectetur quis enim ut volutpat. In massa nulla, blandit sit amet
-            semper eget, accumsan eget nisl. In facilisis felis nulla.
-          </p>
         </div>
 
         <div className="flex flex-col xl:flex-row gap-40 xl:gap-[80px] relative">

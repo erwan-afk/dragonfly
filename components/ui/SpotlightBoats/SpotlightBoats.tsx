@@ -687,7 +687,7 @@ export default function SpotlightBoats({
                   base: 'text-gray-600 data-[hover=true]:bg-gray-100 data-[hover=true]:text-gray-800'
                 }}
               >
-                Marquer comme vendu
+                Mark as sold
               </DropdownItem>
             )) as any
           }
@@ -2646,6 +2646,7 @@ export default function SpotlightBoats({
 
             const isPodium =
               (boat as any).productName?.toLowerCase() === 'podium';
+            const isSold = (boat as any).status === 'sold';
             const boostRaw =
               (boat as any).boostExpiresAt || (boat as any).boost_expires_at;
             const isBoosted =
@@ -2664,7 +2665,7 @@ export default function SpotlightBoats({
                   <div
                     className={`relative overflow-hidden ${gridView ? 'w-full min-h-[200px]' : 'w-full sm:w-1/2 min-h-[220px] self-stretch'}`}
                   >
-                    {isPodium && (
+                    {isPodium && !isSold && (
                       <div className="absolute top-3 left-3 z-20 bg-articblue text-fullwhite text-xs font-medium px-3 py-1.5 rounded-md shadow-2xl drop-shadow-2xl">
                         Don’t miss
                       </div>
@@ -2675,7 +2676,7 @@ export default function SpotlightBoats({
                         Boosted
                       </div>
                     )}
-                    {(boat as any).status === 'sold' && (
+                    {isSold && (
                       <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-lg tracking-wider uppercase">
                         Vendu
                       </div>

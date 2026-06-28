@@ -91,7 +91,7 @@ export const getBoatsFromDatabase = unstable_cache(
           FROM "boats" b
           LEFT JOIN "user" u ON b.user_id = u.id
           LEFT JOIN "products" p ON b.product_id = p.id
-          WHERE b.status IN ('active', 'sold')
+          WHERE b.status = 'active'
           AND (b.expires_at IS NULL OR b.expires_at > NOW())
           ORDER BY
             CASE

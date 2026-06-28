@@ -60,15 +60,20 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
             />
           </div>
         </div>
-        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-lightgrey">
-          <ModelImage
-            src={model.image}
-            alt={model.name}
-            fill
-            priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover"
-          />
+        <div className="flex flex-col gap-8">
+          <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-lightgrey">
+            <ModelImage
+              src={model.image}
+              alt={`${model.name} trimaran — © Dragonfly / Quorning Boats`}
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+          <p className="text-stonegrey text-[11px] italic text-right">
+            © Dragonfly / Quorning Boats
+          </p>
         </div>
       </section>
 
