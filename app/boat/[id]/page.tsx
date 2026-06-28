@@ -150,8 +150,8 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
         {/* Sold banner */}
         {isSold && (
           <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 flex items-center gap-3">
-            <span className="font-bold text-sm tracking-wider uppercase text-red-700">Vendu</span>
-            <span className="text-14 text-red-600">Ce bateau a été vendu et n&apos;est plus disponible.</span>
+            <span className="font-bold text-sm tracking-wider uppercase text-red-700">Sold</span>
+            <span className="text-14 text-red-600">This boat has been sold and is no longer available.</span>
           </div>
         )}
 

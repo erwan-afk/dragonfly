@@ -788,7 +788,7 @@ export default function SpotlightBoats({
                   <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                     {d.isSold ? (
                       <span className="inline-flex px-1.5 sm:px-2 py-0.5 font-semibold rounded-full border bg-gray-100 text-gray-700 border-gray-300 text-xs uppercase tracking-wide">
-                        Vendu
+                        Sold
                       </span>
                     ) : (
                       <span
@@ -2678,7 +2678,7 @@ export default function SpotlightBoats({
                     )}
                     {isSold && (
                       <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-lg tracking-wider uppercase">
-                        Vendu
+                        Sold
                       </div>
                     )}
                     <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
