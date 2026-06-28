@@ -379,7 +379,7 @@ export default function BoatListingFormV2({
             block: 'center'
           });
         } else if (
-          (description.length < 300 || description.length > 2000) &&
+          (description.length < 300 || description.length > 3500) &&
           descriptionFieldRef.current
         ) {
           descriptionFieldRef.current.scrollIntoView({
@@ -758,7 +758,7 @@ export default function BoatListingFormV2({
   };
 
   const validateDescription = (desc: string): boolean => {
-    return desc.length <= 2000;
+    return desc.length <= 3500;
   };
 
   const validateForm = (): { isValid: boolean; errors: string[] } => {
@@ -784,8 +784,8 @@ export default function BoatListingFormV2({
     }
     if (description.length < 300)
       errors.push('Description must be at least 300 characters');
-    if (description.length > 2000)
-      errors.push('Description must be less than 2000 characters');
+    if (description.length > 3500)
+      errors.push('Description must be less than 3500 characters');
     if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
       errors.push('Please enter a valid contact email');
     if (maxPhotos > 0 && photoFiles.length === 0)
@@ -1807,7 +1807,7 @@ export default function BoatListingFormV2({
                 <Textarea
                   classNames={{
                     label: '!text-oceanblue text-md font-medium ',
-                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 300 || description.length > 2000) && touched.description ? 'border-red-500' : ''}`,
+                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 300 || description.length > 3500) && touched.description ? 'border-red-500' : ''}`,
                     input: 'placeholder:text-oceanblue',
                     base: ' border-oceanblue/10 data-[hover=true]:border-articblue   data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors rounded-lg'
                   }}
@@ -1823,17 +1823,17 @@ export default function BoatListingFormV2({
                     setTouched({ ...touched, description: true });
                   }}
                   isDisabled={isLoading}
-                  description={`${description.length} / 2000 characters`}
+                  description={`${description.length} / 3500 characters`}
                 />
               </div>
               <div className="pt-8">
                 <ValidationCheckbox
                   isValid={
-                    description.length >= 300 && description.length <= 2000
+                    description.length >= 300 && description.length <= 3500
                   }
                   shouldPulse={
                     shouldPulseInvalid &&
-                    (description.length < 300 || description.length > 2000)
+                    (description.length < 300 || description.length > 3500)
                   }
                 />
               </div>

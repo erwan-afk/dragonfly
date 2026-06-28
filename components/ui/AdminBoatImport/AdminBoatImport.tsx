@@ -511,9 +511,9 @@ export default function AdminBoatImport() {
                 onChange={(e) => setQuick((q) => ({ ...q, description: e.target.value }))}
                 required
                 minLength={20}
-                maxLength={2000}
+                maxLength={3500}
               />
-              <div className="text-xs text-gray-400 text-right mt-0.5">{quick.description.length}/2000</div>
+              <div className="text-xs text-gray-400 text-right mt-0.5">{quick.description.length}/3500</div>
             </div>
 
             <div>
