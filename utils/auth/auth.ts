@@ -176,6 +176,14 @@ export const auth = betterAuth({
   socialProviders: getSocialProviders(),
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  // Both dragonfly-trimarans.org and 3hulls.com serve this same app permanently,
+  // so requests originating from either host must pass Better Auth's origin check.
+  trustedOrigins: [
+    'https://dragonfly-trimarans.org',
+    'https://www.dragonfly-trimarans.org',
+    'https://3hulls.com',
+    'https://www.3hulls.com',
+  ],
   pages: {
     error: '/auth/error',
   },
