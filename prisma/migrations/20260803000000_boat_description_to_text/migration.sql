@@ -1,0 +1,11 @@
+-- Drop the varchar(2000) cap on boat descriptions.
+--
+-- The listing forms were raised to 3500 characters in b39797d but the column was
+-- never migrated, so any save with a longer description failed with
+-- "value too long for type character varying(2000)" and rolled back the whole
+-- UPDATE (price included). Length is now enforced in application code only, via
+-- DESCRIPTION_MIN_LENGTH / DESCRIPTION_MAX_LENGTH in utils/constants.ts.
+--
+-- varchar(n) -> text is binary coercible in Postgres: no table rewrite, no
+-- lengthy lock, and no risk of truncating existing rows.
+ALTER TABLE "boats" ALTER COLUMN "description" TYPE TEXT;

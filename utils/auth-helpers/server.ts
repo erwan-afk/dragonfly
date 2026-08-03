@@ -3,7 +3,9 @@
 import { auth } from '@/utils/auth/auth';
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getURL, getErrorRedirect, getStatusRedirect } from 'utils/helpers';
+import { DESCRIPTION_MAX_LENGTH, DESCRIPTION_MIN_LENGTH } from '@/utils/constants';
 import prisma from '@/utils/prisma/client';
 import { createRateLimiter } from '@/utils/rate-limit';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
@@ -416,15 +418,40 @@ export async function updateListing(formData: FormData): Promise<string> {
       yearValue = yearNum;
     }
 
+    if (
+      description.length < DESCRIPTION_MIN_LENGTH ||
+      description.length > DESCRIPTION_MAX_LENGTH
+    ) {
+      return getErrorRedirect(
+        '/account',
+        'Your listing could not be updated.',
+        `Description must be between ${DESCRIPTION_MIN_LENGTH} and ${DESCRIPTION_MAX_LENGTH} characters.`
+      );
+    }
+
+    const priceValue = parseFloat(price);
+    if (!Number.isFinite(priceValue) || priceValue <= 0) {
+      return getErrorRedirect(
+        '/account',
+        'Your listing could not be updated.',
+        'Please enter a valid price.'
+      );
+    }
+
+    // Admins may edit any listing (mirrors app/edit-listing/[id]/page.tsx);
+    // everyone else is restricted to their own.
+    const role = (user as any).role;
+    const isAdmin = role === 'admin' || role === 'superAdmin';
+
     // Update the listing with raw SQL to avoid Prisma client regeneration issues
     const parsedSpecs = JSON.parse(specifications);
     const photosArray = photos.split(',').filter(Boolean);
-    await prisma.$executeRaw`
+    const rowsUpdated = await prisma.$executeRaw`
       UPDATE "boats" SET
         model = ${model},
         description = ${description},
         country = ${country},
-        price = ${parseFloat(price)},
+        price = ${priceValue},
         currency = ${currency},
         specifications = ${parsedSpecs},
         vat_paid = ${vat_paid === 'true'},
@@ -435,7 +462,23 @@ export async function updateListing(formData: FormData): Promise<string> {
         video_url = ${videoUrl},
         updated_at = NOW()
       WHERE id = ${id}
+        AND (${isAdmin} OR user_id = ${user.id})
     `;
+
+    if (rowsUpdated === 0) {
+      return getErrorRedirect(
+        '/account',
+        'Your listing could not be updated.',
+        'Listing not found, or you are not allowed to edit it.'
+      );
+    }
+
+    // Without this the account page and the public listings keep serving the
+    // cached pre-edit values (see getBoatsFromDatabase in utils/database/products.ts).
+    revalidateTag('user-data');
+    revalidateTag('boats');
+    revalidatePath('/account');
+    revalidatePath(`/boat/${id}`);
 
     return getStatusRedirect(
       '/account',
@@ -443,6 +486,7 @@ export async function updateListing(formData: FormData): Promise<string> {
       'Your listing has been updated.'
     );
   } catch (error: any) {
+    console.error('❌ Error updating listing:', id, error);
     return getErrorRedirect(
       '/account',
       'Your listing could not be updated.',

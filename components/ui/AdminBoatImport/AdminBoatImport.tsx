@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Plus, Trash2, Upload, CheckCircle, XCircle, Loader2, X, ImageIcon } from 'lucide-react';
 import { specificationsData, normalizeSpecList } from '@/utils/specifications';
-import { countries, boatConditions, dragonflyModels, currencies as currencyList } from '@/utils/constants';
+import { countries, boatConditions, dragonflyModels, currencies as currencyList, DESCRIPTION_MAX_LENGTH } from '@/utils/constants';
 
 const PLAN_OPTIONS = [
   { key: 'start-line', label: 'Start line', productName: 'start line', months: 3 },
@@ -511,9 +511,9 @@ export default function AdminBoatImport() {
                 onChange={(e) => setQuick((q) => ({ ...q, description: e.target.value }))}
                 required
                 minLength={20}
-                maxLength={3500}
+                maxLength={DESCRIPTION_MAX_LENGTH}
               />
-              <div className="text-xs text-gray-400 text-right mt-0.5">{quick.description.length}/3500</div>
+              <div className="text-xs text-gray-400 text-right mt-0.5">{quick.description.length}/{DESCRIPTION_MAX_LENGTH}</div>
             </div>
 
             <div>

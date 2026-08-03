@@ -81,7 +81,7 @@ model boat {
   model          String
   price          Decimal    @db.Decimal
   country        String
-  description    String     @db.VarChar(2000)
+  description    String
   email          String?    @db.VarChar(255)
   condition      String?    @db.VarChar(50)
   year           Int?

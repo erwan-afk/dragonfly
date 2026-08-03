@@ -5,6 +5,10 @@ import prisma from '@/utils/prisma/client';
 import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 import { isValidVideoUrl } from '@/utils/video-embed';
 import { getMaxPhotos } from '@/lib/product-features';
+import {
+    DESCRIPTION_MAX_LENGTH,
+    DESCRIPTION_MIN_LENGTH
+} from '@/utils/constants';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -100,11 +104,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Input validation
-        if (description.length < 300) {
-            return NextResponse.json({ error: 'Description must be at least 300 characters' }, { status: 400 });
+        if (description.length < DESCRIPTION_MIN_LENGTH) {
+            return NextResponse.json({ error: `Description must be at least ${DESCRIPTION_MIN_LENGTH} characters` }, { status: 400 });
         }
-        if (description.length > 2000) {
-            return NextResponse.json({ error: 'Description must be less than 2000 characters' }, { status: 400 });
+        if (description.length > DESCRIPTION_MAX_LENGTH) {
+            return NextResponse.json({ error: `Description must be less than ${DESCRIPTION_MAX_LENGTH} characters` }, { status: 400 });
         }
         if (model.length > 200) {
             return NextResponse.json({ error: 'Model name too long' }, { status: 400 });

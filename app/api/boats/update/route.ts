@@ -6,6 +6,7 @@ import {
   getMaxPhotos,
   getPriceLimit
 } from '@/lib/product-features';
+import { DESCRIPTION_MAX_LENGTH } from '@/utils/constants';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -56,9 +57,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Vérifier que la description n'est pas trop longue
-        if (description.length > 2000) {
+        if (description.length > DESCRIPTION_MAX_LENGTH) {
             return NextResponse.json(
-                { error: 'Description must be less than 2000 characters' },
+                { error: `Description must be less than ${DESCRIPTION_MAX_LENGTH} characters` },
                 { status: 400 }
             );
         }

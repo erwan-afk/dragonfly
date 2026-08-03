@@ -1,3 +1,9 @@
+// Listing description bounds. Enforced client-side (form validation) *and*
+// server-side (API routes + updateListing). The `boats.description` column is
+// TEXT, so these are the only limits — keep every check pointed at them.
+export const DESCRIPTION_MIN_LENGTH = 300;
+export const DESCRIPTION_MAX_LENGTH = 3500;
+
 export const dragonflyModels = [
   { key: 'df25', label: 'Dragonfly 25' },
   { key: 'df28', label: 'Dragonfly 28' },

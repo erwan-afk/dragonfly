@@ -5,6 +5,19 @@ import { getURL } from '@/utils/helpers';
 import { redirectToPath } from './server';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
+// Extracts the message from an error redirect URL, or null if it isn't one.
+function getRedirectError(redirectUrl: string): string | null {
+  const queryString = redirectUrl.split('?')[1];
+  if (!queryString) return null;
+
+  const params = new URLSearchParams(queryString);
+  const error = params.get('error');
+  if (!error) return null;
+
+  const description = params.get('error_description');
+  return description ? `${error} ${description}` : error;
+}
+
 export async function handleRequest(
   e: React.FormEvent<HTMLFormElement>,
   requestFunc: (formData: FormData) => Promise<string>,
@@ -15,6 +28,14 @@ export async function handleRequest(
   try {
     const formData = new FormData(e.currentTarget);
     const redirectUrl: string = await requestFunc(formData);
+
+    // The server actions never throw: they report failure by returning an error
+    // redirect built by getErrorRedirect (`?error=...&error_description=...`).
+    // Without this check every failed action looked like a success.
+    const errorMessage = getRedirectError(redirectUrl);
+    if (errorMessage) {
+      return { success: false, error: errorMessage };
+    }
 
     if (router) {
       router.push(redirectUrl);

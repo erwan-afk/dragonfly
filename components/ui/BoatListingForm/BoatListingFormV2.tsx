@@ -19,7 +19,9 @@ import {
   currencies,
   countries,
   boatConditions,
-  getBoatYears
+  getBoatYears,
+  DESCRIPTION_MIN_LENGTH,
+  DESCRIPTION_MAX_LENGTH
 } from '@/utils/constants';
 import { specificationsData } from '@/utils/specifications';
 import { getModelLabel } from '@/utils/constants';
@@ -379,7 +381,7 @@ export default function BoatListingFormV2({
             block: 'center'
           });
         } else if (
-          (description.length < 300 || description.length > 3500) &&
+          (description.length < DESCRIPTION_MIN_LENGTH || description.length > DESCRIPTION_MAX_LENGTH) &&
           descriptionFieldRef.current
         ) {
           descriptionFieldRef.current.scrollIntoView({
@@ -758,7 +760,7 @@ export default function BoatListingFormV2({
   };
 
   const validateDescription = (desc: string): boolean => {
-    return desc.length <= 3500;
+    return desc.length <= DESCRIPTION_MAX_LENGTH;
   };
 
   const validateForm = (): { isValid: boolean; errors: string[] } => {
@@ -782,10 +784,10 @@ export default function BoatListingFormV2({
         `This price exceeds your plan limit (${getCurrencySymbol(currency)}${formatPriceNumber(priceLimit, currency)}). Please upgrade your plan.`
       );
     }
-    if (description.length < 300)
-      errors.push('Description must be at least 300 characters');
-    if (description.length > 3500)
-      errors.push('Description must be less than 3500 characters');
+    if (description.length < DESCRIPTION_MIN_LENGTH)
+      errors.push(`Description must be at least ${DESCRIPTION_MIN_LENGTH} characters`);
+    if (description.length > DESCRIPTION_MAX_LENGTH)
+      errors.push(`Description must be less than ${DESCRIPTION_MAX_LENGTH} characters`);
     if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail))
       errors.push('Please enter a valid contact email');
     if (maxPhotos > 0 && photoFiles.length === 0)
@@ -1807,7 +1809,7 @@ export default function BoatListingFormV2({
                 <Textarea
                   classNames={{
                     label: '!text-oceanblue text-md font-medium ',
-                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < 300 || description.length > 3500) && touched.description ? 'border-red-500' : ''}`,
+                    inputWrapper: `bg-fullwhite border-2 border-oceanblue/10 data-[hover=true]:bg-articblue/10 data-[hover=true]:border-articblue data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors ${(description.length < DESCRIPTION_MIN_LENGTH || description.length > DESCRIPTION_MAX_LENGTH) && touched.description ? 'border-red-500' : ''}`,
                     input: 'placeholder:text-oceanblue',
                     base: ' border-oceanblue/10 data-[hover=true]:border-articblue   data-[focus=true]:border-articblue data-[focus=true]:bg-fullwhite transition-colors rounded-lg'
                   }}
@@ -1823,17 +1825,17 @@ export default function BoatListingFormV2({
                     setTouched({ ...touched, description: true });
                   }}
                   isDisabled={isLoading}
-                  description={`${description.length} / 3500 characters`}
+                  description={`${description.length} / ${DESCRIPTION_MAX_LENGTH} characters`}
                 />
               </div>
               <div className="pt-8">
                 <ValidationCheckbox
                   isValid={
-                    description.length >= 300 && description.length <= 3500
+                    description.length >= DESCRIPTION_MIN_LENGTH && description.length <= DESCRIPTION_MAX_LENGTH
                   }
                   shouldPulse={
                     shouldPulseInvalid &&
-                    (description.length < 300 || description.length > 3500)
+                    (description.length < DESCRIPTION_MIN_LENGTH || description.length > DESCRIPTION_MAX_LENGTH)
                   }
                 />
               </div>
