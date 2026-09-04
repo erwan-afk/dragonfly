@@ -143,9 +143,22 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-screen-xl w-full border-t-[0.5px] border-stonegrey text-smokygrey flex flex-col sm:flex-row justify-between py-24 lg:py-40 gap-8 px-16 xl:px-0">
-        <div className="text-14">All rights reserved by 3Hulls</div>
-        <div className="text-14">&copy; 2026 3Hulls</div>
+      <div className="mx-auto max-w-screen-xl w-full border-t-[0.5px] border-stonegrey text-smokygrey flex flex-col gap-8 py-24 lg:py-40 px-16 xl:px-0">
+        <div className="flex flex-col sm:flex-row justify-between gap-8">
+          <div className="text-14">All rights reserved by 3Hulls</div>
+          <div className="text-14">&copy; 2026 3Hulls</div>
+        </div>
+        <p className="text-12">
+          Model photographs courtesy of Dragonfly / Quorning Boats —{' '}
+          <a
+            href="https://www.dragonfly.dk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline underline-offset-2"
+          >
+            www.dragonfly.dk
+          </a>
+        </p>
       </div>
     </footer>
   );

@@ -14,7 +14,7 @@ import CookieConsent from '@/components/ui/CookieConsent/CookieConsent';
 import Analytics from '@/components/Analytics';
 
 const meta = {
-  title: "3Hulls - The Automated Marketplace You've Been Waiting For",
+  title: '3Hulls - The dedicated marketplace for Dragonfly trimarans',
   description:
     'Transform your business with our automated marketplace platform. Streamline workflows, boost productivity, and scale effortlessly with AI-powered automation tools.',
   cardImage: '/images/dragonfly-boat.webp',
@@ -125,7 +125,7 @@ const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: '3Hulls',
-  description: "The Automated Marketplace You've Been Waiting For",
+  description: 'The dedicated marketplace for Dragonfly trimarans',
   url: meta.url,
   potentialAction: {
     '@type': 'SearchAction',
@@ -167,9 +167,9 @@ export default function RootLayout({ children }: LayoutsProps) {
                 <main className="w-full relative min-h-screen">
                   <div className="w-full bg-darkgrey text-center text-fullwhite py-8 text-[10px] xs:text-[12px] flex flex-row justify-center items-center gap-4 xs:gap-8 px-8 xs:px-16">
                     <span className="hidden sm:inline">
-                      The Automated Marketplace You've Been Waiting For
+                      The dedicated marketplace for Dragonfly trimarans
                     </span>
-                    <span className="sm:hidden">Automated Marketplace</span>
+                    <span className="sm:hidden">Dragonfly Marketplace</span>
                     <svg
                       width="13"
                       height="13"

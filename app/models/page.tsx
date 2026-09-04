@@ -16,10 +16,6 @@ export default function ModelsIndexPage() {
           <h1 className="text-oceanblue text-32 lg:text-40 font-medium">
             The <span className="text-articblue">Multihull</span> Experience
           </h1>
-          <p className="text-stonegrey text-12 sm:text-right sm:max-w-xs leading-relaxed">
-            Some images are AI-generated — images will be replaced with real
-            photographs as they become available.
-          </p>
         </div>
         <p className="text-darkgrey text-16 max-w-2xl">
           From the compact Dragonfly 25 to the flagship Dragonfly 40, every
@@ -68,10 +64,6 @@ export default function ModelsIndexPage() {
           >
             Dragonfly / Quorning Boats — www.dragonfly.dk
           </a>
-        </p>
-        <p className="text-stonegrey text-12 text-center">
-          Some images are AI-generated — images will be replaced with real
-          photographs as they become available.
         </p>
       </div>
     </div>
