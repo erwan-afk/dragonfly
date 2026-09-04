@@ -5,6 +5,7 @@ import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
 import Button from '@/components/ui/Button/Button';
 import { getModelData, modelsData, allModels } from '@/utils/models-data';
 import { getBoatsByModel } from '@/utils/database/products';
+import { getURL } from '@/utils/helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +15,13 @@ interface ModelPageProps {
 
 export async function generateMetadata({ params }: ModelPageProps) {
   const model = getModelData(params.slug);
-  if (!model) return { title: 'Model not found' };
+  if (!model) {
+    return { title: 'Model not found', robots: { index: false, follow: true } };
+  }
   return {
     title: `${model.name} | 3Hulls`,
-    description: model.tagline
+    description: model.tagline,
+    alternates: { canonical: getURL(`/models/${model.key}`) }
   };
 }
 

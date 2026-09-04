@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import ModelImage from '@/components/ui/ModelImage/ModelImage';
 import { allModels } from '@/utils/models-data';
+import { getURL } from '@/utils/helpers';
 
 export const metadata = {
   title: 'Dragonfly Models | 3Hulls',
   description:
-    'Discover the full range of Dragonfly folding trimarans, from the compact Dragonfly 25 to the offshore-capable Dragonfly 40.'
+    'Discover the full range of Dragonfly folding trimarans, from the compact Dragonfly 25 to the offshore-capable Dragonfly 40.',
+  alternates: { canonical: getURL('/models') }
 };
 
 export default function ModelsIndexPage() {

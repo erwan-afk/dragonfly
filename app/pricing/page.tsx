@@ -7,6 +7,7 @@ import {
   getProductFeatures,
   type ProductName
 } from '@/lib/product-features';
+import { getURL } from '@/utils/helpers';
 
 // Désactiver le rendu statique - cette page doit être rendue dynamiquement
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Pricing - 3Hulls',
   description:
-    'View our pricing plans for advertising your trimaran. Choose the best package that suits your needs and budget.'
+    'View our pricing plans for advertising your trimaran. Choose the best package that suits your needs and budget.',
+  alternates: { canonical: getURL('/pricing') }
 };
 
 export default async function PricingPage() {

@@ -1,10 +1,12 @@
 import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
 import { legalConfig as c } from '@/utils/legal-config';
+import { getURL } from '@/utils/helpers';
 
 export const metadata = {
   title: 'Terms of Use',
   description:
-    'Terms governing the use of the 3Hulls Marketplace.'
+    'Terms governing the use of the 3Hulls Marketplace.',
+  alternates: { canonical: getURL('/terms') }
 };
 
 const sections = [

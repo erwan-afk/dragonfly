@@ -1,10 +1,12 @@
 import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
 import CookieSettingsButton from '@/components/ui/CookieConsent/CookieSettingsButton';
+import { getURL } from '@/utils/helpers';
 
 export const metadata = {
   title: 'Cookie Policy',
   description:
-    'How 3Hulls uses cookies and how you can manage them.'
+    'How 3Hulls uses cookies and how you can manage them.',
+  alternates: { canonical: getURL('/policies') }
 };
 
 const sections = [

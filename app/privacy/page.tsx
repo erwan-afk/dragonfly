@@ -1,10 +1,12 @@
 import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
 import { legalConfig as c } from '@/utils/legal-config';
+import { getURL } from '@/utils/helpers';
 
 export const metadata = {
   title: 'Privacy Policy',
   description:
-    'How 3Hulls collects, uses and protects your personal data.'
+    'How 3Hulls collects, uses and protects your personal data.',
+  alternates: { canonical: getURL('/privacy') }
 };
 
 const sections = [
