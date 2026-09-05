@@ -6,6 +6,45 @@ import SearchBar from '@/components/SearchBar';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
+interface ModelCardImageProps {
+  modelKey: string;
+  alt: string;
+  height: number;
+}
+
+// Matches the grid's actual breakpoints (tailwind.config.js: xs=360px, lg=1024px)
+// so the browser picks the smallest srcset candidate that still covers the
+// real rendered card width.
+const CARD_SIZES =
+  '(min-width: 1024px) 25vw, (min-width: 360px) 50vw, 100vw';
+
+function ModelCardImage({ modelKey, alt, height }: ModelCardImageProps) {
+  const base = `/models/optimized/${modelKey}`;
+  return (
+    <picture>
+      <source
+        type="image/avif"
+        srcSet={`${base}-320.avif 320w, ${base}-640.avif 640w, ${base}-960.avif 960w`}
+        sizes={CARD_SIZES}
+      />
+      <source
+        type="image/webp"
+        srcSet={`${base}-320.webp 320w, ${base}-640.webp 640w, ${base}-960.webp 960w`}
+        sizes={CARD_SIZES}
+      />
+      <img
+        src={`${base}-960.jpg`}
+        alt={alt}
+        width={960}
+        height={height}
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+      />
+    </picture>
+  );
+}
+
 export default function HeroSection() {
   return (
     <div className="flex flex-col gap-32 lg:gap-64 w-full mx-auto max-w-screen-xl">
@@ -48,11 +87,7 @@ export default function HeroSection() {
             rel="noopener noreferrer"
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
-            <img
-              src="/models/df25.jpg"
-              alt="Dragonfly 25"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-            />
+            <ModelCardImage modelKey="df25" alt="Dragonfly 25" height={640} />
             <div className="absolute bottom-0 left-0 z-10 m-2 text-oceanblue text-14 lg:text-16 bg-fullwhite px-2 py-1 rounded-8 text-center font-medium">
               Dragonfly 25
             </div>
@@ -63,11 +98,7 @@ export default function HeroSection() {
             rel="noopener noreferrer"
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
-            <img
-              src="/models/df28.jpg"
-              alt="Dragonfly 28"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-            />
+            <ModelCardImage modelKey="df28" alt="Dragonfly 28" height={640} />
             <div className="absolute bottom-0 left-0 z-10 m-2 text-oceanblue text-14 lg:text-16 bg-fullwhite px-2 py-1 rounded-8 text-center font-medium">
               Dragonfly 28
             </div>
@@ -78,11 +109,7 @@ export default function HeroSection() {
             rel="noopener noreferrer"
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
-            <img
-              src="/models/df32.jpg"
-              alt="Dragonfly 32"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-            />
+            <ModelCardImage modelKey="df32" alt="Dragonfly 32" height={640} />
             <div className="absolute bottom-0 left-0 z-10 m-2 text-oceanblue text-14 lg:text-16 bg-fullwhite px-2 py-1 rounded-8 text-center font-medium">
               Dragonfly 32
             </div>
@@ -93,11 +120,7 @@ export default function HeroSection() {
             rel="noopener noreferrer"
             className="relative h-[140px] lg:h-[200px] w-full rounded-16 overflow-hidden"
           >
-            <img
-              src="/models/df920.jpg"
-              alt="Dragonfly 920"
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-            />
+            <ModelCardImage modelKey="df920" alt="Dragonfly 920" height={718} />
 
             <div
               className="absolute bottom-0 left-0 z-10 m-2

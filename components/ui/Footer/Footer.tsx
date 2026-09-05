@@ -10,14 +10,14 @@ export default function Footer() {
     <footer
       className="w-full pt-[60px] lg:pt-[96px] bg-darkgrey flex flex-col justify-center items-center gap-[40px] lg:gap-[80px] px-4 sm:px-32 xl:px-0"
       style={{
-        backgroundImage: `url('/images/motif_noir.jpg')`,
+        backgroundImage: `url('/images/motif_noir.webp')`,
         backgroundRepeat: 'repeat',
         backgroundSize: '500px'
       }}
     >
       <div
         className="max-w-screen-xl w-full bg-cover bg-center rounded-16"
-        style={{ backgroundImage: `url('images/vagues.png')` }}
+        style={{ backgroundImage: `url('/images/vagues.webp')` }}
       >
         <div className=" flex flex-col gap-[24px] lg:gap-[40px] justify-center items-center py-32 lg:py-64 bg-oceanblue/50 rounded-16 backdrop-blur-md px-16 xs:px-16 lg:px-32">
           <h1 className="font-medium text-18 xs:text-24 lg:text-40 leading-[100%] text-center">

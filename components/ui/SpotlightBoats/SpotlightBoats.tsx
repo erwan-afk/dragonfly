@@ -2709,7 +2709,10 @@ export default function SpotlightBoats({
                         src={imageUrl}
                         alt={`${getModelLabel(boat.model)} photo`}
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        width={800}
+                        height={600}
                         loading="lazy"
+                        decoding="async"
                         onLoad={() =>
                           logImageEvent('load', boat.id, imageUrl as string)
                         }
@@ -2722,6 +2725,10 @@ export default function SpotlightBoats({
                         src="/images/No-image.png"
                         alt="No image available"
                         className="absolute inset-0 w-full h-full object-cover"
+                        width={800}
+                        height={600}
+                        loading="lazy"
+                        decoding="async"
                       />
                     )}
                   </div>

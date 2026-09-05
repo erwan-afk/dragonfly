@@ -157,9 +157,12 @@ export async function convertImageToWebP(
 ): Promise<{ buffer: Buffer; filename: string }> {
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    
-    // Convertir l'image en WebP avec Sharp
+
+    // Convertir l'image en WebP avec Sharp, plafonnée à 1920px de large
+    // pour éviter que des photos non redimensionnées (ex. 6000px+ depuis un
+    // téléphone) restent en pleine résolution une fois converties.
     const webpBuffer = await sharp(buffer)
+      .resize({ width: 1920, withoutEnlargement: true })
       .webp({ quality })
       .toBuffer();
 
