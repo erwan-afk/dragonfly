@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // Désactiver complètement la génération statique pour éviter les erreurs useSearchParams
-    output: 'standalone',
+    // NOTE: 'output: standalone' was removed — production deploys via Coolify
+    // using Nixpacks + `next start`, not the standalone-server Dockerfile
+    // flow, and the mismatch was silently breaking several routes at runtime
+    // (Next.js itself warns "next start does not work with output: standalone").
     productionBrowserSourceMaps: false,
     // Désactiver React Strict Mode pour éviter les doubles rendus en dev
     reactStrictMode: false,

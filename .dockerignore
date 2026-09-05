@@ -45,6 +45,4 @@ coverage/
 .cache/
 .vscode/
 .idea/
-
-# Prisma (garde seulement le schema)
-prisma/migrations/ 
+ 
