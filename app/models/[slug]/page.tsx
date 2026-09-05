@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button/Button';
 import { getModelData, modelsData, allModels } from '@/utils/models-data';
 import { getBoatsByModel } from '@/utils/database/products';
 import { getURL } from '@/utils/helpers';
+import { buildBreadcrumbJsonLd } from '@/utils/json-ld';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,8 +38,18 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
 
   const relatedModels = allModels.filter((m) => m.key !== model.key).slice(0, 3);
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: 'Home', url: getURL('/') },
+    { name: 'Models', url: getURL('/models') },
+    { name: model.name, url: getURL(`/models/${model.key}`) }
+  ]);
+
   return (
     <div className="max-w-screen-xl mx-auto px-16 xl:px-0 py-[40px] lg:py-[60px] flex flex-col gap-48 lg:gap-64">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       {/* Hero */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-32 lg:gap-48 items-center">
         <div className="flex flex-col gap-16">

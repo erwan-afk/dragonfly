@@ -13,7 +13,7 @@ import { SellerContact } from './SellerContact';
 import FlagIcon from '@/components/icons/Flag';
 import { normalizeImageUrls } from '@/utils/image-urls';
 import { formatPriceNumber } from '@/utils/format-price';
-import { buildBoatJsonLd } from '@/utils/json-ld';
+import { buildBoatJsonLd, buildBreadcrumbJsonLd } from '@/utils/json-ld';
 import { getVideoEmbedUrl } from '@/utils/video-embed';
 import { getURL } from '@/utils/helpers';
 import { groupSpecsBySection } from '@/utils/specifications';
@@ -120,30 +120,43 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
     finalImages: allImages
   });
 
+  const modelLabel =
+    dragonflyModels.find((model) => model.key === boat.model)?.label ||
+    boat.model;
+
   const jsonLd = buildBoatJsonLd(
     {
       id: boat.id,
-      model: boat.model,
+      modelLabel,
+      year: row.year,
       price: boat.price,
       currency: boat.currency,
-      country: boat.country,
       description: boat.description,
-      photos: normalizedPhotos,
-      condition: row.condition,
-      specifications: boat.specifications,
       status: (boat as any).status,
-      expiresAt: (boat as any).expires_at,
-      createdAt: boat.createdAt,
-      user: boat.user
+      createdAt: boat.createdAt
     },
     allImages
   );
+
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: 'Home', url: getURL('/') },
+    { name: 'For Sale', url: getURL('/forsale') },
+    { name: modelLabel, url: getURL(`/forsale?model=${boat.model}`) },
+    {
+      name: row.year ? `${modelLabel} ${row.year}` : modelLabel,
+      url: getURL(`/boat/${boat.id}`)
+    }
+  ]);
 
   return (
     <section id="Boats" className="w-full pb-[64px] lg:pb-[128px] bg-fullwhite">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <ViewTracker boatId={boat.id} />
 

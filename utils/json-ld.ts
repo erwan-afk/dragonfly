@@ -1,69 +1,75 @@
 /**
  * JSON-LD structured data utilities for SEO.
  *
- * Generates schema.org-compliant JSON-LD for boat listings (Product type).
+ * Generates schema.org-compliant JSON-LD for boat listings (Product type)
+ * and BreadcrumbList navigation trails.
  */
+
+import { getURL } from '@/utils/helpers';
 
 interface BoatJsonLdInput {
   id: string;
-  model: string;
+  modelLabel: string;
+  year?: number | null;
   price: number;
   currency: string;
-  country: string;
   description: string | null;
-  photos: string[];
-  condition?: string | null;
-  specifications?: Record<string, any> | null;
   status?: string | null;
-  expiresAt?: Date | string | null;
   createdAt: Date | string;
-  user?: {
-    name?: string | null;
-    email?: string | null;
-  } | null;
+}
+
+function getAvailability(status: string | null | undefined): string {
+  if (status === 'sold') return 'https://schema.org/SoldOut';
+  if (status === 'active') return 'https://schema.org/InStock';
+  // pending / inactive / deleted: not currently purchasable, but not
+  // confirmed sold either.
+  return 'https://schema.org/OutOfStock';
 }
 
 export function buildBoatJsonLd(
   boat: BoatJsonLdInput,
   images: string[]
 ): Record<string, any> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-yachts.com';
+  const url = getURL(`/boat/${boat.id}`);
+  const name = boat.year ? `${boat.modelLabel} ${boat.year}` : boat.modelLabel;
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: boat.model,
-    description: boat.description || `${boat.model} listed on 3Hulls`,
+    name,
+    description: boat.description || `${name} listed on 3Hulls`,
     image: images.length > 0 ? images : undefined,
     sku: boat.id,
+    url,
     offers: {
       '@type': 'Offer',
+      url,
       price: boat.price.toString(),
       priceCurrency: boat.currency || 'EUR',
-      availability:
-        boat.status === 'active'
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/SoldOut',
-      url: `${baseUrl}/boat/${boat.id}`,
-    },
-    ...(boat.condition
-      ? {
-          itemCondition: {
-            '@type': 'OfferItemCondition',
-            name: boat.condition,
-          },
-        }
-      : {}),
-    ...(boat.specifications
-      ? {
-          additionalProperty: Object.entries(boat.specifications)
-            .filter(([, value]) => value != null && value !== '')
-            .map(([key, value]) => ({
-              '@type': 'PropertyValue',
-              name: key,
-              value: String(value),
-            })),
-        }
-      : {}),
+      availability: getAvailability(boat.status),
+      // All listings on 3Hulls are pre-owned boats — schema.org has no
+      // finer-grained "used" condition than UsedCondition.
+      itemCondition: 'https://schema.org/UsedCondition'
+    }
+  };
+}
+
+interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+export function buildBreadcrumbJsonLd(
+  items: BreadcrumbItem[]
+): Record<string, any> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url
+    }))
   };
 }
