@@ -2,10 +2,6 @@ import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
 import CookieSettingsButton from '@/components/ui/CookieConsent/CookieSettingsButton';
 import { getURL } from '@/utils/helpers';
 
-// Static generation crashes in production for this page — force dynamic
-// rendering like the rest of the site's public pages.
-export const dynamic = 'force-dynamic';
-
 export const metadata = {
   title: 'Cookie Policy',
   description:

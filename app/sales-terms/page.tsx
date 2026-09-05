@@ -2,10 +2,6 @@ import LegalLayout, { Section } from '@/components/ui/LegalLayout/LegalLayout';
 import { legalConfig as c } from '@/utils/legal-config';
 import { getURL } from '@/utils/helpers';
 
-// Static generation crashes in production for this page — force dynamic
-// rendering like the rest of the site's public pages.
-export const dynamic = 'force-dynamic';
-
 export const metadata = {
   title: 'Sales Terms',
   description:
