@@ -28,11 +28,16 @@ export default function CookieConsent() {
   return (
     <>
       {showBanner && (
-        <div
-          role="region"
-          aria-label="Cookie consent"
-          className="fixed bottom-0 left-0 right-0 z-[90] px-4 pb-4 sm:px-8 sm:pb-8"
-        >
+        <>
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-[89] pointer-events-none bg-black/60"
+          />
+          <div
+            role="region"
+            aria-label="Cookie consent"
+            className="fixed bottom-0 left-0 right-0 z-[90] px-4 pb-16 sm:px-8 sm:pb-32 lg:pb-48"
+          >
           <div className="mx-auto max-w-screen-xl bg-fullwhite text-oceanblue rounded-16 shadow-2xl border border-stonegrey/20 p-16 sm:p-24 flex flex-col lg:flex-row gap-16 lg:items-center lg:justify-between">
             <div className="text-14 lg:text-15 leading-relaxed lg:max-w-2xl">
               We use cookies to operate this site, measure audience, and improve
@@ -70,7 +75,8 @@ export default function CookieConsent() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       <ConsentModal
