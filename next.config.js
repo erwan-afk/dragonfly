@@ -81,9 +81,13 @@ const nextConfig = {
 
         // Next.js needs unsafe-eval in dev for React Fast Refresh; keep it out of production.
         const isDev = process.env.NODE_ENV !== 'production';
+        // static.cloudflareinsights.com serves the Web Analytics beacon that
+        // Cloudflare's edge auto-injects when proxying this domain — it is
+        // not loaded by our own code, but the CSP still has to allow it or
+        // Cloudflare's script gets blocked with a console error.
         const scriptSrc = isDev
-            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com"
-            : "'self' 'unsafe-inline' https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com";
+            ? "'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://static.cloudflareinsights.com"
+            : "'self' 'unsafe-inline' https://js.stripe.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://static.cloudflareinsights.com";
 
         const csp = [
             "default-src 'self'",

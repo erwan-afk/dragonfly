@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useReCaptcha } from 'next-recaptcha-v3';
+import { useReCaptcha, ReCaptchaProvider } from 'next-recaptcha-v3';
 import Button from '@/components/ui/Button';
 import { FloatingPaths } from '@/components/ui/FloatingPaths';
 import Logo from '@/components/icons/Logo';
@@ -35,6 +35,16 @@ interface ValidationResult {
 }
 
 export default function ContactPage() {
+  // reCAPTCHA must only load when this form is actually shown, not on
+  // every page — scope the provider to this page instead of globally.
+  return (
+    <ReCaptchaProvider>
+      <ContactForm />
+    </ReCaptchaProvider>
+  );
+}
+
+function ContactForm() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',

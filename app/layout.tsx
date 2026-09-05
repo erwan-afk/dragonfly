@@ -7,7 +7,6 @@ import 'styles/main.css';
 import { HeroUIProvider } from '@heroui/system';
 import { LoadingProvider } from '@/components/ui/LoadingProvider';
 import { ToastProvider } from '@/components/ui/Toast';
-import { ReCaptchaProvider } from 'next-recaptcha-v3';
 import NavigationLoader from '@/components/ui/NavigationLoader';
 import SurveyWidget from '@/components/ui/SurveyWidget/SurveyWidget';
 import CookieConsent from '@/components/ui/CookieConsent/CookieConsent';
@@ -162,7 +161,7 @@ export default function RootLayout({ children }: LayoutsProps) {
         <HeroUIProvider>
           <LoadingProvider>
             <ToastProvider>
-              <ReCaptchaProvider>
+              <>
                 <NavigationLoader />
                 <main className="w-full relative min-h-screen">
                   <div className="w-full bg-darkgrey text-center text-fullwhite py-8 text-[10px] xs:text-[12px] flex flex-row justify-center items-center gap-4 xs:gap-8 px-8 xs:px-16">
@@ -215,7 +214,7 @@ export default function RootLayout({ children }: LayoutsProps) {
                   <CookieConsent />
                   <SurveyWidget />
                 </main>
-              </ReCaptchaProvider>
+              </>
             </ToastProvider>
           </LoadingProvider>
         </HeroUIProvider>

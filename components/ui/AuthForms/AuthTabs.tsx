@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { ReCaptchaProvider } from 'next-recaptcha-v3';
 import PasswordSignIn from './PasswordSignIn';
 import SignUp from './Signup';
 import OauthSignIn from './OauthSignIn';
@@ -30,6 +31,7 @@ export default function AuthTabs({
       : getAuthTypes();
 
   return (
+    <ReCaptchaProvider>
     <div className="flex flex-col w-full">
       {/* Header */}
       <div className="flex flex-col space-y-1 mb-8 pb-32">
@@ -122,5 +124,6 @@ export default function AuthTabs({
         </div>
       </div>
     </div>
+    </ReCaptchaProvider>
   );
 }
