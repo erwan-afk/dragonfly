@@ -34,6 +34,7 @@ import {
 } from '@/lib/product-features';
 import { formatPriceNumber, formatPriceCurrency } from '@/utils/format-price';
 import { isValidVideoUrl } from '@/utils/video-embed';
+import { trackSelectPromotion, trackBeginCheckout, trackPurchase } from '@/lib/gtm';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_LIVE ??
@@ -298,6 +299,37 @@ export default function BoatListingFormV2({
     photoAddOnPriceId,
     videoAddOnPriceId
   ]);
+
+  // GTM: select_promotion — fires whenever the chosen plan changes (arrival
+  // via /pricing?preference=... counts as the initial selection).
+  useEffect(() => {
+    if (!selectedProduct || !selectedPrice?.unitAmount) return;
+    trackSelectPromotion({
+      plan_name: selectedProduct.name || '',
+      transaction_type: isRenewalMode ? 'renewal' : 'new_listing',
+      value: Number(selectedPrice.unitAmount) / 100,
+      currency: (selectedPrice.currency || 'eur').toUpperCase()
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProduct?.id]);
+
+  // GTM: begin_checkout — fires once the Payment Element is ready to accept
+  // card details for the currently selected plan. clientSecret is
+  // regenerated whenever add-ons change, so this stays in sync with the
+  // actual amount about to be charged.
+  useEffect(() => {
+    if (!clientSecret || !selectedProduct || !selectedPrice?.unitAmount) return;
+    const addOnsCents =
+      (addOnsAllowed && wantExtraPhotos ? photoAddOnAmount : 0) +
+      (addOnsAllowed && wantVideo ? videoAddOnAmount : 0);
+    trackBeginCheckout({
+      plan_name: selectedProduct.name || '',
+      transaction_type: isRenewalMode ? 'renewal' : 'new_listing',
+      value: (Number(selectedPrice.unitAmount) + addOnsCents) / 100,
+      currency: (selectedPrice.currency || 'eur').toUpperCase()
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientSecret]);
 
   // Utiliser les fonctions importées depuis la configuration partagée
   const planMaxPhotos = getMaxPhotos(selectedProduct?.name);
@@ -1014,6 +1046,23 @@ export default function BoatListingFormV2({
 
   const handlePaymentSuccess = async () => {
     console.log('✅ Payment successful!');
+
+    // GTM: purchase — Stripe has already confirmed the payment at this
+    // point (handlePaymentSuccess only runs when stripe.confirmPayment
+    // returned no error). Dedupe by paymentIntentId inside trackPurchase.
+    // value includes any add-ons (extra photos / video) actually charged.
+    if (paymentIntentId && selectedProduct && selectedPrice?.unitAmount) {
+      const addOnsCents =
+        (addOnsAllowed && wantExtraPhotos ? photoAddOnAmount : 0) +
+        (addOnsAllowed && wantVideo ? videoAddOnAmount : 0);
+      trackPurchase({
+        transaction_id: paymentIntentId,
+        plan_name: selectedProduct.name || '',
+        transaction_type: isRenewalMode ? 'renewal' : 'new_listing',
+        value: (Number(selectedPrice.unitAmount) + addOnsCents) / 100,
+        currency: (selectedPrice.currency || 'eur').toUpperCase()
+      });
+    }
 
     // Si on est en mode renewal, renouveler l'annonce
     if (isRenewalMode && selectedBoatId) {

@@ -14,6 +14,11 @@ import { getMaxPhotos, getDuration, getProductFeatures } from '@/lib/product-fea
 import { formatPriceNumber } from '@/utils/format-price';
 import { ArrowUpCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import {
+  trackSelectPromotion,
+  trackBeginCheckout,
+  trackPurchase
+} from '@/lib/gtm';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -43,7 +48,7 @@ function PaymentForm({
 }: {
   boatId: string;
   newPlanId: string;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onCancel: () => void;
 }) {
   const stripe = useStripe();
@@ -93,7 +98,7 @@ function PaymentForm({
           throw new Error(data.error || 'Failed to upgrade boat');
         }
 
-        onSuccess();
+        onSuccess(paymentIntent.id);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
@@ -160,6 +165,42 @@ export default function UpgradeClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const selectedPlanPricing = selectedPlan
+    ? (() => {
+        const price = selectedPlan.prices?.[0];
+        const fullPrice = price?.unit_amount || 0;
+        const differenceAmount = Math.max(0, fullPrice - currentPlanPrice);
+        return {
+          value: differenceAmount / 100,
+          currency: (price?.currency || 'eur').toUpperCase()
+        };
+      })()
+    : null;
+
+  // GTM: select_promotion — fires whenever the chosen upgrade plan changes.
+  useEffect(() => {
+    if (!selectedPlan || !selectedPlanPricing) return;
+    trackSelectPromotion({
+      plan_name: selectedPlan.name,
+      transaction_type: 'upgrade',
+      value: selectedPlanPricing.value,
+      currency: selectedPlanPricing.currency
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPlan?.id]);
+
+  // GTM: begin_checkout — fires once the Payment Element is ready.
+  useEffect(() => {
+    if (!clientSecret || !selectedPlan || !selectedPlanPricing) return;
+    trackBeginCheckout({
+      plan_name: selectedPlan.name,
+      transaction_type: 'upgrade',
+      value: selectedPlanPricing.value,
+      currency: selectedPlanPricing.currency
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientSecret]);
+
   // Create payment intent when plan is selected
   useEffect(() => {
     if (!selectedPlan) {
@@ -208,7 +249,18 @@ export default function UpgradeClient({
     createPaymentIntent();
   }, [selectedPlan, boat.id]);
 
-  const handleSuccess = () => {
+  const handleSuccess = (paymentIntentId: string) => {
+    // GTM: purchase — this only runs after Stripe confirmed
+    // paymentIntent.status === 'succeeded' in PaymentForm.
+    if (selectedPlan && selectedPlanPricing) {
+      trackPurchase({
+        transaction_id: paymentIntentId,
+        plan_name: selectedPlan.name,
+        transaction_type: 'upgrade',
+        value: selectedPlanPricing.value,
+        currency: selectedPlanPricing.currency
+      });
+    }
     router.push(
       '/account?status=Success&status_description=Your listing has been upgraded successfully!'
     );

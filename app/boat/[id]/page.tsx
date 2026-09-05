@@ -9,6 +9,7 @@ import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import { ViewTracker } from './ViewTracker';
 import { ViewStats } from './ViewStats';
+import { SellerContact } from './SellerContact';
 import FlagIcon from '@/components/icons/Flag';
 import { normalizeImageUrls } from '@/utils/image-urls';
 import { formatPriceNumber } from '@/utils/format-price';
@@ -271,10 +272,19 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
                     {boat.user?.name || 'Anonymous user'}
                   </div>
 
-                  <div className="text-darkgrey text-14">
-                    <span className="font-medium">Mail : </span>
-                    <span className="break-all">{boat.user?.email || 'Not available'}</span>
-                  </div>
+                  {boat.user?.email ? (
+                    <SellerContact
+                      listingId={boat.id}
+                      model={boat.model}
+                      country={boat.country}
+                      email={boat.user.email}
+                    />
+                  ) : (
+                    <div className="text-darkgrey text-14">
+                      <span className="font-medium">Mail : </span>
+                      <span className="break-all">Not available</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
