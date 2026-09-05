@@ -3,6 +3,11 @@ import ModelImage from '@/components/ui/ModelImage/ModelImage';
 import { allModels } from '@/utils/models-data';
 import { getURL } from '@/utils/helpers';
 
+// Static generation of this page crashes in production (see .dockerignore/
+// next.config.js history) — force dynamic rendering like the rest of the
+// site's public pages.
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Dragonfly Trimaran Models: 25, 28, 32, 35, 40 & Classics',
   description:
