@@ -51,10 +51,37 @@ export default function Navlinks({
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    async function fetchUnreadCount() {
+      try {
+        const res = await fetch('/api/messages/unread-count');
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) setUnreadCount(data.count || 0);
+      } catch {
+        // Ignore transient errors — the badge just stays stale until the next poll.
+      }
+    }
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -113,6 +140,17 @@ export default function Navlinks({
 
           {/* Desktop right side */}
           <div className="hidden lg:flex flex-row gap-[20px] items-center">
+            <Link
+              href="/messages"
+              className={`hover:underline hover:underline-offset-4 ${pathname.startsWith('/messages') ? 'text-articblue' : 'text-darkgrey'} flex flex-row gap-[5px] items-center justify-center`}
+            >
+              Messages
+              {unreadCount > 0 && (
+                <span className="w-16 h-16 rounded-full bg-articblue text-fullwhite text-[10px] flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
             {isPending ? (
               <Skeleton className="rounded-lg" isLoaded={false}>
                 <div className="w-[100px] h-[24px] bg-default-200 rounded-lg" />
@@ -158,36 +196,8 @@ export default function Navlinks({
             />
           </div>
 
-          {/* Mobile: CTA + Profile + Hamburger */}
+          {/* Mobile: Hamburger only (CTA + profile live inside the menu) */}
           <div className="flex lg:hidden flex-row gap-16 items-center ml-auto">
-            <span className="hidden xs:inline">
-              <Button
-                text="Place an ad"
-                href="/list-boat"
-                icon="add"
-                bgColor="bg-articblue"
-                textsize="text-12"
-              />
-            </span>
-            <span className="xs:hidden">
-              <Button
-                text="Place an ad"
-                href="/list-boat"
-                bgColor="bg-articblue"
-                lowercase
-                anim_disabled
-                textsize="text-[12px]"
-              />
-            </span>
-            {!isPending && user && (
-              <Link href="/account" aria-label="Profile">
-                {pathname === '/account' ? (
-                  <AccountButtonFilled className="text-articblue w-[20px] h-[20px]" />
-                ) : (
-                  <AccountButton className="w-[20px] h-[20px] text-darkgrey" />
-                )}
-              </Link>
-            )}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-darkgrey"
@@ -310,6 +320,18 @@ export default function Navlinks({
 
                 {/* Navigation links */}
                 <nav className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+                  <Link
+                    href="/messages"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`px-16 xs:px-16 py-16 text-16 font-medium border-b border-stonegrey/10 flex items-center gap-8 ${pathname.startsWith('/messages') ? 'text-articblue underline underline-offset-4' : 'text-darkgrey'} transition-colors`}
+                  >
+                    Messages
+                    {unreadCount > 0 && (
+                      <span className="w-20 h-20 rounded-full bg-articblue text-fullwhite text-12 flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}

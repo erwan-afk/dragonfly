@@ -272,31 +272,26 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
 
           {/* Sidebar - seller card + stats */}
           <div className="w-full lg:w-[320px] flex flex-col gap-32">
-            <div className="bg-lightgrey rounded-[12px] p-6 flex flex-col gap-4">
-              <div className="flex flex-col gap-4">
+            <div className="bg-lightgrey rounded-[12px] p-16 flex flex-col gap-16">
+              <div className="flex flex-col gap-16">
                 <div className="w-[46px] h-[46px] rounded-full overflow-hidden bg-white border-2 border-articblue flex items-center justify-center">
                   <div className="w-full h-full flex items-center justify-center text-articblue text-18 font-medium">
                     {boat.user?.name?.charAt(0).toUpperCase() || 'U'}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-8">
                   <div className="text-articblue text-24 lg:text-32 font-medium leading-tight">
                     {boat.user?.name || 'Anonymous user'}
                   </div>
 
-                  {boat.user?.email ? (
+                  {!isOwner && (
                     <SellerContact
                       listingId={boat.id}
                       model={boat.model}
                       country={boat.country}
-                      email={boat.user.email}
+                      isLoggedIn={!!viewerUserId}
                     />
-                  ) : (
-                    <div className="text-darkgrey text-14">
-                      <span className="font-medium">Mail : </span>
-                      <span className="break-all">Not available</span>
-                    </div>
                   )}
                 </div>
               </div>

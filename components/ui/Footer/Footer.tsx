@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import Logo from '@/components/icons/Logo';
 import GitHub from '@/components/icons/GitHub';
@@ -6,9 +9,15 @@ import Button from '../Button/Button';
 import CookieSettingsButton from '../CookieConsent/CookieSettingsButton';
 
 export default function Footer() {
+  const pathname = usePathname();
+  // The messages panel needs all the vertical space it can get on small
+  // screens (composer must stay reachable without scrolling past the
+  // footer) — hide it below lg on that route only.
+  const hideOnMobile = pathname?.startsWith('/messages');
+
   return (
     <footer
-      className="w-full pt-[60px] lg:pt-[96px] bg-darkgrey flex flex-col justify-center items-center gap-[40px] lg:gap-[80px] px-4 sm:px-32 xl:px-0"
+      className={`w-full pt-[60px] lg:pt-[96px] bg-darkgrey ${hideOnMobile ? 'hidden lg:flex' : 'flex'} flex-col justify-center items-center gap-[40px] lg:gap-[80px] px-4 sm:px-32 xl:px-0`}
       style={{
         backgroundImage: `url('/images/motif_noir.webp')`,
         backgroundRepeat: 'repeat',
