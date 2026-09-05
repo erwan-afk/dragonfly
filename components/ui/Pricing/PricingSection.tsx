@@ -103,7 +103,7 @@ export default function PricingSection({
       className={`w-full ${pathname === '/pricing' ? '' : 'pb-[100px]'}  `}
     >
       <div className="mx-auto max-w-screen-xl flex flex-col gap-32 px-16 xs:px-16 xl:px-0">
-        <div className="flex flex-row items-center justify-between gap-16">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-16">
           {pathname !== '/pricing' ? (
             <h2 className="text-oceanblue text-32">
               <span className="text-articblue">Pricing</span> for ads
@@ -112,7 +112,9 @@ export default function PricingSection({
             <span />
           )}
           <div className="flex items-center gap-8">
-            <span className="text-darkgrey text-14">Boat price in</span>
+            <span className="text-darkgrey text-14 whitespace-nowrap">
+              Boat price in
+            </span>
             <Dropdown>
               <DropdownTrigger>
                 <button className="flex items-center gap-2 rounded-lg px-3 h-9 bg-fullwhite border-2 border-oceanblue/10 hover:border-articblue hover:bg-articblue/10 transition-colors !text-oceanblue font-medium text-14 cursor-pointer">

@@ -31,12 +31,12 @@ export default function CookieConsent() {
         <>
           <div
             aria-hidden="true"
-            className="fixed inset-0 z-[89] pointer-events-none bg-black/60"
+            className="fixed inset-0 z-[9989] pointer-events-none bg-black/60"
           />
           <div
             role="region"
             aria-label="Cookie consent"
-            className="fixed bottom-0 left-0 right-0 z-[90] px-4 pb-16 sm:px-8 sm:pb-32 lg:pb-48"
+            className="fixed bottom-0 left-0 right-0 z-[9991] px-4 pb-16 sm:px-8 sm:pb-32 lg:pb-48"
           >
           <div className="mx-auto max-w-screen-xl bg-fullwhite text-oceanblue rounded-16 shadow-2xl border border-stonegrey/20 p-16 sm:p-24 flex flex-col lg:flex-row gap-16 lg:items-center lg:justify-between">
             <div className="text-14 lg:text-15 leading-relaxed lg:max-w-2xl">
@@ -52,13 +52,6 @@ export default function CookieConsent() {
               .
             </div>
             <div className="flex flex-col sm:flex-row gap-8 lg:shrink-0">
-              <button
-                type="button"
-                onClick={() => rejectAll()}
-                className="px-16 py-8 rounded-full border border-stonegrey/40 text-oceanblue text-14 font-medium hover:bg-lightgrey transition-colors cursor-pointer"
-              >
-                Reject all
-              </button>
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}

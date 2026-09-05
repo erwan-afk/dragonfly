@@ -125,7 +125,7 @@ export default function SurveyWidget() {
   if (hidden) return null;
 
   return (
-    <div className="fixed bottom-6 right-4 z-[9990] flex flex-col items-end">
+    <div className="fixed bottom-24 right-0 sm:bottom-6 sm:right-4 z-[9990] flex flex-col items-end">
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -134,7 +134,7 @@ export default function SurveyWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="mb-2 bg-darkgrey text-white rounded-2xl shadow-2xl w-72 max-w-[calc(100vw-2rem)] overflow-hidden"
+            className="mb-2 mr-4 sm:mr-0 bg-darkgrey text-white rounded-2xl shadow-2xl w-72 max-w-[calc(100vw-2rem)] overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
@@ -219,8 +219,8 @@ export default function SurveyWidget() {
       {/* Toggle tab */}
       <motion.button
         onClick={() => setIsOpen((v) => !v)}
-        whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-2 bg-darkgrey text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg border border-white/10 hover:border-articblue/50 hover:bg-[#2e3033] transition-all duration-150"
+        whileTap={{ scale: 0.97 }}
+        className="flex items-center justify-center gap-2 bg-darkgrey/70 text-white text-[9px] font-medium tracking-wide h-[84px] w-[20px] py-6 [writing-mode:vertical-rl] rounded-l-8 border border-white/10 border-r-0 shadow-md sm:[writing-mode:horizontal-tb] sm:h-auto sm:w-auto sm:py-2.5 sm:px-16 sm:text-xs sm:tracking-normal sm:bg-darkgrey sm:rounded-full sm:border sm:shadow-lg hover:bg-[#2e3033] hover:border-articblue/50 transition-all duration-150"
         aria-label={isOpen ? 'Close feedback' : 'Give feedback'}
       >
         <svg
@@ -229,7 +229,7 @@ export default function SurveyWidget() {
           viewBox="0 0 14 14"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="text-articblue shrink-0"
+          className="hidden sm:block text-articblue shrink-0"
         >
           <path
             d="M12.25 1.75H1.75C1.2 1.75 0.75 2.2 0.75 2.75V9.25C0.75 9.8 1.2 10.25 1.75 10.25H4.25L7 12.25L9.75 10.25H12.25C12.8 10.25 13.25 9.8 13.25 9.25V2.75C13.25 2.2 12.8 1.75 12.25 1.75Z"
@@ -238,11 +238,11 @@ export default function SurveyWidget() {
             strokeLinejoin="round"
           />
         </svg>
-        <span className="text-white/80">Your feedback</span>
+        <span className="text-white/80">Feedback</span>
         <motion.span
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="text-white/40 text-[10px]"
+          className="hidden sm:inline text-white/40 text-[10px]"
         >
           ▲
         </motion.span>

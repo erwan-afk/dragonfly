@@ -54,20 +54,20 @@ export default function ConsentModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-darkgrey/60 backdrop-blur-sm px-4 py-8"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-darkgrey/60 backdrop-blur-sm sm:px-4 sm:py-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="consent-modal-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-fullwhite rounded-16 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full sm:max-w-2xl bg-fullwhite rounded-t-16 sm:rounded-16 shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-24 py-20 border-b border-stonegrey/20 flex items-center justify-between">
+        <div className="px-16 py-8 sm:px-24 sm:py-20 border-b border-stonegrey/20 flex items-center justify-between gap-16">
           <h2
             id="consent-modal-title"
-            className="text-oceanblue text-20 font-medium"
+            className="text-oceanblue text-16 sm:text-20 font-medium"
           >
             Cookie preferences
           </h2>
@@ -75,14 +75,14 @@ export default function ConsentModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-darkgrey hover:text-oceanblue text-24 leading-none cursor-pointer"
+            className="shrink-0 text-darkgrey hover:text-oceanblue text-24 leading-none cursor-pointer"
           >
             ×
           </button>
         </div>
 
-        <div className="px-24 py-16 overflow-y-auto flex flex-col gap-16 text-oceanblue">
-          <p className="text-14 text-darkgrey">
+        <div className="px-16 py-8 sm:px-24 sm:py-16 overflow-y-auto flex flex-col gap-8 sm:gap-16 text-oceanblue">
+          <p className="text-[12px] sm:text-14 text-darkgrey leading-snug hidden sm:block">
             We use cookies to make the site work, measure audience, and improve
             our services. You can accept or refuse non-essential cookies and
             change your choice at any time from the footer. See our{' '}
@@ -91,50 +91,58 @@ export default function ConsentModal({
             </Link>{' '}
             for details.
           </p>
+          <p className="text-[12px] text-darkgrey leading-snug sm:hidden">
+            Accept or refuse non-essential cookies. See our{' '}
+            <Link href="/policies" className="underline hover:text-articblue">
+              Cookie Policy
+            </Link>
+            .
+          </p>
 
           <Category
             title="Essential"
-            description="Required for the site to work: authentication session, security (CSRF, anti-spam reCAPTCHA), and your cookie choices. Cannot be disabled."
+            description="Required for the site to work (session, security, your cookie choices). Cannot be disabled."
             checked
             disabled
           />
 
           <Category
             title="Analytics"
-            description="Google Analytics. Helps us understand how visitors use the site (pages viewed, traffic sources) so we can improve it. Anonymous data."
+            description="Google Analytics: anonymous usage data to help us improve the site."
             checked={toggles.analytics}
             onChange={(v) => setToggles((t) => ({ ...t, analytics: v }))}
           />
 
           <Category
             title="Marketing"
-            description="Reserved for future advertising features. Currently no marketing cookies are set."
+            description="Reserved for future advertising features. None set today."
             checked={toggles.marketing}
             onChange={(v) => setToggles((t) => ({ ...t, marketing: v }))}
           />
         </div>
 
-        <div className="px-24 py-16 border-t border-stonegrey/20 flex flex-col-reverse sm:flex-row sm:justify-between gap-8">
+        <div className="px-16 py-8 sm:px-24 sm:py-16 border-t border-stonegrey/20 grid grid-cols-3 gap-8 sm:flex sm:flex-row sm:justify-between">
           <button
             type="button"
             onClick={() => {
               onRejectAll();
               onClose();
             }}
-            className="px-16 py-8 rounded-full border border-stonegrey/40 text-oceanblue text-14 font-medium hover:bg-lightgrey transition-colors cursor-pointer"
+            className="px-8 sm:px-16 py-8 rounded-full border border-stonegrey/40 text-oceanblue text-[12px] sm:text-14 font-medium hover:bg-lightgrey transition-colors cursor-pointer sm:order-1"
           >
             Reject all
           </button>
-          <div className="flex flex-col sm:flex-row gap-8">
+          <div className="col-span-2 grid grid-cols-2 gap-8 sm:flex sm:flex-row sm:order-2">
             <button
               type="button"
               onClick={() => {
                 onSave(toggles);
                 onClose();
               }}
-              className="px-16 py-8 rounded-full border border-articblue text-articblue text-14 font-medium hover:bg-articblue/10 transition-colors cursor-pointer"
+              className="px-8 sm:px-16 py-8 rounded-full border border-articblue text-articblue text-[12px] sm:text-14 font-medium hover:bg-articblue/10 transition-colors cursor-pointer"
             >
-              Save my choices
+              <span className="sm:hidden">Save</span>
+              <span className="hidden sm:inline">Save my choices</span>
             </button>
             <button
               type="button"
@@ -142,7 +150,7 @@ export default function ConsentModal({
                 onAcceptAll();
                 onClose();
               }}
-              className="px-16 py-8 rounded-full bg-articblue text-fullwhite text-14 font-medium hover:bg-oceanblue transition-colors cursor-pointer"
+              className="px-8 sm:px-16 py-8 rounded-full bg-articblue text-fullwhite text-[12px] sm:text-14 font-medium hover:bg-oceanblue transition-colors cursor-pointer"
             >
               Accept all
             </button>
@@ -167,17 +175,21 @@ function Category({
   onChange?: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-16 p-16 rounded-12 border border-stonegrey/20 bg-fullwhite">
-      <div className="flex flex-col gap-4">
-        <div className="text-16 font-medium text-oceanblue">{title}</div>
-        <p className="text-13 text-darkgrey leading-snug">{description}</p>
+    <div className="flex flex-col gap-8 p-8 sm:p-16 rounded-12 border border-stonegrey/20 bg-fullwhite">
+      <div className="flex items-center justify-between gap-16">
+        <div className="text-14 sm:text-16 font-medium text-oceanblue">
+          {title}
+        </div>
+        <Toggle
+          checked={checked}
+          disabled={disabled}
+          onChange={onChange}
+          ariaLabel={title}
+        />
       </div>
-      <Toggle
-        checked={checked}
-        disabled={disabled}
-        onChange={onChange}
-        ariaLabel={title}
-      />
+      <p className="text-[12px] sm:text-[13px] text-darkgrey leading-snug">
+        {description}
+      </p>
     </div>
   );
 }
