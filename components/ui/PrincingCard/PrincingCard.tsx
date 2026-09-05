@@ -131,9 +131,9 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         </div>
       )}
 
-      <h1 className="font-medium text-24 xs:text-32 text-oceanblue break-words text-center sm:text-left">
+      <p className="font-medium text-24 xs:text-32 text-oceanblue break-words text-center sm:text-left">
         {price}
-      </h1>
+      </p>
 
       <div className="flex justify-center sm:justify-start">
         <Button

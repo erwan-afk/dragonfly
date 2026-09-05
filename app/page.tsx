@@ -11,9 +11,20 @@ import HeroSection from '@/components/HeroSection';
 import FeatureSection from '@/components/FeatureSection';
 import Button from '@/components/ui/Button/Button';
 import { Skeleton } from '@heroui/skeleton';
+import { getURL } from '@/utils/helpers';
 
 // Désactiver le rendu statique - cette page doit être rendue dynamiquement
 export const dynamic = 'force-dynamic';
+
+export const metadata = {
+  // The title template from the root layout does not apply to app/page.tsx
+  // (same route segment as the layout that defines it), so the full title
+  // is spelled out here rather than relying on the "%s | 3Hulls" template.
+  title: 'Dragonfly Trimarans for Sale | 3Hulls',
+  description:
+    'Buy and sell used Dragonfly trimarans. Browse current listings, compare Dragonfly models and place your boat advertisement on 3Hulls.',
+  alternates: { canonical: getURL('/') }
+};
 
 export default async function HomePage() {
   const isDev = process.env.NODE_ENV === 'development';

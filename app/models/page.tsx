@@ -4,9 +4,9 @@ import { allModels } from '@/utils/models-data';
 import { getURL } from '@/utils/helpers';
 
 export const metadata = {
-  title: 'Dragonfly Models | 3Hulls',
+  title: 'Dragonfly Trimaran Models: 25, 28, 32, 35, 40 & Classics',
   description:
-    'Discover the full range of Dragonfly folding trimarans, from the compact Dragonfly 25 to the offshore-capable Dragonfly 40.',
+    'Compare Dragonfly trimaran models, from the trailerable Dragonfly 25 to the classic 920 and flagship 40. View specifications, history and current listings.',
   alternates: { canonical: getURL('/models') }
 };
 

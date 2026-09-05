@@ -20,9 +20,9 @@ export default function Footer() {
         style={{ backgroundImage: `url('/images/vagues.webp')` }}
       >
         <div className=" flex flex-col gap-[24px] lg:gap-[40px] justify-center items-center py-32 lg:py-64 bg-oceanblue/50 rounded-16 backdrop-blur-md px-16 xs:px-16 lg:px-32">
-          <h1 className="font-medium text-18 xs:text-24 lg:text-40 leading-[100%] text-center">
+          <p className="font-medium text-18 xs:text-24 lg:text-40 leading-[100%] text-center">
             JOIN OUR COMMUNITY
-          </h1>
+          </p>
           <div className="w-full lg:w-2/3 text-center text-14 lg:text-16">
             Whether you're looking to sell your trimaran quickly and profitably,
             or searching for your dream trimaran, our community provides the

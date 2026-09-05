@@ -105,9 +105,9 @@ export default function PricingSection({
       <div className="mx-auto max-w-screen-xl flex flex-col gap-32 px-16 xs:px-16 xl:px-0">
         <div className="flex flex-row items-center justify-between gap-16">
           {pathname !== '/pricing' ? (
-            <h1 className="text-oceanblue text-32">
+            <h2 className="text-oceanblue text-32">
               <span className="text-articblue">Pricing</span> for ads
-            </h1>
+            </h2>
           ) : (
             <span />
           )}

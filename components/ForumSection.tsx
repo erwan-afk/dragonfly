@@ -147,14 +147,6 @@ export default function ForumSection() {
     { key: 'name', label: 'Name (A-Z)' }
   ];
 
-  if (loading) {
-    return <section className="w-full py-16 max-w-screen-xl mx-auto"></section>;
-  }
-
-  if (error) {
-    return <></>;
-  }
-
   const renderForumItem = (forum: ForumData) => (
     <a
       key={forum.forum_id}
@@ -363,6 +355,15 @@ export default function ForumSection() {
           </>
         )}
 
+        {loading && (
+          <div
+            className={`w-full text-center py-32 ${pathname === '/forum' ? 'text-oceanblue' : 'text-fullwhite'}`}
+          >
+            Loading forum discussions…
+          </div>
+        )}
+
+        {!loading && !error && (
         <div className="space-y-8 w-full mb-[60px] lg:mb-[120px]">
           {/* General category */}
           {generalCategory && (
@@ -492,6 +493,7 @@ export default function ForumSection() {
               </div>
             ))}
         </div>
+        )}
       </div>
     </section>
   );

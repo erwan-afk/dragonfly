@@ -16,7 +16,7 @@ import Analytics from '@/components/Analytics';
 const meta = {
   title: '3Hulls - The dedicated marketplace for Dragonfly trimarans',
   description:
-    'Transform your business with our automated marketplace platform. Streamline workflows, boost productivity, and scale effortlessly with AI-powered automation tools.',
+    'The dedicated marketplace for buying and selling used Dragonfly trimarans.',
   cardImage: '/images/dragonfly-boat.webp',
   robots: 'follow, index',
   favicon: '/favicon.ico',
@@ -93,7 +93,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: meta.cardImage,
           width: 1200,
           height: 630,
-          alt: '3Hulls - The Automated Marketplace'
+          alt: '3Hulls - Dragonfly trimarans marketplace'
         }
       ]
     },

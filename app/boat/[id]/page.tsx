@@ -218,11 +218,11 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
               )}
             </div>
             <div className="w-full h-[1px] bg-stonegrey"></div>
-            <h1 className="text-oceanblue text-20 lg:text-24">Description</h1>
+            <h2 className="text-oceanblue text-20 lg:text-24">Description</h2>
             <p className="text-darkgrey text-16 lg:text-20 whitespace-pre-line break-words">{boat.description}</p>
             <div className="w-full h-[1px] bg-stonegrey"></div>
             <div className="flex flex-col gap-16 lg:gap-32">
-              <h1 className="text-oceanblue text-20 lg:text-24">Specifications</h1>
+              <h2 className="text-oceanblue text-20 lg:text-24">Specifications</h2>
               {(() => {
                 const groups = groupSpecsBySection(boat.specifications || []);
                 if (groups.length === 0) {

@@ -32,9 +32,9 @@ export async function generateMetadata({
   );
 
   return {
-    title: 'Boats for sale - 3Hulls',
+    title: 'Dragonfly Trimarans for Sale | Browse Used Boats',
     description:
-      'Browse Dragonfly trimarans for sale, filter by model, country, and price.',
+      'Browse used Dragonfly trimarans for sale. Filter current listings by model, price, location and equipment, then contact the seller directly.',
     alternates: { canonical: getURL('/forsale') },
     robots: hasFilters
       ? { index: false, follow: true }
