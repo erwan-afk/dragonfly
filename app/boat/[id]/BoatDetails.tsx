@@ -36,7 +36,7 @@ export interface BoatDetailsProps {
     description: string | null;
     country: string;
     specifications: string[] | null;
-    user: { name: string | null; email: string | null };
+    user: { name: string | null };
   };
   year: number | string | null;
   formattedDate: string;
@@ -220,9 +220,11 @@ export function BoatDetails(props: BoatDetailsProps) {
           <div className="border border-[#eef1f5] rounded-[14px] p-[22px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <div className="text-[28px] font-bold text-[#16232b]">{priceLabel}</div>
 
-            <div className="mt-16">
-              <SellerContact listingId={boat.id} model={boat.model} country={boat.country} email={boat.user.email} />
-            </div>
+            {!isOwner && (
+              <div className="mt-16">
+                <SellerContact listingId={boat.id} model={boat.model} country={boat.country} isLoggedIn={isAuthenticated} />
+              </div>
+            )}
 
             <div className="w-full h-[1px] bg-[#eef1f5] my-[18px]" />
 
