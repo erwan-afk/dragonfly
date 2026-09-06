@@ -77,7 +77,7 @@ async function upsertTestBoat(sellerId: string): Promise<string> {
       model: 'df800',
       price: 89000,
       currency: 'EUR',
-      country: 'France',
+      country: 'france',
       description:
         'Messages test listing — Dragonfly 800 in great condition, well maintained, ready to sail. ' +
         'This is seeded test data used to exercise the /messages flow on localhost: sails, rigging and ' +
