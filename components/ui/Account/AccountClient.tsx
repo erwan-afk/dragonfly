@@ -31,6 +31,7 @@ interface AccountClientProps {
   userDetails: UserDetails;
   boats: Boat[];
   payments: any[];
+  favoriteBoats?: Boat[];
   products: any[];
   isLoading?: boolean;
 }
@@ -39,6 +40,7 @@ export function AccountClient({
   userDetails,
   boats,
   payments,
+  favoriteBoats = [],
   products,
   isLoading = false
 }: AccountClientProps) {
@@ -579,6 +581,28 @@ export function AccountClient({
                   <p className="mt-1 text-sm text-gray-500">
                     Your purchase history will appear here once you make a
                     payment.
+                  </p>
+                </div>
+              )}
+              {/* Section des favoris */}
+              <h1 className="text-24 sm:text-32 lg:text-56 text-articblue">My favorites</h1>
+
+              {favoriteBoats.length > 0 ? (
+                <SpotlightBoats
+                  key="account-favorites"
+                  gridView
+                  boats={favoriteBoats}
+                  products={products}
+                  favoritedBoatIds={favoriteBoats.map((b: any) => b.id)}
+                  isAuthenticated
+                />
+              ) : (
+                <div className="flex flex-col gap-[20px] w-full items-center justify-center">
+                  <p className="text-oceanblue text-14 sm:text-18 text-center">
+                    You haven't liked any listings yet.{' '}
+                    <Link href="/forsale" className="text-articblue font-medium hover:underline">
+                      Browse listings
+                    </Link>
                   </p>
                 </div>
               )}

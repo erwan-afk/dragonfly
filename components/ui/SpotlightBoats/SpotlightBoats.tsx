@@ -52,6 +52,7 @@ import FlagIcon from '@/components/icons/Flag';
 import { specificationsData } from '@/utils/specifications';
 import { formatPriceNumber } from '@/utils/format-price';
 import { normalizePhotoUrl } from '@/utils/image-urls.client';
+import { FavoriteButton } from '@/components/ui/FavoriteButton/FavoriteButton';
 
 interface SpotlightBoatsProps {
   boats: Boat[];
@@ -63,6 +64,8 @@ interface SpotlightBoatsProps {
   products?: any[];
   isLoading?: boolean;
   searchResultsInfo?: string | null; // Informations sur les résultats de recherche
+  favoritedBoatIds?: string[]; // Ids favoris du viewer courant, pour afficher le cœur rempli
+  isAuthenticated?: boolean; // Contrôle la redirection signin au clic sur le cœur
 }
 
 export default function SpotlightBoats({
@@ -74,7 +77,9 @@ export default function SpotlightBoats({
   userId,
   products = [],
   isLoading,
-  searchResultsInfo
+  searchResultsInfo,
+  favoritedBoatIds = [],
+  isAuthenticated = false
 }: SpotlightBoatsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -2516,6 +2521,14 @@ export default function SpotlightBoats({
                                   Boosted
                                 </div>
                               )}
+                              <div className="absolute top-3 right-3 z-20">
+                                <FavoriteButton
+                                  boatId={boat.id}
+                                  initialFavorited={favoritedBoatIds.includes(boat.id)}
+                                  isAuthenticated={isAuthenticated}
+                                  size={32}
+                                />
+                              </div>
                               <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
                                 {countries.find(
                                   (country) => country.key === boat.country
@@ -2681,6 +2694,14 @@ export default function SpotlightBoats({
                         Sold
                       </div>
                     )}
+                    <div className="absolute bottom-3 right-3 z-20">
+                      <FavoriteButton
+                        boatId={boat.id}
+                        initialFavorited={favoritedBoatIds.includes(boat.id)}
+                        isAuthenticated={isAuthenticated}
+                        size={32}
+                      />
+                    </div>
                     <div className="absolute flex flex-row items-center gap-2 z-10 m-3 bg-fullwhite w-fit px-[10px] rounded-[7px] text-oceanblue bottom-0">
                       {countries.find((country) => country.key === boat.country)
                         ?.label || ''}

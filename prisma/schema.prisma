@@ -65,6 +65,7 @@ model user {
   session         session[]
   boat_views      boat_view[]
   emailLogs       email_log[]
+  favorites       favorite[]
 }
 
 model verification {
@@ -105,6 +106,7 @@ model boat {
   payments       payment[]
   views          boat_view[]
   emailLogs      email_log[]
+  favorites      favorite[]
 
   @@index([userId])
   @@index([status])
@@ -112,6 +114,19 @@ model boat {
   @@index([status, expiresAt])
   @@index([boostExpiresAt])
   @@map("boats")
+}
+
+model favorite {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  boatId    String   @map("boat_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  boat      boat     @relation(fields: [boatId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, boatId])
+  @@index([boatId])
+  @@map("favorites")
 }
 
 model boat_view {

@@ -1,56 +1,41 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { trackGenerateLead } from '@/lib/gtm';
 
 interface SellerContactProps {
   listingId: string;
   model: string;
   country: string;
-  email: string;
+  email: string | null;
 }
 
-export function SellerContact({
-  listingId,
-  model,
-  country,
-  email
-}: SellerContactProps) {
-  const [copied, setCopied] = useState(false);
+export function SellerContact({ listingId, model, country, email }: SellerContactProps) {
   const hasTrackedLead = useRef(false);
 
-  const handleContactIntent = async () => {
+  if (!email) {
+    return (
+      <div className="w-full text-center text-14 text-[#8b979d] border border-[#dde3e7] rounded-[10px] py-[13px]">
+        Contact unavailable
+      </div>
+    );
+  }
+
+  const handleClick = () => {
     if (!hasTrackedLead.current) {
       hasTrackedLead.current = true;
       trackGenerateLead({ listing_id: listingId, model, country });
     }
-
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard API unavailable — the email is still visible for manual copy.
-    }
+    window.location.href = `mailto:${email}`;
   };
 
   return (
-    <div className="text-darkgrey text-14">
-      <span className="font-medium">Mail : </span>
-      <a
-        href={`mailto:${email}`}
-        onClick={handleContactIntent}
-        className="break-all hover:text-articblue transition-colors"
-      >
-        {email}
-      </a>
-      <button
-        type="button"
-        onClick={handleContactIntent}
-        className="ml-2 text-articblue text-12 hover:underline"
-      >
-        {copied ? 'Copied!' : 'Copy'}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={handleClick}
+      className="w-full bg-[#3fada6] text-fullwhite text-14 font-bold rounded-[10px] py-[13px] hover:opacity-90 transition-opacity"
+    >
+      Contact seller
+    </button>
   );
 }

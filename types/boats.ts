@@ -11,7 +11,7 @@ export interface Boat {
   specifications: string[];
   vat_paid: boolean;
   year?: number | null;
-  user?: {
+  user: {
     name: string | null;
     email: string | null;
     avatar_url: string | null;
