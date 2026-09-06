@@ -80,7 +80,7 @@ export default async function HomePage() {
     console.error('❌ HomePage: Error loading data:', error);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+      <div className="min-h-screen bg-fullwhite">
         <HeroSection />
         <FeatureSection />
 

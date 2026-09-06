@@ -170,7 +170,7 @@ export function BoatDetails(props: BoatDetailsProps) {
               )}
             </div>
             <Link
-              href={`/models/${model.key}`}
+              href={`/models/${model.key}?from=${encodeURIComponent(`/boat/${boat.id}`)}`}
               className="inline-flex items-center gap-[4px] mt-[14px] text-[13px] font-semibold text-[#2c8a82] hover:underline"
             >
               View model page <ArrowRight size={13} />

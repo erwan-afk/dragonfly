@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BackLink from '@/components/ui/BackLink/BackLink';
 import ModelImage from '@/components/ui/ModelImage/ModelImage';
 import { notFound } from 'next/navigation';
 import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
@@ -63,12 +64,11 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
       {/* Hero */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-32 lg:gap-48 items-center">
         <div className="flex flex-col gap-16">
-          <Link
-            href="/models"
+          <BackLink
+            fallbackHref="/models"
+            fallbackLabel="All models"
             className="text-stonegrey hover:text-articblue text-14 w-fit"
-          >
-            ← All models
-          </Link>
+          />
           <h1 className="text-oceanblue text-32 lg:text-40 font-medium">
             {model.name}
           </h1>
