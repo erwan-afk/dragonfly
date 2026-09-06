@@ -11,12 +11,7 @@ interface SellerContactProps {
   isLoggedIn: boolean;
 }
 
-export function SellerContact({
-  listingId,
-  model,
-  country,
-  isLoggedIn
-}: SellerContactProps) {
+export function SellerContact({ listingId, model, country, isLoggedIn }: SellerContactProps) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +24,7 @@ export function SellerContact({
     }
 
     if (!isLoggedIn) {
-      router.push(`/signin/password_signin?callbackUrl=/boat/${listingId}`);
+      router.push(`/signin?callbackUrl=${encodeURIComponent(`/boat/${listingId}`)}`);
       return;
     }
 
@@ -60,11 +55,11 @@ export function SellerContact({
         type="button"
         onClick={handleMessageSeller}
         disabled={sending}
-        className="w-fit bg-oceanblue text-fullwhite px-16 py-8 rounded-[100px] text-14 font-medium disabled:opacity-50"
+        className="w-full bg-[#3fada6] text-fullwhite text-14 font-bold rounded-[10px] py-[13px] hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {sending ? 'Contacting...' : 'Contact seller'}
       </button>
-      {error && <p className="text-12 text-red-600">{error}</p>}
+      {error && <p className="text-[12px] text-red-600">{error}</p>}
     </div>
   );
 }

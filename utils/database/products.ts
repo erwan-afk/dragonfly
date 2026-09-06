@@ -164,7 +164,7 @@ export const getBoatsByModel = unstable_cache(
   async (modelKey: string, limit = 6) => {
     try {
       const boats = await prisma.$queryRaw`
-        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at,
+        SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at, b.year,
                u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
                p.name as product_name
         FROM "boats" b

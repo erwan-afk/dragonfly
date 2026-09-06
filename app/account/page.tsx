@@ -13,7 +13,7 @@ import { normalizeImageUrls } from '@/utils/image-urls';
 // Fonction pour récupérer les données utilisateur (sans cache pour éviter les problèmes de synchronisation)
 async function getUserData(userId: string) {
   // Paralléliser les requêtes pour gagner du temps
-  const [userDetails, boats, payments] = await Promise.all([
+  const [userDetails, boats, payments, favoriteBoats] = await Promise.all([
     prisma.$queryRaw`
       SELECT id, email, name, full_name, avatar_url, billing_address, payment_method, created_at
       FROM "user"
@@ -36,10 +36,21 @@ async function getUserData(userId: string) {
       LEFT JOIN "products" pr ON p.product_id = pr.id
       WHERE p.user_id = ${userId} AND (p.status = 'completed' OR p.status = 'succeeded')
       ORDER BY p.created_at DESC
+    ` as Promise<any[]>,
+    prisma.$queryRaw`
+      SELECT b.id, b.model, b.price, b.country, b.description, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.boosted_at, b.boost_expires_at,
+             u.name as user_name, u.email as user_email, u.avatar_url as user_avatar_url,
+             p.name as product_name
+      FROM "favorites" f
+      JOIN "boats" b ON f.boat_id = b.id
+      LEFT JOIN "user" u ON b.user_id = u.id
+      LEFT JOIN "products" p ON b.product_id = p.id
+      WHERE f.user_id = ${userId} AND b.status IN ('active', 'sold')
+      ORDER BY f.created_at DESC
     ` as Promise<any[]>
   ]);
 
-  return { userDetails, boats, payments };
+  return { userDetails, boats, payments, favoriteBoats };
 }
 
 // Composant côté serveur pour récupérer les données
@@ -57,7 +68,7 @@ export default async function Account() {
 
   try {
     // Récupérer les données utilisateur directement (sans cache)
-    const { userDetails, boats, payments } = await getUserData(user.id);
+    const { userDetails, boats, payments, favoriteBoats } = await getUserData(user.id);
     const products = await getProductsFromDatabase();
 
     if (!userDetails || userDetails.length === 0) {
@@ -76,6 +87,21 @@ export default async function Account() {
       hasExtraPhotos: !!boat.has_extra_photos,
       videoUrl: boat.video_url,
       // Ensure client components always get absolute URLs for images
+      photos: normalizeImageUrls(
+        typeof boat.photos === 'string' ? JSON.parse(boat.photos) : boat.photos,
+        boat.id
+      )
+    }));
+
+    const serializedFavoriteBoats = favoriteBoats.map((boat: any) => ({
+      ...boat,
+      price: parseFloat(boat.price.toString()),
+      createdAt: boat.created_at,
+      expiresAt: boat.expires_at,
+      productId: boat.product_id,
+      boostedAt: boat.boosted_at,
+      boostExpiresAt: boat.boost_expires_at,
+      productName: boat.product_name || null,
       photos: normalizeImageUrls(
         typeof boat.photos === 'string' ? JSON.parse(boat.photos) : boat.photos,
         boat.id
@@ -102,6 +128,7 @@ export default async function Account() {
         userDetails={userDetails[0]}
         boats={serializedBoats || []}
         payments={serializedPayments || []}
+        favoriteBoats={serializedFavoriteBoats || []}
         products={products}
       />
     );

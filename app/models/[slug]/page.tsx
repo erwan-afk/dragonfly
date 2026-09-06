@@ -5,6 +5,9 @@ import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
 import Button from '@/components/ui/Button/Button';
 import { getModelData, modelsData, allModels } from '@/utils/models-data';
 import { getBoatsByModel } from '@/utils/database/products';
+import { getFavoritedBoatIds } from '@/utils/database/favorites';
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
 import { getURL } from '@/utils/helpers';
 import { buildBreadcrumbJsonLd } from '@/utils/json-ld';
 
@@ -35,6 +38,13 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
   if (!model) notFound();
 
   const boats = await getBoatsByModel(model.key, 6);
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  const viewerUserId = session?.user?.id ?? null;
+  const favoritedBoatIds = await getFavoritedBoatIds(
+    viewerUserId,
+    boats.map((b: any) => b.id)
+  );
 
   const relatedModels = allModels.filter((m) => m.key !== model.key).slice(0, 3);
 
@@ -167,7 +177,13 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
         </div>
 
         {boats.length > 0 ? (
-          <SpotlightBoats key={`model-${model.key}`} gridView boats={boats} />
+          <SpotlightBoats
+            key={`model-${model.key}`}
+            gridView
+            boats={boats}
+            favoritedBoatIds={favoritedBoatIds}
+            isAuthenticated={!!viewerUserId}
+          />
         ) : (
           <div className="bg-lightgrey rounded-xl p-32 text-center flex flex-col items-center gap-16">
             <p className="text-darkgrey text-16">

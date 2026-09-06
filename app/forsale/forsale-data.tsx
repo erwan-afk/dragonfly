@@ -1,5 +1,8 @@
 import prisma from '@/utils/prisma/client';
 import SpotlightBoats from '@/components/ui/SpotlightBoats/SpotlightBoats';
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
+import { getFavoritedBoatIds } from '@/utils/database/favorites';
 
 interface ForSalePageProps {
   searchParams: Promise<{
@@ -246,6 +249,13 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
     const formattedBoats = boats.map(formatBoat);
     const formattedSuggestedBoats = suggestedBoats.map(formatBoat);
 
+    const session = await auth.api.getSession({ headers: await headers() });
+    const viewerUserId = session?.user?.id ?? null;
+    const favoritedBoatIds = await getFavoritedBoatIds(viewerUserId, [
+      ...formattedBoats.map((b: any) => b.id),
+      ...formattedSuggestedBoats.map((b: any) => b.id)
+    ]);
+
     // Générer un message de description basé sur les filtres et le tri
     const hasFilters =
       params.model ||
@@ -340,6 +350,8 @@ export async function ForSaleData({ searchParams }: ForSalePageProps) {
               boats={formattedBoats ?? []}
               suggestedBoats={formattedSuggestedBoats}
               searchResultsInfo={hasFilters ? filterDescription : null}
+              favoritedBoatIds={favoritedBoatIds}
+              isAuthenticated={!!viewerUserId}
             />
           </div>
         </section>
