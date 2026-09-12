@@ -11,7 +11,16 @@ const nextConfig = {
     experimental: {
         webpackBuildWorker: false,
         missingSuspenseWithCSRBailout: false,
-        serverComponentsExternalPackages: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner']
+        serverComponentsExternalPackages: ['@aws-sdk/client-s3', '@aws-sdk/s3-request-presigner'],
+        // Without this, the client Router Cache keeps serving a stale RSC
+        // payload for `force-dynamic` pages for up to 30s after a <Link>
+        // soft-navigation (e.g. favoriting a boat on the homepage, then
+        // clicking into /account shows the old favorites list until a hard
+        // refresh). Disabling it makes every soft nav to a dynamic route
+        // re-fetch from the server, matching force-dynamic's intent.
+        staleTimes: {
+            dynamic: 0
+        }
     },
     webpack: (config, { isServer }) => {
         if (!isServer) {
