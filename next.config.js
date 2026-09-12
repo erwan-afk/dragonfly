@@ -63,15 +63,16 @@ const nextConfig = {
                 hostname: 'flagcdn.com',
                 pathname: '/**',
             },
-            // Pattern pour domaine personnalisé R2 (si vous en avez un)
-            // Décommentez et modifiez selon votre domaine personnalisé
-            /*
+            // R2_PUBLIC_URL in production — without this, next/image refuses
+            // to load boat photos served from this domain and silently falls
+            // back to a placeholder image (e.g. on the "Similar listings"
+            // cards, which use next/image unlike the main photo carousel's
+            // plain <img> tags).
             {
                 protocol: 'https',
-                hostname: 'your-custom-domain.com',
+                hostname: 'images.dragonfly-trimarans.org',
                 pathname: '/**',
             },
-            */
         ],
     },
     typescript: {
