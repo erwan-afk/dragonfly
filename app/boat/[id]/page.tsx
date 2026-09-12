@@ -1,27 +1,26 @@
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import type { Metadata } from 'next';
-import { dragonflyModels, currencies, countries, boatConditions } from '@/utils/constants';
+import { dragonflyModels, currencies } from '@/utils/constants';
 import type { Boat } from '@/types/boats';
 import BoatImageGallery from '@/components/ui/BoatImageGallery/BoatImageGallery';
 import prisma from '@/utils/prisma/client';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import { ViewTracker } from './ViewTracker';
-import { ViewStats } from './ViewStats';
-import { SellerContact } from './SellerContact';
-import FlagIcon from '@/components/icons/Flag';
+import { BoatDetails } from './BoatDetails';
 import { normalizeImageUrls } from '@/utils/image-urls';
 import { formatPriceNumber } from '@/utils/format-price';
 import { buildBoatJsonLd, buildBreadcrumbJsonLd } from '@/utils/json-ld';
 import { getVideoEmbedUrl } from '@/utils/video-embed';
 import { getURL } from '@/utils/helpers';
-import { groupSpecsBySection } from '@/utils/specifications';
+import { getModelData } from '@/utils/models-data';
+import { getBoatsByModel } from '@/utils/database/products';
 
 const getBoatRow = cache(async (id: string) => {
   const [row] = (await prisma.$queryRaw`
     SELECT b.id, b.model, b.price, b.country, b.description, b.email as boat_email, b.condition, b.year, b.photos, b.user_id, b.product_id, b.created_at, b.updated_at, b.currency, b.specifications, b.vat_paid, b.status, b.expires_at, b.view_count, b.has_extra_photos, b.video_url,
-           u.name as user_name, u.full_name as user_full_name, u.email as user_email, u.avatar_url as user_avatar_url
+           u.name as user_name, u.full_name as user_full_name, u.email as user_email, u.avatar_url as user_avatar_url, u.created_at as user_created_at
     FROM "boats" b
     LEFT JOIN "user" u ON b.user_id = u.id
     WHERE b.id = ${id}
@@ -148,6 +147,33 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
     }
   ]);
 
+  const modelData = getModelData(boat.model) || {
+    key: boat.model,
+    name: modelLabel,
+    tagline: '',
+    yearsProduced: '',
+    designer: 'Quorning Boats',
+    image: '/images/dragonfly-boat.webp',
+    overview: [],
+    history: [],
+    sailing: '',
+    audience: '',
+    specs: []
+  };
+
+  const [similarBoatsRaw, favorite, listingsCount] = await Promise.all([
+    getBoatsByModel(boat.model, 4),
+    viewerUserId
+      ? prisma.favorite.findUnique({
+          where: { userId_boatId: { userId: viewerUserId, boatId: boat.id } }
+        })
+      : Promise.resolve(null),
+    prisma.boat.count({ where: { userId: (boat as any).user_id, status: 'active' } })
+  ]);
+
+  const similarBoats = similarBoatsRaw.filter((b: any) => b.id !== boat.id).slice(0, 3);
+  const sellerMemberSinceYear = row.user_created_at ? new Date(row.user_created_at).getFullYear() : null;
+
   return (
     <section id="Boats" className="w-full pb-[64px] lg:pb-[128px] bg-fullwhite">
       <script
@@ -161,25 +187,6 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
       <ViewTracker boatId={boat.id} />
 
       <div className="mx-auto max-w-screen-xl flex flex-col gap-[32px] lg:gap-[56px]">
-        {/* Sold banner */}
-        {isSold && (
-          <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 flex items-center gap-3">
-            <span className="font-bold text-sm tracking-wider uppercase text-red-700">Sold</span>
-            <span className="text-14 text-red-600">This boat has been sold and is no longer available.</span>
-          </div>
-        )}
-
-        {/* Pending banner for owners */}
-        {!isActive && !isSold && isOwner && (
-          <div className="rounded-[12px] border border-orange-200 bg-orange-50 px-4 py-3 text-oceanblue">
-            <div className="font-medium">Payment is being processed</div>
-            <div className="text-14 text-darkgrey">
-              Your listing will appear publicly as soon as Stripe confirms the
-              payment (usually a few seconds). You can refresh this page.
-            </div>
-          </div>
-        )}
-
         <BoatImageGallery images={allImages} boatModel={boat.model} />
 
         {(() => {
@@ -198,114 +205,31 @@ export default async function BoatPage({ params }: { params: { id: string } }) {
           );
         })()}
 
-        <div className="flex flex-col lg:flex-row justify-between gap-32">
-          <div className="flex-1 flex flex-col gap-24 lg:gap-48">
-            <div className="flex flex-row gap-8 items-center px-2.5 py-1.5 w-fit bg-oceanblue rounded-lg uppercase text-fullwhite">
-              {boat.country}{' '}
-              {boat.country && (
-                <FlagIcon
-                  flag={
-                    countries.find((country) => country.key === boat.country)
-                      ?.flag || ''
-                  }
-                />
-              )}
-            </div>
-            <div className="gap-16 lg:gap-32 flex flex-col">
-              <h1 className="text-articblue leading-[100%] text-32 lg:text-40">
-                {dragonflyModels.find((model) => model.key === boat.model)
-                  ?.label || boat.model}
-                {row.year ? ` — ${row.year}` : ''}
-              </h1>
-
-              <h2 className="text-oceanblue leading-[100%] text-24 lg:text-32 font-medium">
-                {formatPriceNumber(boat.price, boat.currency)}{' '}
-                {currencies.find((currency) => currency.key === boat.currency)
-                  ?.symbol || boat.currency}
-              </h2>
-              <div className="text-darkgrey text-16">{formattedDate}</div>
-              {row.condition && (
-                <div className="px-3 py-1.5 bg-articblue/10 text-articblue rounded-lg w-fit text-14 font-medium">
-                  {boatConditions.find(c => c.key === row.condition)?.label || row.condition}
-                </div>
-              )}
-            </div>
-            <div className="w-full h-[1px] bg-stonegrey"></div>
-            <h2 className="text-oceanblue text-20 lg:text-24">Description</h2>
-            <p className="text-darkgrey text-16 lg:text-20 whitespace-pre-line break-words">{boat.description}</p>
-            <div className="w-full h-[1px] bg-stonegrey"></div>
-            <div className="flex flex-col gap-16 lg:gap-32">
-              <h2 className="text-oceanblue text-20 lg:text-24">Specifications</h2>
-              {(() => {
-                const groups = groupSpecsBySection(boat.specifications || []);
-                if (groups.length === 0) {
-                  return (
-                    <p className="text-stonegrey text-14 italic">
-                      No specifications provided.
-                    </p>
-                  );
-                }
-                return (
-                  <div className="flex flex-col gap-24">
-                    {groups.map((group) => (
-                      <div key={group.title} className="flex flex-col gap-12">
-                        <h3 className="text-articblue text-16 lg:text-18 font-medium">
-                          {group.title}
-                        </h3>
-                        <div className="flex flex-row gap-8 lg:gap-12 flex-wrap">
-                          {group.items.map((spec) => (
-                            <div
-                              key={spec.key}
-                              className="w-fit px-[10px] py-[6px] bg-lightgrey rounded-[6px] text-oceanblue text-14"
-                            >
-                              {spec.label}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Sidebar - seller card + stats */}
-          <div className="w-full lg:w-[320px] flex flex-col gap-32">
-            <div className="bg-lightgrey rounded-[12px] p-6 flex flex-col gap-4">
-              <div className="flex flex-col gap-4">
-                <div className="w-[46px] h-[46px] rounded-full overflow-hidden bg-white border-2 border-articblue flex items-center justify-center">
-                  <div className="w-full h-full flex items-center justify-center text-articblue text-18 font-medium">
-                    {boat.user?.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <div className="text-articblue text-24 lg:text-32 font-medium leading-tight">
-                    {boat.user?.name || 'Anonymous user'}
-                  </div>
-
-                  {boat.user?.email ? (
-                    <SellerContact
-                      listingId={boat.id}
-                      model={boat.model}
-                      country={boat.country}
-                      email={boat.user.email}
-                    />
-                  ) : (
-                    <div className="text-darkgrey text-14">
-                      <span className="font-medium">Mail : </span>
-                      <span className="break-all">Not available</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="w-full h-[1px] px-6">
-              <ViewStats boatId={boat.id} viewCount={row.view_count || 0} />
-            </div>
-          </div>
-        </div>
+        <BoatDetails
+          boat={{
+            id: boat.id,
+            model: boat.model,
+            price: boat.price,
+            currency: boat.currency,
+            description: boat.description,
+            country: boat.country,
+            specifications: boat.specifications,
+            user: boat.user
+          }}
+          year={row.year}
+          formattedDate={formattedDate}
+          condition={row.condition}
+          isSold={isSold}
+          isOwner={isOwner}
+          isActive={isActive}
+          viewCount={row.view_count || 0}
+          model={modelData}
+          similarBoats={similarBoats}
+          sellerMemberSinceYear={sellerMemberSinceYear}
+          sellerListingsCount={listingsCount}
+          isFavoritedInitial={!!favorite}
+          isAuthenticated={!!viewerUserId}
+        />
       </div>
     </section>
   );

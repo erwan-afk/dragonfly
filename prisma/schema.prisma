@@ -65,6 +65,12 @@ model user {
   session         session[]
   boat_views      boat_view[]
   emailLogs       email_log[]
+  favorites       favorite[]
+  conversationsAsBuyer  conversation[] @relation("ConversationBuyer")
+  conversationsAsSeller conversation[] @relation("ConversationSeller")
+  messages              message[]
+  blockedUsers          blocked_user[] @relation("Blocker")
+  blockedByUsers        blocked_user[] @relation("Blocked")
 }
 
 model verification {
@@ -105,6 +111,8 @@ model boat {
   payments       payment[]
   views          boat_view[]
   emailLogs      email_log[]
+  favorites      favorite[]
+  conversations  conversation[]
 
   @@index([userId])
   @@index([status])
@@ -112,6 +120,19 @@ model boat {
   @@index([status, expiresAt])
   @@index([boostExpiresAt])
   @@map("boats")
+}
+
+model favorite {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  boatId    String   @map("boat_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  boat      boat     @relation(fields: [boatId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, boatId])
+  @@index([boatId])
+  @@map("favorites")
 }
 
 model boat_view {
@@ -200,6 +221,53 @@ model email_log {
   @@unique([type, boatId])
   @@index([userId])
   @@map("email_logs")
+}
+
+model conversation {
+  id            String    @id @default(cuid())
+  boatId        String?   @map("boat_id")
+  buyerId       String    @map("buyer_id")
+  sellerId      String    @map("seller_id")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  lastMessageAt DateTime  @default(now()) @map("last_message_at") @db.Timestamp(6)
+  boat          boat?     @relation(fields: [boatId], references: [id], onDelete: SetNull)
+  buyer         user      @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller        user      @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  messages      message[]
+
+  @@unique([boatId, buyerId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model message {
+  id             String       @id @default(cuid())
+  conversationId String       @map("conversation_id")
+  senderId       String       @map("sender_id")
+  body           String
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  readAt         DateTime?    @map("read_at") @db.Timestamp(6)
+  conversation   conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         user         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model blocked_user {
+  id        String   @id @default(cuid())
+  blockerId String   @map("blocker_id")
+  blockedId String   @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  blocker   user     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   user     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocked_users")
 }
 
 model survey_response {

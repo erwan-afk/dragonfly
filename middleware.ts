@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 // Routes that require authentication (cookie check only — full session
 // validation still happens in the API routes / server components).
-const PROTECTED_ROUTES = ['/account', '/list-boat', '/edit-listing', '/upgrade'];
+const PROTECTED_ROUTES = ['/account', '/list-boat', '/edit-listing', '/upgrade', '/messages'];
 
 // Routes that require admin role (checked server-side in the page)
 const ADMIN_ROUTES = ['/admin'];

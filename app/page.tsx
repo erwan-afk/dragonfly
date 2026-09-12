@@ -7,6 +7,9 @@ import {
   getProductsFromDatabase,
   getBoatsFromDatabase
 } from '@/utils/database/products';
+import { getFavoritedBoatIds } from '@/utils/database/favorites';
+import { auth } from '@/utils/auth/auth';
+import { headers } from 'next/headers';
 import HeroSection from '@/components/HeroSection';
 import FeatureSection from '@/components/FeatureSection';
 import Button from '@/components/ui/Button/Button';
@@ -37,6 +40,13 @@ export default async function HomePage() {
       getBoatsFromDatabase(3) // Limite à 3 bateaux les plus récents pour la homepage
     ]);
 
+    const session = await auth.api.getSession({ headers: await headers() });
+    const viewerUserId = session?.user?.id ?? null;
+    const favoritedBoatIds = await getFavoritedBoatIds(
+      viewerUserId,
+      boats.map((b: any) => b.id)
+    );
+
     return (
       <div className="min-h-screen">
         <HeroSection />
@@ -46,7 +56,7 @@ export default async function HomePage() {
             <div className="p-8 text-center">Chargement des bateaux...</div>
           }
         >
-          <BoatGrid boats={boats} />
+          <BoatGrid boats={boats} favoritedBoatIds={favoritedBoatIds} isAuthenticated={!!viewerUserId} />
         </Suspense>
 
         <FeatureSection />
@@ -70,7 +80,7 @@ export default async function HomePage() {
     console.error('❌ HomePage: Error loading data:', error);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+      <div className="min-h-screen bg-fullwhite">
         <HeroSection />
         <FeatureSection />
 

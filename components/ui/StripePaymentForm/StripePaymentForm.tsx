@@ -113,7 +113,7 @@ export default function StripePaymentForm({
 
       // 3. Confirmer le paiement avec Stripe
       console.log('💰 Confirming payment...');
-      const { error: confirmError } = await stripe.confirmPayment({
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: returnUrl
@@ -121,10 +121,21 @@ export default function StripePaymentForm({
         redirect: 'if_required'
       });
 
-      if (confirmError) {
-        console.error('❌ Payment confirmation error:', confirmError);
-        setErrorMessage(confirmError.message || 'An error occurred');
-        onError(confirmError.message || 'An error occurred');
+      // `confirmPayment` with `redirect: 'if_required'` resolves with no
+      // `error` for any outcome that doesn't need a redirect — that includes
+      // a declined card (`requires_payment_method`) or a PaymentIntent still
+      // waiting on further action (`requires_action`), not just success.
+      // Treating "no error" as "paid" fired the GA4 purchase event (and
+      // activated boats) for payments that never actually went through.
+      if (confirmError || paymentIntent?.status !== 'succeeded') {
+        const message =
+          confirmError?.message ||
+          (paymentIntent?.status === 'requires_action'
+            ? 'Additional authentication is required to complete this payment. Please try again.'
+            : 'Payment was not completed. Please try again or use a different payment method.');
+        console.error('❌ Payment did not succeed:', confirmError || paymentIntent?.status);
+        setErrorMessage(message);
+        onError(message);
       } else {
         console.log('✅ Payment confirmed successfully!');
         setPaymentStep(3);

@@ -1,56 +1,65 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { trackGenerateLead } from '@/lib/gtm';
 
 interface SellerContactProps {
   listingId: string;
   model: string;
   country: string;
-  email: string;
+  isLoggedIn: boolean;
 }
 
-export function SellerContact({
-  listingId,
-  model,
-  country,
-  email
-}: SellerContactProps) {
-  const [copied, setCopied] = useState(false);
+export function SellerContact({ listingId, model, country, isLoggedIn }: SellerContactProps) {
+  const router = useRouter();
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const hasTrackedLead = useRef(false);
 
-  const handleContactIntent = async () => {
+  const handleMessageSeller = async () => {
     if (!hasTrackedLead.current) {
       hasTrackedLead.current = true;
       trackGenerateLead({ listing_id: listingId, model, country });
     }
 
+    if (!isLoggedIn) {
+      router.push(`/signin?callbackUrl=${encodeURIComponent(`/boat/${listingId}`)}`);
+      return;
+    }
+
+    setSending(true);
+    setError(null);
     try {
-      await navigator.clipboard.writeText(email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      const res = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boatId: listingId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Unable to contact this seller');
+        return;
+      }
+      router.push(`/messages/${data.conversationId}`);
     } catch {
-      // Clipboard API unavailable — the email is still visible for manual copy.
+      setError('Something went wrong, please try again later.');
+    } finally {
+      setSending(false);
     }
   };
 
   return (
-    <div className="text-darkgrey text-14">
-      <span className="font-medium">Mail : </span>
-      <a
-        href={`mailto:${email}`}
-        onClick={handleContactIntent}
-        className="break-all hover:text-articblue transition-colors"
-      >
-        {email}
-      </a>
+    <div className="flex flex-col gap-8">
       <button
         type="button"
-        onClick={handleContactIntent}
-        className="ml-2 text-articblue text-12 hover:underline"
+        onClick={handleMessageSeller}
+        disabled={sending}
+        className="w-full bg-[#3fada6] text-fullwhite text-14 font-bold rounded-[10px] py-[13px] hover:opacity-90 transition-opacity disabled:opacity-50"
       >
-        {copied ? 'Copied!' : 'Copy'}
+        {sending ? 'Contacting...' : 'Contact seller'}
       </button>
+      {error && <p className="text-[12px] text-red-600">{error}</p>}
     </div>
   );
 }
