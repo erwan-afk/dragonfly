@@ -17,24 +17,19 @@ interface ViewStatsData {
 }
 
 export function ViewStats({ boatId, viewCount }: ViewStatsProps) {
-  // Si on a le viewCount directement, l'utiliser
-  if (viewCount !== undefined) {
-    return (
-      <div className="flex flex-col gap-2 text-darkgrey text-14">
-        <div className="flex items-center gap-1">
-          <svg className="w-4 h-4 text-oceanblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-          <span>{viewCount} view{viewCount !== 1 ? 's' : ''}</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Sinon, utiliser l'ancienne logique avec l'API (pour la compatibilité)
+  // Hooks must always run, regardless of the viewCount/API branch below —
+  // otherwise a change in `viewCount` between renders (it's optional) makes
+  // React throw "Rendered more/fewer hooks than during the previous render".
   const [stats, setStats] = useState<ViewStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Si on a le viewCount directement, pas besoin d'appeler l'API.
+    if (viewCount !== undefined) {
+      return;
+    }
+
     const fetchStats = async () => {
       try {
         const response = await fetch(`/api/boat-views?boatId=${boatId}`);
@@ -54,7 +49,19 @@ export function ViewStats({ boatId, viewCount }: ViewStatsProps) {
     };
 
     fetchStats();
-  }, [boatId]);
+  }, [boatId, viewCount]);
+
+  // Si on a le viewCount directement, l'utiliser
+  if (viewCount !== undefined) {
+    return (
+      <div className="flex flex-col gap-2 text-darkgrey text-14">
+        <div className="flex items-center gap-1">
+          <svg className="w-4 h-4 text-oceanblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+          <span>{viewCount} view{viewCount !== 1 ? 's' : ''}</span>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -14,7 +14,8 @@ interface SignUpProps {
 }
 
 export default function SignUp({ redirectMethod, callbackUrl }: SignUpProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const routerInstance = useRouter();
+  const router = redirectMethod === 'client' ? routerInstance : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
