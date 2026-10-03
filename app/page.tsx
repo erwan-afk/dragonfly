@@ -23,7 +23,7 @@ export const metadata = {
   // The title template from the root layout does not apply to app/page.tsx
   // (same route segment as the layout that defines it), so the full title
   // is spelled out here rather than relying on the "%s | 3Hulls" template.
-  title: 'Dragonfly Trimarans for Sale | 3Hulls',
+  title: 'The dedicated marketplace for Dragonfly trimarans',
   description:
     'Buy and sell used Dragonfly trimarans. Browse current listings, compare Dragonfly models and place your boat advertisement on 3Hulls.',
   alternates: { canonical: getURL('/') }
