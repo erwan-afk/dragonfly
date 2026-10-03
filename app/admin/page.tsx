@@ -37,6 +37,11 @@ export default async function AdminPage() {
         banned: true,
         _count: {
           select: { boats: true, session: true }
+        },
+        session: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { createdAt: true }
         }
       },
       orderBy: { createdAt: 'desc' },
@@ -95,7 +100,9 @@ export default async function AdminPage() {
     ...u,
     createdAt: u.createdAt.toISOString(),
     boatsCount: u._count.boats,
-    sessionCount: u._count.session
+    sessionCount: u._count.session,
+    lastLoginAt: u.session[0]?.createdAt?.toISOString() ?? null,
+    session: undefined
   }));
 
   const serializedBoats = boats.map((b) => ({

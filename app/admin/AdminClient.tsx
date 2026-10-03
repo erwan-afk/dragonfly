@@ -777,6 +777,9 @@ export default function AdminClient({
                   Joined
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
+                  Last connection
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase">
@@ -833,6 +836,11 @@ export default function AdminClient({
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {user.lastLoginAt
+                      ? new Date(user.lastLoginAt).toLocaleDateString()
+                      : 'Never'}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       {user.banned ? (
@@ -845,7 +853,7 @@ export default function AdminClient({
                           Active
                         </span>
                       )}
-                      {user.sessionCount === 0 && (
+                      {!user.lastLoginAt && (
                         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
                           <Clock size={12} />
                           Jamais connecté
