@@ -2,10 +2,11 @@
 
 /**
  * Script d'envoi d'emails de renouvellement d'annonces
- * 3 types de rappels, chacun envoyé UNE SEULE FOIS grâce à la table email_logs
+ * 4 types de rappels, chacun envoyé UNE SEULE FOIS grâce à la table email_logs
  * - reminder_7d : 7 jours avant expiration
  * - reminder_1d : 1 jour avant expiration
  * - expired : annonce expirée → notification + passage en inactive
+ * - pending_payment : annonce bloquée en pending (paiement jamais confirmé) depuis >2h
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -121,6 +122,32 @@ function templateExpired(userName: string, boatModel: string, expiryDate: Date, 
         <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
            style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
           Re-publish my listing
+        </a>
+      </div>
+    </div>
+  `);
+}
+
+function templatePendingPayment(userName: string, boatModel: string, boatId: string): string {
+  return emailWrapper(`
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #1e3a8a; margin: 0;">Your listing is almost live</h1>
+    </div>
+    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
+      <p style="font-size: 16px; line-height: 1.6;">
+        Hello <strong>${userName}</strong>,
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Your listing for the <strong>${boatModel}</strong> is all set, but the payment was never completed —
+        it's not visible to buyers yet.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6;">
+        Finish your payment to publish it.
+      </p>
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${SITE_URL}/resume-payment/${boatId}"
+           style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Finish my payment
         </a>
       </div>
     </div>
@@ -289,11 +316,57 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
   return { sent, skipped, deactivated };
 }
 
+async function processPendingPayment(dryRun: boolean): Promise<{ sent: number; skipped: number }> {
+  console.log('\n── Pass 4: Pending payment (abandoned checkout) ──');
+  const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+  const boats = await prisma.boat.findMany({
+    where: {
+      status: 'pending',
+      createdAt: { lt: cutoff },
+    },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+
+  console.log(`   ${boats.length} listings pending for more than 2h`);
+  const alreadySent = await getAlreadySentSet('pending_payment', boats.map(b => b.id));
+  let sent = 0, skipped = 0;
+
+  for (const boat of boats) {
+    if (!boat.user?.email) { skipped++; continue; }
+    if (alreadySent.has(boat.id)) {
+      console.log(`   ⏭️  "${boat.model}" — already sent`);
+      skipped++;
+      continue;
+    }
+
+    if (dryRun) {
+      console.log(`   🧪 [dry-run] would email ${boat.user.email} for "${boat.model}" (${boat.id})`);
+      sent++;
+      continue;
+    }
+
+    const html = templatePendingPayment(boat.user.name || 'there', boat.model, boat.id);
+    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} is all set, but the payment was never completed — it's not visible to buyers yet.\n\nFinish your payment here: ${SITE_URL}/resume-payment/${boat.id}\n\n3Hulls`;
+    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" is almost live — finish your payment`, html, text);
+
+    if (ok) {
+      await logEmail('pending_payment', boat.id, boat.user.id, boat.user.email);
+      console.log(`   ✅ "${boat.model}" → ${boat.user.email}`);
+      sent++;
+    }
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  return { sent, skipped };
+}
+
 // ─── Main ───────────────────────────────────────────────────────
 
-async function sendRenewalReminders() {
+async function sendRenewalReminders(dryRun: boolean = false) {
   console.log('🚀 Starting renewal reminder script');
   console.log(`📅 ${formatDate(new Date())}`);
+  if (dryRun) console.log('🧪 Dry-run mode: pending-payment pass will only log, not send');
 
   if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
     console.error('❌ SMTP_USER or SMTP_PASSWORD missing');
@@ -304,11 +377,13 @@ async function sendRenewalReminders() {
     const r7 = await processReminder7d();
     const r1 = await processReminder1d();
     const exp = await processExpired();
+    const pend = await processPendingPayment(dryRun);
 
     console.log('\n── Summary ──');
     console.log(`   7 days  : ${r7.sent} sent, ${r7.skipped} skipped`);
     console.log(`   1 day   : ${r1.sent} sent, ${r1.skipped} skipped`);
     console.log(`   Expired : ${exp.sent} sent, ${exp.skipped} skipped, ${exp.deactivated} deactivated`);
+    console.log(`   Pending : ${pend.sent} sent, ${pend.skipped} skipped`);
     console.log('✅ Done');
   } catch (error) {
     console.error('❌ Error:', error);
@@ -357,7 +432,7 @@ if (require.main === module) {
   if (args.includes('--diagnostic') || args.includes('-d')) {
     quickDiagnostic().catch(console.error);
   } else {
-    sendRenewalReminders().catch(console.error);
+    sendRenewalReminders(args.includes('--dry-run')).catch(console.error);
   }
 }
 
