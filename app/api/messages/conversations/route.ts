@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
-      return NextResponse.json({ conversationId: existing.id });
+      return NextResponse.json({ conversationId: existing.id, isNew: false });
     }
 
     if (boat.status !== 'active') {
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ conversationId: conversation.id });
+    return NextResponse.json({ conversationId: conversation.id, isNew: true });
   } catch (error) {
     console.error('❌ Error creating conversation:', error);
     return NextResponse.json(

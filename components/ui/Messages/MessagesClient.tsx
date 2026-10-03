@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@/components/ui/Button/Button';
+import { trackSellerReplied } from '@/lib/gtm';
 
 interface ApiUser {
   id: string;
@@ -218,6 +219,12 @@ export default function MessagesClient({
         const data = await res.json();
         setMessages((prev) => [...prev, data.message]);
         fetchConversations();
+        if (data.isFirstSellerReply && selected?.boat) {
+          trackSellerReplied({
+            listing_id: selected.boat.id,
+            time_to_first_reply: data.timeToFirstReplySeconds
+          });
+        }
       }
     } finally {
       setSending(false);

@@ -177,6 +177,14 @@ export async function POST(
       );
     }
 
+    const isSeller = session.user.id === conversation.sellerId;
+    const priorSellerMessage = isSeller
+      ? await prisma.message.findFirst({
+          where: { conversationId: conversation.id, senderId: conversation.sellerId }
+        })
+      : null;
+    const isFirstSellerReply = isSeller && !priorSellerMessage;
+
     const [message] = await prisma.$transaction([
       prisma.message.create({
         data: {
@@ -197,7 +205,15 @@ export async function POST(
     //   (error) => console.error('❌ Error sending notification email:', error)
     // );
 
-    return NextResponse.json({ message });
+    const timeToFirstReplySeconds = isFirstSellerReply
+      ? Math.max(0, (message.createdAt.getTime() - conversation.createdAt.getTime()) / 1000)
+      : null;
+
+    return NextResponse.json({
+      message,
+      isFirstSellerReply,
+      timeToFirstReplySeconds
+    });
   } catch (error) {
     console.error('❌ Error sending message:', error);
     return NextResponse.json(

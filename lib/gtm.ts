@@ -24,6 +24,16 @@ interface GenerateLeadParams {
   country: string;
 }
 
+interface MessageThreadStartedParams {
+  listing_id: string;
+  model: string;
+}
+
+interface SellerRepliedParams {
+  listing_id: string;
+  time_to_first_reply: number;
+}
+
 function pushToDataLayer(event: string, params: object) {
   if (typeof window === 'undefined') return;
   (window as any).dataLayer = (window as any).dataLayer || [];
@@ -77,4 +87,14 @@ export function trackPurchase(params: PurchaseEventParams) {
 
 export function trackGenerateLead(params: GenerateLeadParams) {
   pushToDataLayer('generate_lead', params);
+}
+
+/** Only call this when a brand-new conversation was created (not an existing one reopened). */
+export function trackMessageThreadStarted(params: MessageThreadStartedParams) {
+  pushToDataLayer('message_thread_started', params);
+}
+
+/** Only call this on the seller's first message in a conversation. */
+export function trackSellerReplied(params: SellerRepliedParams) {
+  pushToDataLayer('seller_replied', params);
 }

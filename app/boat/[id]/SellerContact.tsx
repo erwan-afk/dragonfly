@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { trackGenerateLead } from '@/lib/gtm';
+import { trackGenerateLead, trackMessageThreadStarted } from '@/lib/gtm';
 
 interface SellerContactProps {
   listingId: string;
@@ -40,6 +40,9 @@ export function SellerContact({ listingId, model, country, isLoggedIn }: SellerC
       if (!res.ok) {
         setError(data.error || 'Unable to contact this seller');
         return;
+      }
+      if (data.isNew) {
+        trackMessageThreadStarted({ listing_id: listingId, model });
       }
       router.push(`/messages/${data.conversationId}`);
     } catch {
