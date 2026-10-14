@@ -12,6 +12,17 @@
 import { PrismaClient } from '@prisma/client';
 import * as nodemailer from 'nodemailer';
 import { recordEmail } from '../utils/email-tracking';
+import {
+  EMAIL_BASE_URL as SITE_URL,
+  esc,
+  formatDate,
+  listingCard,
+  modelLabel,
+  paragraph,
+  renderEmail,
+  renderText,
+  type ListingSummary,
+} from '../utils/email-layout';
 
 const prisma = new PrismaClient();
 
@@ -25,134 +36,133 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app';
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+// ─── Email content ──────────────────────────────────────────────
+// Layout, colors and footer live in utils/email-layout.ts (shared by all emails).
+
+type ReminderBoat = ListingSummary;
+export interface BuiltEmail { subject: string; html: string; text: string }
+
+const renewUrl = (boatId: string) => `${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}`;
+const REASON = 'You are receiving this email because you have a listing on 3Hulls.';
+
+export function buildReminder7d(userName: string, boat: ReminderBoat, expiryDate: Date, daysLeft: number): BuiltEmail {
+  const label = modelLabel(boat.model);
+  const when = formatDate(expiryDate);
+  const days = `${daysLeft} day${daysLeft > 1 ? 's' : ''}`;
+  return {
+    subject: `Your ${label} listing expires in ${days}`,
+    html: renderEmail({
+      preheader: `Renew to keep your ${label} in front of buyers after ${when}.`,
+      eyebrow: 'Listing reminder',
+      title: `Your listing expires in ${days}`,
+      content:
+        paragraph(`Hello ${esc(userName)},`) +
+        paragraph(`Your listing for the <strong>${esc(label)}</strong> stays visible to buyers until <strong>${when}</strong>.`) +
+        listingCard(boat, { text: `Expires ${when}`, tone: 'warn' }) +
+        paragraph('Renewing gives it another 3 months in front of Dragonfly enthusiasts. You can renew at any time: your listing stays visible until its expiry date.'),
+      cta: { label: 'Renew my listing', url: renewUrl(boat.id) },
+      secondary: { label: 'See renewal pricing', url: `${SITE_URL}/pricing` },
+      reason: REASON,
+    }),
+    text: renderText({
+      greeting: `Hello ${userName},`,
+      lines: [
+        `Your listing for the ${label} stays visible to buyers until ${when} (in ${days}).`,
+        'Renewing gives it another 3 months in front of Dragonfly enthusiasts.',
+      ],
+      cta: { label: 'Renew my listing', url: renewUrl(boat.id) },
+      reason: REASON,
+    }),
+  };
 }
 
-// ─── Email Templates ────────────────────────────────────────────
-
-function emailWrapper(content: string): string {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      ${content}
-      <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-      <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-        This email was sent automatically by 3Hulls.
-      </p>
-    </div>
-  `;
+export function buildReminder1d(userName: string, boat: ReminderBoat, expiryDate: Date): BuiltEmail {
+  const label = modelLabel(boat.model);
+  const when = formatDate(expiryDate);
+  return {
+    subject: `Last call: your ${label} listing expires tomorrow`,
+    html: renderEmail({
+      preheader: `After ${when}, your ${label} will no longer be visible to buyers.`,
+      eyebrow: 'Last reminder',
+      title: 'Your listing expires tomorrow',
+      content:
+        paragraph(`Hello ${esc(userName)},`) +
+        paragraph(`Your listing for the <strong>${esc(label)}</strong> expires on <strong>${when}</strong>, which is <strong>tomorrow</strong>. After that date it will no longer be visible to buyers.`) +
+        listingCard(boat, { text: 'Expires tomorrow', tone: 'danger' }),
+      cta: { label: 'Renew my listing', url: renewUrl(boat.id) },
+      secondary: { label: 'See renewal pricing', url: `${SITE_URL}/pricing` },
+      reason: REASON,
+    }),
+    text: renderText({
+      greeting: `Hello ${userName},`,
+      lines: [
+        `Last reminder: your listing for the ${label} expires tomorrow (${when}).`,
+        'After that date it will no longer be visible to buyers.',
+      ],
+      cta: { label: 'Renew my listing', url: renewUrl(boat.id) },
+      reason: REASON,
+    }),
+  };
 }
 
-function template7d(userName: string, boatModel: string, expiryDate: Date, daysLeft: number, boatId: string): string {
-  return emailWrapper(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #1e3a8a; margin: 0;">Your listing expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}</h1>
-    </div>
-    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-      <p style="font-size: 16px; line-height: 1.6;">
-        Hello <strong>${userName}</strong>,
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Your listing for the <strong>${boatModel}</strong> expires on <strong>${formatDate(expiryDate)}</strong>.
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Renew it to keep receiving enquiries from potential buyers.
-      </p>
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
-           style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          Renew my listing
-        </a>
-      </div>
-      <p style="color: #6b7280; font-size: 14px;">
-        You can renew at any time. Your listing stays visible until it expires.
-      </p>
-    </div>
-  `);
+export function buildExpired(userName: string, boat: ReminderBoat, expiryDate: Date): BuiltEmail {
+  const label = modelLabel(boat.model);
+  const when = formatDate(expiryDate);
+  return {
+    subject: `Your ${label} listing has expired`,
+    html: renderEmail({
+      preheader: `Your ${label} is no longer visible on 3Hulls. Re-publish it in a few minutes.`,
+      eyebrow: 'Listing expired',
+      title: 'Your listing has expired',
+      content:
+        paragraph(`Hello ${esc(userName)},`) +
+        paragraph(`Your listing for the <strong>${esc(label)}</strong> expired on <strong>${when}</strong> and is no longer visible on the site.`) +
+        listingCard(boat, { text: `Expired on ${when}`, tone: 'muted' }) +
+        paragraph('If your boat is still for sale, you can re-publish it in a couple of minutes and it will be back in front of buyers.'),
+      cta: { label: 'Re-publish my listing', url: renewUrl(boat.id) },
+      secondary: { label: 'See renewal pricing', url: `${SITE_URL}/pricing` },
+      reason: REASON,
+    }),
+    text: renderText({
+      greeting: `Hello ${userName},`,
+      lines: [
+        `Your listing for the ${label} expired on ${when} and is no longer visible on the site.`,
+        'If your boat is still for sale, you can re-publish it in a couple of minutes.',
+      ],
+      cta: { label: 'Re-publish my listing', url: renewUrl(boat.id) },
+      reason: REASON,
+    }),
+  };
 }
 
-function template1d(userName: string, boatModel: string, expiryDate: Date, boatId: string): string {
-  return emailWrapper(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #dc2626; margin: 0;">Your listing expires tomorrow!</h1>
-    </div>
-    <div style="background-color: #fef2f2; padding: 25px; border-radius: 8px;">
-      <p style="font-size: 16px; line-height: 1.6;">
-        Hello <strong>${userName}</strong>,
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        <strong>Last reminder:</strong> your listing for the <strong>${boatModel}</strong> expires
-        on <strong>${formatDate(expiryDate)}</strong>, which is <strong>tomorrow</strong>.
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        After that date your listing will no longer be visible to buyers.
-      </p>
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
-           style="background-color: #dc2626; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          Renew now
-        </a>
-      </div>
-    </div>
-  `);
-}
-
-function templateExpired(userName: string, boatModel: string, expiryDate: Date, boatId: string): string {
-  return emailWrapper(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #6b7280; margin: 0;">Your listing has expired</h1>
-    </div>
-    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-      <p style="font-size: 16px; line-height: 1.6;">
-        Hello <strong>${userName}</strong>,
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Your listing for the <strong>${boatModel}</strong> expired on <strong>${formatDate(expiryDate)}</strong>
-        and is no longer visible on the site.
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        You can re-publish it at any time if your boat is still for sale.
-      </p>
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${SITE_URL}/list-boat?preference=Renewal&boatId=${boatId}"
-           style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          Re-publish my listing
-        </a>
-      </div>
-    </div>
-  `);
-}
-
-function templatePendingPayment(userName: string, boatModel: string, boatId: string): string {
-  return emailWrapper(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #1e3a8a; margin: 0;">Your listing is almost live</h1>
-    </div>
-    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-      <p style="font-size: 16px; line-height: 1.6;">
-        Hello <strong>${userName}</strong>,
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Your listing for the <strong>${boatModel}</strong> is all set, but the payment was never completed —
-        it's not visible to buyers yet.
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Finish your payment to publish it.
-      </p>
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${SITE_URL}/resume-payment/${boatId}"
-           style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          Finish my payment
-        </a>
-      </div>
-    </div>
-  `);
+export function buildPendingPayment(userName: string, boat: ReminderBoat): BuiltEmail {
+  const label = modelLabel(boat.model);
+  const url = `${SITE_URL}/resume-payment/${boat.id}`;
+  return {
+    subject: `One step left to publish your ${label}`,
+    html: renderEmail({
+      preheader: `Your ${label} is ready. Finish your payment to make it visible to buyers.`,
+      eyebrow: 'Almost live',
+      title: 'One step left to publish your listing',
+      content:
+        paragraph(`Hello ${esc(userName)},`) +
+        paragraph(`Your listing for the <strong>${esc(label)}</strong> is all set, but the payment was never completed, so buyers can't see it yet.`) +
+        listingCard(boat, { text: 'Awaiting payment', tone: 'info' }) +
+        paragraph('Finish your payment and it goes live straight away.'),
+      cta: { label: 'Finish my payment', url },
+      reason: REASON,
+    }),
+    text: renderText({
+      greeting: `Hello ${userName},`,
+      lines: [
+        `Your listing for the ${label} is all set, but the payment was never completed, so buyers can't see it yet.`,
+        'Finish your payment and it goes live straight away.',
+      ],
+      cta: { label: 'Finish my payment', url },
+      reason: REASON,
+    }),
+  };
 }
 
 // ─── Core Logic ─────────────────────────────────────────────────
@@ -243,9 +253,8 @@ async function processReminder7d(dryRun: boolean): Promise<{ sent: number; skipp
     }
 
     const daysLeft = Math.ceil((boat.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const html = template7d(boat.user.name || 'there', boat.model, boat.expiresAt, daysLeft, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expires on ${formatDate(boat.expiresAt)} (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`, html, text, { type: 'reminder_7d', userId: boat.user.id, boatId: boat.id });
+    const mail = buildReminder7d(boat.user.name || 'there', boat, boat.expiresAt, daysLeft);
+    const ok = await sendEmail(boat.user.email, mail.subject, mail.html, mail.text, { type: 'reminder_7d', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('reminder_7d', boat.id, boat.user.id, boat.user.email);
@@ -290,9 +299,8 @@ async function processReminder1d(dryRun: boolean): Promise<{ sent: number; skipp
       continue;
     }
 
-    const html = template1d(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nLast reminder: your listing for the ${boat.model} expires tomorrow (${formatDate(boat.expiresAt)}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Last chance: your listing "${boat.model}" expires tomorrow`, html, text, { type: 'reminder_1d', userId: boat.user.id, boatId: boat.id });
+    const mail = buildReminder1d(boat.user.name || 'there', boat, boat.expiresAt);
+    const ok = await sendEmail(boat.user.email, mail.subject, mail.html, mail.text, { type: 'reminder_1d', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('reminder_1d', boat.id, boat.user.id, boat.user.email);
@@ -344,9 +352,8 @@ async function processExpired(dryRun: boolean): Promise<{ sent: number; skipped:
       continue;
     }
 
-    const html = templateExpired(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expired on ${formatDate(boat.expiresAt)} and is no longer visible on the site.\n\nRe-publish it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" has expired`, html, text, { type: 'expired', userId: boat.user.id, boatId: boat.id });
+    const mail = buildExpired(boat.user.name || 'there', boat, boat.expiresAt);
+    const ok = await sendEmail(boat.user.email, mail.subject, mail.html, mail.text, { type: 'expired', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('expired', boat.id, boat.user.id, boat.user.email);
@@ -389,9 +396,8 @@ async function processPendingPayment(dryRun: boolean): Promise<{ sent: number; s
       continue;
     }
 
-    const html = templatePendingPayment(boat.user.name || 'there', boat.model, boat.id);
-    const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} is all set, but the payment was never completed — it's not visible to buyers yet.\n\nFinish your payment here: ${SITE_URL}/resume-payment/${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" is almost live — finish your payment`, html, text, { type: 'pending_payment', userId: boat.user.id, boatId: boat.id });
+    const mail = buildPendingPayment(boat.user.name || 'there', boat);
+    const ok = await sendEmail(boat.user.email, mail.subject, mail.html, mail.text, { type: 'pending_payment', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('pending_payment', boat.id, boat.user.id, boat.user.email);

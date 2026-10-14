@@ -1,5 +1,13 @@
 import nodemailer from 'nodemailer';
 import { recordEmail } from '@/utils/email-tracking';
+import {
+  EMAIL_BASE_URL,
+  esc,
+  panel,
+  paragraph,
+  renderEmail,
+  renderText
+} from '@/utils/email-layout';
 
 const transporter = nodemailer.createTransport({
   host: 'mail.infomaniak.com',
@@ -24,31 +32,35 @@ export async function sendEmail(
       to,
       subject,
       html,
-      text: text || html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      text:
+        text ||
+        html
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
     });
-    await recordEmail({ type: meta?.type ?? 'generic', to, subject, userId: meta?.userId, boatId: meta?.boatId, info });
+    await recordEmail({
+      type: meta?.type ?? 'generic',
+      to,
+      subject,
+      userId: meta?.userId,
+      boatId: meta?.boatId,
+      info
+    });
     return true;
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
-    await recordEmail({ type: meta?.type ?? 'generic', to, subject, userId: meta?.userId, boatId: meta?.boatId, error });
+    await recordEmail({
+      type: meta?.type ?? 'generic',
+      to,
+      subject,
+      userId: meta?.userId,
+      boatId: meta?.boatId,
+      error
+    });
     return false;
   }
 }
-
-function emailWrapper(content: string): string {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      ${content}
-      <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-      <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
-        This email was sent automatically by 3Hulls.
-      </p>
-    </div>
-  `;
-}
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://dragonfly-livid.vercel.app';
 
 export function buildNewMessageEmail(params: {
   recipientName: string;
@@ -57,28 +69,30 @@ export function buildNewMessageEmail(params: {
   conversationId: string;
 }): { subject: string; html: string; text: string } {
   const { recipientName, senderName, boatModel, conversationId } = params;
-  const link = `${SITE_URL}/messages/${conversationId}`;
+  const link = `${EMAIL_BASE_URL}/messages/${conversationId}`;
   const subject = `New message about your listing "${boatModel}"`;
-  const html = emailWrapper(`
-    <div style="text-align: center; margin-bottom: 30px;">
-      <h1 style="color: #1e3a8a; margin: 0;">You have a new message</h1>
-    </div>
-    <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-      <p style="font-size: 16px; line-height: 1.6;">
-        Hello <strong>${recipientName}</strong>,
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        <strong>${senderName}</strong> sent you a message about the <strong>${boatModel}</strong>.
-      </p>
-      <div style="text-align: center; margin: 25px 0;">
-        <a href="${link}"
-           style="background-color: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-          Reply in Messages
-        </a>
-      </div>
-    </div>
-  `);
-  const text = `Hello ${recipientName},\n\n${senderName} sent you a message about the ${boatModel}.\n\nReply here: ${link}\n\n3Hulls`;
+  const reason =
+    'You are receiving this email because someone contacted you about your listing on 3Hulls.';
+  const html = renderEmail({
+    preheader: `${senderName} is interested in your ${boatModel}.`,
+    eyebrow: 'New message',
+    title: 'A buyer wrote to you',
+    content:
+      paragraph(`Hello ${esc(recipientName)},`) +
+      paragraph(
+        `<strong>${esc(senderName)}</strong> sent you a message about the <strong>${esc(boatModel)}</strong>. Replying quickly is the best way to turn an enquiry into a sale.`
+      ),
+    cta: { label: 'Reply in Messages', url: link },
+    reason
+  });
+  const text = renderText({
+    greeting: `Hello ${recipientName},`,
+    lines: [
+      `${senderName} sent you a message about the ${boatModel}. Replying quickly is the best way to turn an enquiry into a sale.`
+    ],
+    cta: { label: 'Reply in Messages', url: link },
+    reason
+  });
   return { subject, html, text };
 }
 
@@ -98,25 +112,32 @@ export function buildReportEmail(params: {
     reason,
     conversationId
   } = params;
-  const link = `${SITE_URL}/messages/${conversationId}`;
+  const link = `${EMAIL_BASE_URL}/messages/${conversationId}`;
   const subject = `[Messages] Conversation reported by ${reporterName}`;
-  const html = emailWrapper(`
-    <h2 style="color: #dc2626; border-bottom: 2px solid #dc2626; padding-bottom: 10px;">
-      Conversation reported
-    </h2>
-    <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 5px 0;"><strong>Reported by:</strong> ${reporterName} (${reporterEmail})</p>
-      <p style="margin: 5px 0;"><strong>Reported user:</strong> ${reportedName}</p>
-      ${boatModel ? `<p style="margin: 5px 0;"><strong>Listing:</strong> ${boatModel}</p>` : ''}
-      <p style="margin: 5px 0;"><strong>Reason:</strong> ${reason || 'Not specified'}</p>
-    </div>
-    <div style="text-align: center; margin: 25px 0;">
-      <a href="${link}"
-         style="background-color: #dc2626; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-        View conversation
-      </a>
-    </div>
-  `);
-  const text = `Conversation reported by ${reporterName} (${reporterEmail})\nReported user: ${reportedName}\n${boatModel ? `Listing: ${boatModel}\n` : ''}Reason: ${reason || 'Not specified'}\n\nView: ${link}`;
+  const footerReason =
+    'Moderation notice: a conversation was reported on 3Hulls.';
+  const html = renderEmail({
+    preheader: `${reporterName} reported a conversation with ${reportedName}.`,
+    eyebrow: 'Moderation',
+    title: 'Conversation reported',
+    content: panel(
+      `<strong>Reported by:</strong> ${esc(reporterName)} (${esc(reporterEmail)})<br>` +
+        `<strong>Reported user:</strong> ${esc(reportedName)}<br>` +
+        (boatModel ? `<strong>Listing:</strong> ${esc(boatModel)}<br>` : '') +
+        `<strong>Reason:</strong> ${esc(reason || 'Not specified')}`
+    ),
+    cta: { label: 'View conversation', url: link },
+    reason: footerReason
+  });
+  const text = renderText({
+    lines: [
+      `Conversation reported by ${reporterName} (${reporterEmail})`,
+      `Reported user: ${reportedName}`,
+      ...(boatModel ? [`Listing: ${boatModel}`] : []),
+      `Reason: ${reason || 'Not specified'}`
+    ],
+    cta: { label: 'View conversation', url: link },
+    reason: footerReason
+  });
   return { subject, html, text };
 }

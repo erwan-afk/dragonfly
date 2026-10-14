@@ -4,6 +4,7 @@ import { admin } from "better-auth/plugins";
 import * as nodemailer from 'nodemailer';
 import prisma from '../prisma/client';
 import { recordEmail } from '../email-tracking';
+import { buildPasswordResetEmail, buildVerificationEmail } from '../email-account';
 
 // Only log during runtime, not during build
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -74,44 +75,17 @@ export const auth = betterAuth({
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
       });
 
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #1e3a8a; text-align: center;">Password Reset</h1>
-          <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-            <p style="font-size: 16px; line-height: 1.6;">
-              Hello <strong>${user.name || 'there'}</strong>,
-            </p>
-            <p style="font-size: 16px; line-height: 1.6;">
-              You requested a password reset. Click the button below to create a new one.
-            </p>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${url}"
-                 style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                Reset my password
-              </a>
-            </div>
-            <p style="color: #6b7280; font-size: 14px;">
-              This link expires in 7 days. If you did not request this, please ignore this email.
-            </p>
-          </div>
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="color: #6b7280; font-size: 12px; text-align: center;">
-            This email was sent automatically by 3Hulls.
-          </p>
-        </div>
-      `;
-
-      const text = `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\n3Hulls`;
+      const { subject, html, text } = buildPasswordResetEmail(user.name, url);
 
       try {
         const info = await transporter.sendMail({
           from: `"3Hulls" <${process.env.SMTP_USER}>`,
           to: user.email,
-          subject: 'Reset your password',
+          subject,
           html,
           text,
         });
-        await recordEmail({ type: 'password_reset', to: user.email, subject: 'Reset your password', userId: user.id, info });
+        await recordEmail({ type: 'password_reset', to: user.email, subject, userId: user.id, info });
 
         await prisma.email_log.create({
           data: {
@@ -124,7 +98,7 @@ export const auth = betterAuth({
         console.log(`✅ Reset email sent to ${user.email}`);
       } catch (error) {
         console.error(`❌ Failed to send email to ${user.email}:`, error);
-        await recordEmail({ type: 'password_reset', to: user.email, subject: 'Reset your password', userId: user.id, error });
+        await recordEmail({ type: 'password_reset', to: user.email, subject, userId: user.id, error });
       }
     },
     sendVerificationEmail: async ({ user, url }: any) => {
@@ -140,41 +114,21 @@ export const auth = betterAuth({
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
       });
 
+      const { subject, html, text } = buildVerificationEmail(user.name, url);
+
       try {
         const info = await transporter.sendMail({
           from: `"3Hulls" <${process.env.SMTP_USER}>`,
           to: user.email,
-          subject: 'Verify your email address',
-          text: `Hello ${user.name || 'there'},\n\nPlease verify your email address by clicking the link below:\n${url}\n\n3Hulls`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="color: #1e3a8a; text-align: center;">Verify your email</h1>
-              <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px;">
-                <p style="font-size: 16px; line-height: 1.6;">
-                  Hello <strong>${user.name || 'there'}</strong>,
-                </p>
-                <p style="font-size: 16px; line-height: 1.6;">
-                  Please confirm your email address by clicking the button below.
-                </p>
-                <div style="text-align: center; margin: 25px 0;">
-                  <a href="${url}"
-                     style="background-color: #1e3a8a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                    Verify my email
-                  </a>
-                </div>
-              </div>
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 12px; text-align: center;">
-                This email was sent automatically by 3Hulls.
-              </p>
-            </div>
-          `,
+          subject,
+          text,
+          html,
         });
-        await recordEmail({ type: 'verification', to: user.email, subject: 'Verify your email address', userId: user.id, info });
+        await recordEmail({ type: 'verification', to: user.email, subject, userId: user.id, info });
         console.log(`✅ Verification email sent to ${user.email}`);
       } catch (error) {
         console.error(`❌ Failed to send verification email to ${user.email}:`, error);
-        await recordEmail({ type: 'verification', to: user.email, subject: 'Verify your email address', userId: user.id, error });
+        await recordEmail({ type: 'verification', to: user.email, subject, userId: user.id, error });
       }
     },
   },

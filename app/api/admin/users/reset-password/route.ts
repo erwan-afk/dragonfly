@@ -5,6 +5,7 @@ import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { recordEmail } from '@/utils/email-tracking';
+import { buildAdminPasswordResetEmail } from '@/utils/email-account';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,29 +91,19 @@ export async function POST(request: NextRequest) {
     });
 
     // Send email with temporary password
-    const baseUrl = process.env.BETTER_AUTH_URL;
-
-    const resetSubject = 'Your password has been reset - 3Hulls';
+    const {
+      subject: resetSubject,
+      html,
+      text
+    } = buildAdminPasswordResetEmail(targetUser.name, tempPassword);
     let resetInfo;
     try {
       resetInfo = await transporter.sendMail({
         from: `"3Hulls" <${process.env.SMTP_USER}>`,
         to: targetUser.email,
         subject: resetSubject,
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #1e3a5f;">Password Reset</h2>
-          <p>Hello ${targetUser.name || 'there'},</p>
-          <p>An administrator has reset your password. Here is your temporary password:</p>
-          <div style="background: #f0f4f8; padding: 16px; border-radius: 8px; margin: 20px 0; text-align: center;">
-            <code style="font-size: 18px; font-weight: bold; color: #1e3a5f; letter-spacing: 1px;">${tempPassword}</code>
-          </div>
-          <p>Please <a href="${baseUrl}/signin" style="color: #1e3a5f; font-weight: bold;">sign in</a> with this temporary password and change it immediately in your account settings.</p>
-          <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;" />
-          <p style="color: #888; font-size: 12px;">If you did not expect this email, please contact our support team.</p>
-          <p style="color: #888; font-size: 12px;">3Hulls</p>
-        </div>
-      `
+        html,
+        text
       });
     } catch (mailError) {
       await recordEmail({
