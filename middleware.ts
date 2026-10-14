@@ -48,7 +48,8 @@ export async function middleware(request: NextRequest) {
 
     if (!sessionToken) {
       const signInUrl = new URL('/signin', request.url);
-      signInUrl.searchParams.set('callbackUrl', pathname);
+      // Keep the query string: renewal links from emails carry ?preference=…&boatId=…
+      signInUrl.searchParams.set('callbackUrl', pathname + request.nextUrl.search);
       return NextResponse.redirect(signInUrl);
     }
   }

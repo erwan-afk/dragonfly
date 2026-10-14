@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 
 /**
  * GET /api/boats/my-active
- * Récupère toutes les annonces actives de l'utilisateur connecté
+ * Listings of the signed-in user that can be renewed (active or expired)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
     const boats = await prisma.boat.findMany({
       where: {
         userId: session.user.id,
-        status: 'active'
+        // Expired listings (status "inactive") must be renewable too
+        status: { in: ['active', 'inactive'] }
       },
       orderBy: {
         createdAt: 'desc'
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
         specifications: true,
         vatPaid: true,
         status: true,
+        expiresAt: true,
         createdAt: true,
         updatedAt: true
       }

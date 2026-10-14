@@ -46,6 +46,8 @@ interface BoatListingFormProps {
   user: UserSimple | null | undefined;
   products: ProductWithPrices[];
   preference: string | null;
+  /** Listing to pre-select in renewal mode (deep link from a reminder email) */
+  initialBoatId?: string | null;
 }
 
 // Composant de checkbox de validation
@@ -106,7 +108,8 @@ function ValidationCheckbox({
 export default function BoatListingFormV2({
   user,
   products,
-  preference
+  preference,
+  initialBoatId
 }: BoatListingFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -201,6 +204,7 @@ export default function BoatListingFormV2({
   const [userBoats, setUserBoats] = useState<any[]>([]);
   const [loadingBoats, setLoadingBoats] = useState(false);
   const hasLoadedBoatsRef = useRef(false);
+  const hasPreselectedBoatRef = useRef(false);
   // Prevent duplicate boat creation when the user retries payment.
   // We create a "pending" boat before confirming payment; without this, a second attempt can create a second pending ad.
   const prePaymentBoatIdRef = useRef<string | null>(null);
@@ -566,6 +570,18 @@ export default function BoatListingFormV2({
 
       if (response.ok && data?.success && data?.boats) {
         setUserBoats(data.boats);
+
+        // Deep link: pre-select the listing the email was about (only once,
+        // and only if it really is one of the user's renewable listings)
+        if (
+          initialBoatId &&
+          !hasPreselectedBoatRef.current &&
+          data.boats.some((b: any) => b.id === initialBoatId)
+        ) {
+          hasPreselectedBoatRef.current = true;
+          setSelectedBoatId(initialBoatId);
+          setTouched((prev) => ({ ...prev, boat: true }));
+        }
       } else {
         toast.error('Failed to load your ads', {
           duration: 3000,
@@ -1389,7 +1405,10 @@ export default function BoatListingFormV2({
 
                       // Calcule la date d'expiration (3 mois par défaut, 4 mois pour podium)
                       // On ne peut pas savoir le plan original, donc on utilise 3 mois par défaut
-                      const expirationDate = boat.createdAt
+                      // Real expiry date when known, otherwise the legacy estimate
+                      const expirationDate = boat.expiresAt
+                        ? new Date(boat.expiresAt)
+                        : boat.createdAt
                         ? (() => {
                             const created = new Date(boat.createdAt);
                             const expiration = new Date(created);
