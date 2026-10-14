@@ -56,8 +56,8 @@ export function button(label: string, url: string): string {
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 28px auto 8px;">
       <tr>
-        <td align="center" bgcolor="${COLORS.ocean}" style="border-radius: 8px;">
-          <a href="${url}" target="_blank" style="display: inline-block; padding: 15px 36px; font-family: ${FONT}; font-size: 16px; font-weight: bold; line-height: 1; color: #FFFFFF; text-decoration: none; border-radius: 8px;">${esc(label)}</a>
+        <td align="center" bgcolor="${COLORS.ocean}" style="border-radius: 8px; mso-padding-alt: 15px 36px;">
+          <a href="${url}" target="_blank" style="display: inline-block; padding: 15px 36px; font-family: ${FONT}; font-size: 16px; font-weight: bold; line-height: 1.2; color: #FFFFFF; text-decoration: none; border-radius: 8px;">${esc(label)}</a>
         </td>
       </tr>
     </table>`;
@@ -83,7 +83,7 @@ export function pill(text: string, tone: PillTone = 'info'): string {
 
 /** A soft panel to group related info (credentials, steps, a quote...). */
 export function panel(html: string): string {
-  return `<div style="margin: 0 0 22px; padding: 20px 22px; background-color: ${COLORS.light}; border-radius: 10px; font-family: ${FONT}; font-size: 15px; line-height: 1.6; color: ${COLORS.dark};">${html}</div>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 22px;"><tr><td bgcolor="${COLORS.light}" style="padding: 20px 22px; background-color: ${COLORS.light}; border-radius: 10px; font-family: ${FONT}; font-size: 15px; line-height: 1.6; color: ${COLORS.dark};">${html}</td></tr></table>`;
 }
 
 export interface ListingSummary {
@@ -119,12 +119,13 @@ export function listingCard(
   const photo = normalizeImageUrls(boat.photos, boat.id)[0] ?? null;
 
   const image = photo
-    ? `<img src="${esc(photo)}" alt="${esc(label)}" width="536" style="display: block; width: 100%; max-width: 536px; height: 220px; object-fit: cover; border: 0;" />`
+    ? `<!--[if mso]><img src="${esc(photo)}" alt="${esc(label)}" width="536" style="display: block; width: 536px; height: auto; border: 0;" /><![endif]-->
+<!--[if !mso]><!--><img src="${esc(photo)}" alt="${esc(label)}" width="536" style="display: block; width: 100%; max-width: 536px; height: 220px; object-fit: cover; border: 0;" /><!--<![endif]-->`
     : `<div style="height: 120px; background-color: ${COLORS.light}; text-align: center; line-height: 120px; font-family: ${FONT}; font-size: 13px; color: ${COLORS.stone};">No photo</div>`;
 
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 24px; border: 1px solid ${COLORS.smoky}; border-radius: 12px; overflow: hidden; background-color: #FFFFFF;">
-      <tr><td style="line-height: 0; font-size: 0;">${image}</td></tr>
+      <tr><td bgcolor="${COLORS.light}" style="background-color: ${COLORS.light}; line-height: 0; font-size: 0;">${image}</td></tr>
       <tr>
         <td style="padding: 18px 22px 20px; font-family: ${FONT};">
           <div style="font-size: 12px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; color: ${COLORS.stone}; margin-bottom: 6px;">${esc(country)}</div>
@@ -164,24 +165,34 @@ export function renderEmail(o: EmailOptions): string {
   const logo = `${EMAIL_BASE_URL}/email/logo-white.png`;
 
   return `<!doctype html>
-<html lang="en">
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
   <title>${esc(o.title)}</title>
+  <style>
+    :root { color-scheme: light only; supported-color-schemes: light only; }
+    @media only screen and (max-width: 620px) {
+      .px { padding-left: 20px !important; padding-right: 20px !important; }
+      .h1 { font-size: 22px !important; }
+    }
+  </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: ${COLORS.light};">
   <div style="display: none; max-height: 0; overflow: hidden; opacity: 0; color: transparent; mso-hide: all;">${esc(o.preheader)}${'&nbsp;&zwnj;'.repeat(40)}</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${COLORS.light}">
     <tr>
       <td align="center" style="padding: 28px 12px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px;">
+        <!--[if mso]><table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px;">
 
           <!-- Header -->
           <tr>
-            <td align="center" bgcolor="${COLORS.ocean}" style="padding: 34px 24px 26px; border-radius: 14px 14px 0 0;">
-              <a href="${EMAIL_BASE_URL}" target="_blank"><img src="${logo}" alt="3Hulls" width="260" style="display: block; width: 260px; max-width: 100%; height: auto; border: 0;" /></a>
+            <td align="center" bgcolor="${COLORS.ocean}" class="px" style="padding: 34px 24px 26px; border-radius: 14px 14px 0 0;">
+              <a href="${EMAIL_BASE_URL}" target="_blank" style="text-decoration: none; color: #FFFFFF;"><img src="${logo}" alt="3Hulls" width="260" style="display: block; width: 260px; max-width: 100%; height: auto; border: 0; font-family: ${FONT}; font-size: 26px; font-weight: bold; letter-spacing: 0.2em; color: #FFFFFF;" /></a>
               <div style="margin-top: 14px; font-family: ${FONT}; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: ${COLORS.smoky};">The dedicated marketplace for Dragonfly trimarans</div>
             </td>
           </tr>
@@ -189,9 +200,9 @@ export function renderEmail(o: EmailOptions): string {
 
           <!-- Body -->
           <tr>
-            <td bgcolor="${COLORS.white}" style="padding: 38px 32px 34px;">
+            <td bgcolor="${COLORS.white}" class="px" style="padding: 38px 32px 34px;">
               ${o.eyebrow ? `<div style="margin: 0 0 10px; font-family: ${FONT}; font-size: 12px; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: ${COLORS.arctic};">${esc(o.eyebrow)}</div>` : ''}
-              <h1 style="margin: 0 0 24px; font-family: ${FONT}; font-size: 26px; font-weight: bold; line-height: 1.25; color: ${COLORS.ocean};">${esc(o.title)}</h1>
+              <h1 class="h1" style="margin: 0 0 24px; font-family: ${FONT}; font-size: 26px; font-weight: bold; line-height: 1.25; color: ${COLORS.ocean};">${esc(o.title)}</h1>
               ${o.content}
               ${o.cta ? button(o.cta.label, o.cta.url) : ''}
               ${o.secondary ? secondaryLink(o.secondary.label, o.secondary.url) : ''}
@@ -200,7 +211,7 @@ export function renderEmail(o: EmailOptions): string {
 
           <!-- Footer -->
           <tr>
-            <td bgcolor="${COLORS.dark}" align="center" style="padding: 32px 28px; border-radius: 0 0 14px 14px;">
+            <td bgcolor="${COLORS.dark}" align="center" class="px" style="padding: 32px 28px; border-radius: 0 0 14px 14px;">
               <div style="margin-bottom: 18px; font-family: ${FONT}; font-size: 13px;">
                 ${FOOTER_LINKS.map(
                   ([label, url]) =>
@@ -219,6 +230,7 @@ export function renderEmail(o: EmailOptions): string {
           </tr>
 
         </table>
+        <!--[if mso]></td></tr></table><![endif]-->
       </td>
     </tr>
   </table>
