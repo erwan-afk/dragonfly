@@ -187,6 +187,20 @@ async function logEmail(type: string, boatId: string, userId: string, email: str
   });
 }
 
+/** What a dry run would do, with masked recipients (safe to return from the API). */
+export interface PlannedEmail { type: string; model: string; boatId: string; to: string }
+let dryRunPlan: PlannedEmail[] = [];
+
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  return `${local.slice(0, 1)}***@${domain}`;
+}
+
+function planEmail(type: string, boat: { id: string; model: string }, email: string): void {
+  console.log(`   🧪 [dry-run] would send ${type} to ${maskEmail(email)} for "${boat.model}" (${boat.id})`);
+  dryRunPlan.push({ type, model: boat.model, boatId: boat.id, to: maskEmail(email) });
+}
+
 async function getAlreadySentSet(type: string, boatIds: string[]): Promise<Set<string>> {
   if (boatIds.length === 0) return new Set();
   const logs = await prisma.email_log.findMany({
@@ -196,7 +210,7 @@ async function getAlreadySentSet(type: string, boatIds: string[]): Promise<Set<s
   return new Set(logs.map(l => l.boatId).filter((id): id is string => id !== null));
 }
 
-async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
+async function processReminder7d(dryRun: boolean): Promise<{ sent: number; skipped: number }> {
   console.log('\n── Pass 1: 7-day reminders ──');
   const now = new Date();
   const in6d = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
@@ -222,6 +236,12 @@ async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
       continue;
     }
 
+    if (dryRun) {
+      planEmail('reminder_7d', boat, boat.user.email);
+      sent++;
+      continue;
+    }
+
     const daysLeft = Math.ceil((boat.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     const html = template7d(boat.user.name || 'there', boat.model, boat.expiresAt, daysLeft, boat.id);
     const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expires on ${formatDate(boat.expiresAt)} (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
@@ -238,7 +258,7 @@ async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
   return { sent, skipped };
 }
 
-async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
+async function processReminder1d(dryRun: boolean): Promise<{ sent: number; skipped: number }> {
   console.log('\n── Pass 2: 1-day reminders ──');
   const now = new Date();
   const in0d = now;
@@ -264,6 +284,12 @@ async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
       continue;
     }
 
+    if (dryRun) {
+      planEmail('reminder_1d', boat, boat.user.email);
+      sent++;
+      continue;
+    }
+
     const html = template1d(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
     const text = `Hello ${boat.user.name || 'there'},\n\nLast reminder: your listing for the ${boat.model} expires tomorrow (${formatDate(boat.expiresAt)}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
     const ok = await sendEmail(boat.user.email, `Last chance: your listing "${boat.model}" expires tomorrow`, html, text, { type: 'reminder_1d', userId: boat.user.id, boatId: boat.id });
@@ -279,7 +305,7 @@ async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
   return { sent, skipped };
 }
 
-async function processExpired(): Promise<{ sent: number; skipped: number; deactivated: number }> {
+async function processExpired(dryRun: boolean): Promise<{ sent: number; skipped: number; deactivated: number }> {
   console.log('\n── Pass 3: Expired listings ──');
   const now = new Date();
 
@@ -296,6 +322,14 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
   let sent = 0, skipped = 0, deactivated = 0;
 
   for (const boat of boats) {
+    if (dryRun) {
+      console.log(`   🧪 [dry-run] would deactivate "${boat.model}" (${boat.id}), expired ${boat.expiresAt?.toISOString().slice(0, 10)}`);
+      deactivated++;
+      if (boat.user?.email && !alreadySent.has(boat.id)) planEmail('expired', boat, boat.user.email);
+      sent++;
+      continue;
+    }
+
     await prisma.boat.update({
       where: { id: boat.id },
       data: { status: 'inactive' },
@@ -350,7 +384,7 @@ async function processPendingPayment(dryRun: boolean): Promise<{ sent: number; s
     }
 
     if (dryRun) {
-      console.log(`   🧪 [dry-run] would email ${boat.user.email} for "${boat.model}" (${boat.id})`);
+      planEmail('pending_payment', boat, boat.user.email);
       sent++;
       continue;
     }
@@ -375,7 +409,8 @@ async function processPendingPayment(dryRun: boolean): Promise<{ sent: number; s
 async function sendRenewalReminders(dryRun: boolean = false) {
   console.log('🚀 Starting renewal reminder script');
   console.log(`📅 ${formatDate(new Date())}`);
-  if (dryRun) console.log('🧪 Dry-run mode: pending-payment pass will only log, not send');
+  if (dryRun) console.log('🧪 Dry-run mode: nothing is sent, no listing is modified');
+  dryRunPlan = [];
 
   if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
     console.error('❌ SMTP_USER or SMTP_PASSWORD missing');
@@ -383,9 +418,9 @@ async function sendRenewalReminders(dryRun: boolean = false) {
   }
 
   try {
-    const r7 = await processReminder7d();
-    const r1 = await processReminder1d();
-    const exp = await processExpired();
+    const r7 = await processReminder7d(dryRun);
+    const r1 = await processReminder1d(dryRun);
+    const exp = await processExpired(dryRun);
     const pend = await processPendingPayment(dryRun);
 
     console.log('\n── Summary ──');
@@ -394,6 +429,15 @@ async function sendRenewalReminders(dryRun: boolean = false) {
     console.log(`   Expired : ${exp.sent} sent, ${exp.skipped} skipped, ${exp.deactivated} deactivated`);
     console.log(`   Pending : ${pend.sent} sent, ${pend.skipped} skipped`);
     console.log('✅ Done');
+
+    return {
+      dryRun,
+      reminder7d: r7,
+      reminder1d: r1,
+      expired: exp,
+      pendingPayment: pend,
+      planned: dryRun ? dryRunPlan : undefined,
+    };
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);

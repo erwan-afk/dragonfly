@@ -1,5 +1,16 @@
 name: Send Renewal Reminders
 
+# Calls the production app's own endpoint, so the job always runs on the
+# production database (the previous version connected with a DATABASE_URL
+# secret that did not point to it, so reminders never reached real users).
+#
+# Needs the repository secret CRON_SECRET_TOKEN (same value as the
+# CRON_SECRET_TOKEN environment variable of the deployed app).
+#
+# DRY RUN: while the "?dryRun=1" query string below is present, nothing is
+# sent and no listing is modified; the response lists what would happen.
+# Remove it (see "Activate" step) once the preview has been reviewed.
+
 on:
   schedule:
     - cron: '0 9 * * *'
@@ -10,29 +21,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20 
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Generate Prisma client
-        run: npx prisma generate
-
-      - name: Send renewal reminders
+      - name: Send renewal reminders (dry run)
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          NEXT_PUBLIC_SITE_URL: https://3hulls.com
-        run: | 
-          set -e    
-          echo "🚀 Envoi des rappels de renouvellement..."
-          which npx
-          npx --version
-          npx tsx scripts/send-renewal-reminders.ts
+          CRON_SECRET_TOKEN: ${{ secrets.CRON_SECRET_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET_TOKEN}" ]; then
+            echo "::error::Repository secret CRON_SECRET_TOKEN is not set"
+            exit 1
+          fi
+          # Activate: drop "?dryRun=1" from the URL below.
+          curl --fail-with-body --silent --show-error --max-time 300 \
+            -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET_TOKEN}" \
+            "https://3hulls.com/api/send-renewal-reminders?dryRun=1" | tee response.json
+          echo

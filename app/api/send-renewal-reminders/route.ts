@@ -51,14 +51,20 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    // ?dryRun=1 : liste ce qui serait envoyé / modifié, sans rien faire
+    const dryRun = request.nextUrl.searchParams.get('dryRun') === '1';
+
     // Exécuter la fonction de rappel des renouvellements
-    await sendRenewalReminders();
+    const summary = await sendRenewalReminders(dryRun);
 
     const duration = Date.now() - startTime;
 
     return NextResponse.json({
       success: true,
-      message: 'Renewal reminders processed successfully',
+      message: dryRun
+        ? 'Dry run: nothing was sent or modified'
+        : 'Renewal reminders processed successfully',
+      summary,
       timestamp: new Date().toISOString(),
       duration: `${duration}ms`
     });
@@ -96,14 +102,20 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    // ?dryRun=1 : liste ce qui serait envoyé / modifié, sans rien faire
+    const dryRun = request.nextUrl.searchParams.get('dryRun') === '1';
+
     // Exécuter la fonction de rappel des renouvellements
-    await sendRenewalReminders();
+    const summary = await sendRenewalReminders(dryRun);
 
     const duration = Date.now() - startTime;
 
     return NextResponse.json({
       success: true,
-      message: 'Renewal reminders processed successfully',
+      message: dryRun
+        ? 'Dry run: nothing was sent or modified'
+        : 'Renewal reminders processed successfully',
+      summary,
       timestamp: new Date().toISOString(),
       duration: `${duration}ms`
     });
