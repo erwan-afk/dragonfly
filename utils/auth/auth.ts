@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import * as nodemailer from 'nodemailer';
 import prisma from '../prisma/client';
+import { recordEmail } from '../email-tracking';
 
 // Only log during runtime, not during build
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -103,13 +104,14 @@ export const auth = betterAuth({
       const text = `Hello ${user.name || 'there'},\n\nYou requested a password reset. Use the link below to create a new password:\n${url}\n\nThis link expires in 7 days. If you did not request this, please ignore this email.\n\n3Hulls`;
 
       try {
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
           from: `"3Hulls" <${process.env.SMTP_USER}>`,
           to: user.email,
           subject: 'Reset your password',
           html,
           text,
         });
+        await recordEmail({ type: 'password_reset', to: user.email, subject: 'Reset your password', userId: user.id, info });
 
         await prisma.email_log.create({
           data: {
@@ -122,6 +124,7 @@ export const auth = betterAuth({
         console.log(`✅ Reset email sent to ${user.email}`);
       } catch (error) {
         console.error(`❌ Failed to send email to ${user.email}:`, error);
+        await recordEmail({ type: 'password_reset', to: user.email, subject: 'Reset your password', userId: user.id, error });
       }
     },
     sendVerificationEmail: async ({ user, url }: any) => {
@@ -138,7 +141,7 @@ export const auth = betterAuth({
       });
 
       try {
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
           from: `"3Hulls" <${process.env.SMTP_USER}>`,
           to: user.email,
           subject: 'Verify your email address',
@@ -167,9 +170,11 @@ export const auth = betterAuth({
             </div>
           `,
         });
+        await recordEmail({ type: 'verification', to: user.email, subject: 'Verify your email address', userId: user.id, info });
         console.log(`✅ Verification email sent to ${user.email}`);
       } catch (error) {
         console.error(`❌ Failed to send verification email to ${user.email}:`, error);
+        await recordEmail({ type: 'verification', to: user.email, subject: 'Verify your email address', userId: user.id, error });
       }
     },
   },

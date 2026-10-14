@@ -11,6 +11,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import * as nodemailer from 'nodemailer';
+import { recordEmail } from '../utils/email-tracking';
 
 const prisma = new PrismaClient();
 
@@ -156,18 +157,26 @@ function templatePendingPayment(userName: string, boatModel: string, boatId: str
 
 // ─── Core Logic ─────────────────────────────────────────────────
 
-async function sendEmail(to: string, subject: string, html: string, text: string): Promise<boolean> {
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  meta: { type: string; userId: string; boatId: string }
+): Promise<boolean> {
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"3Hulls" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
       text,
     });
+    await recordEmail({ ...meta, to, subject, info }, prisma);
     return true;
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
+    await recordEmail({ ...meta, to, subject, error }, prisma);
     return false;
   }
 }
@@ -216,7 +225,7 @@ async function processReminder7d(): Promise<{ sent: number; skipped: number }> {
     const daysLeft = Math.ceil((boat.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     const html = template7d(boat.user.name || 'there', boat.model, boat.expiresAt, daysLeft, boat.id);
     const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expires on ${formatDate(boat.expiresAt)} (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`, html, text);
+    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" expires in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`, html, text, { type: 'reminder_7d', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('reminder_7d', boat.id, boat.user.id, boat.user.email);
@@ -257,7 +266,7 @@ async function processReminder1d(): Promise<{ sent: number; skipped: number }> {
 
     const html = template1d(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
     const text = `Hello ${boat.user.name || 'there'},\n\nLast reminder: your listing for the ${boat.model} expires tomorrow (${formatDate(boat.expiresAt)}).\n\nRenew it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Last chance: your listing "${boat.model}" expires tomorrow`, html, text);
+    const ok = await sendEmail(boat.user.email, `Last chance: your listing "${boat.model}" expires tomorrow`, html, text, { type: 'reminder_1d', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('reminder_1d', boat.id, boat.user.id, boat.user.email);
@@ -303,7 +312,7 @@ async function processExpired(): Promise<{ sent: number; skipped: number; deacti
 
     const html = templateExpired(boat.user.name || 'there', boat.model, boat.expiresAt, boat.id);
     const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} expired on ${formatDate(boat.expiresAt)} and is no longer visible on the site.\n\nRe-publish it here: ${SITE_URL}/list-boat?preference=Renewal&boatId=${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" has expired`, html, text);
+    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" has expired`, html, text, { type: 'expired', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('expired', boat.id, boat.user.id, boat.user.email);
@@ -348,7 +357,7 @@ async function processPendingPayment(dryRun: boolean): Promise<{ sent: number; s
 
     const html = templatePendingPayment(boat.user.name || 'there', boat.model, boat.id);
     const text = `Hello ${boat.user.name || 'there'},\n\nYour listing for the ${boat.model} is all set, but the payment was never completed — it's not visible to buyers yet.\n\nFinish your payment here: ${SITE_URL}/resume-payment/${boat.id}\n\n3Hulls`;
-    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" is almost live — finish your payment`, html, text);
+    const ok = await sendEmail(boat.user.email, `Your listing "${boat.model}" is almost live — finish your payment`, html, text, { type: 'pending_payment', userId: boat.user.id, boatId: boat.id });
 
     if (ok) {
       await logEmail('pending_payment', boat.id, boat.user.id, boat.user.email);

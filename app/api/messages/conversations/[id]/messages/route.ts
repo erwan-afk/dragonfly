@@ -52,7 +52,10 @@ async function notifyNewMessage(
     conversationId
   });
 
-  await sendEmail(to, subject, html, text);
+  await sendEmail(to, subject, html, text, {
+    type: 'new_message',
+    userId: recipientId
+  });
 }
 
 export async function GET(

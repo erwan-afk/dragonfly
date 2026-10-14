@@ -78,7 +78,9 @@ export async function POST(
       conversationId: conversation.id
     });
 
-    await sendEmail(process.env.CONTACT_EMAIL, subject, html, text);
+    await sendEmail(process.env.CONTACT_EMAIL, subject, html, text, {
+      type: 'report'
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

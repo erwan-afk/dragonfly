@@ -1,6 +1,7 @@
 import * as nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import prisma from '../prisma/client';
+import { recordEmail } from '../email-tracking';
 import { dragonflyModels, currencies, countries, boatConditions } from '../constants';
 import { normalizeImageUrls } from '../image-urls';
 import { formatPriceNumber } from '../format-price';
@@ -228,14 +229,16 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
   });
 
   try {
-    await transporter.sendMail({
+    const inviteSubject = '3Hulls User Forum — Your listing is now on the new platform';
+    const info = await transporter.sendMail({
       from: `"3Hulls" <${process.env.SMTP_USER}>`,
       replyTo: 'administrator@dragonfly-trimarans.org',
       to: normalized,
-      subject: '3Hulls User Forum — Your listing is now on the new platform',
+      subject: inviteSubject,
       html,
       text,
     });
+    await recordEmail({ type: 'invitation', to: normalized, subject: inviteSubject, userId: user?.id, info });
 
     if (user?.id) {
       await prisma.email_log.create({
@@ -250,5 +253,6 @@ export async function sendInvitationEmail(email: string, boats: BoatEmailData[])
     console.log(`✅ Invitation email sent to ${normalized}`);
   } catch (error) {
     console.error(`❌ Failed to send invitation email to ${normalized}:`, error);
+    await recordEmail({ type: 'invitation', to: normalized, subject: '3Hulls User Forum — Your listing is now on the new platform', userId: user?.id, error });
   }
 }

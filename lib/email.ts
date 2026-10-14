@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { recordEmail } from '@/utils/email-tracking';
 
 const transporter = nodemailer.createTransport({
   host: 'mail.infomaniak.com',
@@ -14,19 +15,22 @@ export async function sendEmail(
   to: string,
   subject: string,
   html: string,
-  text?: string
+  text?: string,
+  meta?: { type: string; userId?: string | null; boatId?: string | null }
 ): Promise<boolean> {
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"3Hulls" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html,
       text: text || html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     });
+    await recordEmail({ type: meta?.type ?? 'generic', to, subject, userId: meta?.userId, boatId: meta?.boatId, info });
     return true;
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
+    await recordEmail({ type: meta?.type ?? 'generic', to, subject, userId: meta?.userId, boatId: meta?.boatId, error });
     return false;
   }
 }

@@ -4,6 +4,7 @@ import prisma from '@/utils/prisma/client';
 import { createRateLimiter, checkRateLimit } from '@/utils/rate-limit';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { recordEmail } from '@/utils/email-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,12 +30,18 @@ export async function POST(request: NextRequest) {
   try {
     const userCheck = await checkUser();
     if (!userCheck.isAdmin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
     }
 
     const { userId } = await request.json();
     if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'userId is required' },
+        { status: 400 }
+      );
     }
 
     // Get target user
@@ -49,7 +56,10 @@ export async function POST(request: NextRequest) {
 
     // Cannot reset superAdmin password unless you are superAdmin
     if (targetUser.role === 'superAdmin' && !userCheck.isSuperAdmin) {
-      return NextResponse.json({ error: 'Cannot reset super admin password' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Cannot reset super admin password' },
+        { status: 403 }
+      );
     }
 
     // Generate a temporary password
@@ -82,11 +92,14 @@ export async function POST(request: NextRequest) {
     // Send email with temporary password
     const baseUrl = process.env.BETTER_AUTH_URL;
 
-    await transporter.sendMail({
-      from: `"3Hulls" <${process.env.SMTP_USER}>`,
-      to: targetUser.email,
-      subject: 'Your password has been reset - 3Hulls',
-      html: `
+    const resetSubject = 'Your password has been reset - 3Hulls';
+    let resetInfo;
+    try {
+      resetInfo = await transporter.sendMail({
+        from: `"3Hulls" <${process.env.SMTP_USER}>`,
+        to: targetUser.email,
+        subject: resetSubject,
+        html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #1e3a5f;">Password Reset</h2>
           <p>Hello ${targetUser.name || 'there'},</p>
@@ -100,11 +113,31 @@ export async function POST(request: NextRequest) {
           <p style="color: #888; font-size: 12px;">3Hulls</p>
         </div>
       `
+      });
+    } catch (mailError) {
+      await recordEmail({
+        type: 'admin_password_reset',
+        to: targetUser.email,
+        subject: resetSubject,
+        userId: targetUser.id,
+        error: mailError
+      });
+      throw mailError;
+    }
+    await recordEmail({
+      type: 'admin_password_reset',
+      to: targetUser.email,
+      subject: resetSubject,
+      userId: targetUser.id,
+      info: resetInfo
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error resetting password:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

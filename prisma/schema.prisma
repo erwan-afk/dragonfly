@@ -335,3 +335,24 @@ model auth_event {
   @@index([createdAt])
   @@map("auth_events")
 }
+
+// One row per outgoing email attempt (sent or failed), whatever its origin.
+// Complements email_logs, which only dedups renewal reminders. No FK on
+// purpose: contact-form mails have no user, and rows must survive deletion.
+model email_event {
+  id        String   @id @default(cuid())
+  type      String   // "password_reset" | "verification" | "invitation" | "admin_password_reset" | "new_message" | "report" | "contact_form" | "reminder_7d" | ...
+  status    String   // "sent" | "failed"
+  toEmail   String   @map("to_email")
+  userId    String?  @map("user_id")
+  boatId    String?  @map("boat_id")
+  subject   String?
+  messageId String?  @map("message_id") // SMTP Message-ID, to trace a mail on the provider side
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([userId, createdAt])
+  @@index([toEmail, createdAt])
+  @@index([createdAt])
+  @@map("email_events")
+}

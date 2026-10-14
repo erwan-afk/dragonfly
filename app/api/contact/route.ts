@@ -4,6 +4,7 @@ import validator from 'validator';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { validateCSRFToken } from '@/utils/csrf';
 import { validateRecaptcha } from '@/utils/recaptcha';
+import { recordEmail } from '@/utils/email-tracking';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -282,7 +283,13 @@ export async function POST(request: NextRequest) {
     };
 
     // Envoi de l'email
-    await transporter.sendMail(mailOptions);
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      await recordEmail({ type: 'contact_form', to: String(mailOptions.to), subject: mailOptions.subject, info });
+    } catch (mailError) {
+      await recordEmail({ type: 'contact_form', to: String(mailOptions.to), subject: mailOptions.subject, error: mailError });
+      throw mailError;
+    }
 
     // Log de succès
     console.log(`[SUCCESS] Contact form submitted from IP: ${ip}`);

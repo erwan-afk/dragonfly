@@ -677,6 +677,10 @@ export default function AdminClient({
           >
             Journal d&apos;authentification
           </Link>
+          {' · '}
+          <Link href="/admin/emails" className="text-blue-600 hover:underline">
+            Emails envoyés
+          </Link>
         </p>
       </div>
 

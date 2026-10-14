@@ -34,12 +34,17 @@ const AUTH_LABELS: Record<string, string> = {
 };
 
 const EMAIL_LABELS: Record<string, string> = {
-  reminder_7d: 'Email envoyé : rappel d’expiration (7 jours)',
-  reminder_1d: 'Email envoyé : rappel d’expiration (1 jour)',
-  expired: 'Email envoyé : annonce expirée',
-  pending_payment: 'Email envoyé : finir le paiement de l’annonce',
-  password_reset: 'Email envoyé : reset du mot de passe',
-  invitation: 'Email envoyé : invitation'
+  reminder_7d: 'Email : rappel d’expiration (7 jours)',
+  reminder_1d: 'Email : rappel d’expiration (1 jour)',
+  expired: 'Email : annonce expirée',
+  pending_payment: 'Email : finir le paiement de l’annonce',
+  password_reset: 'Email : reset du mot de passe',
+  admin_password_reset: 'Email : mot de passe réinitialisé par un admin',
+  verification: 'Email : vérification de l’adresse',
+  invitation: 'Email : invitation',
+  new_message: 'Email : notification de nouveau message',
+  report: 'Email : signalement de conversation',
+  contact_form: 'Email : formulaire de contact'
 };
 
 const fmt = (d: Date) =>
@@ -103,6 +108,8 @@ export default async function AdminUserPage({
     boats,
     payments,
     emailLogs,
+    emailEvents,
+    firstEmailLogged,
     messages,
     buyerConvos
   ] = await Promise.all([
@@ -148,6 +155,12 @@ export default async function AdminUserPage({
       take: 50,
       select: { type: true, sentAt: true, boat: { select: { model: true } } }
     }),
+    prisma.email_event.findMany({
+      where: { OR: [{ userId: user.id }, { toEmail: user.email.toLowerCase() }] },
+      orderBy: { createdAt: 'desc' },
+      take: 200
+    }),
+    prisma.email_event.aggregate({ _min: { createdAt: true } }),
     prisma.message.findMany({
       where: { senderId: user.id },
       orderBy: { createdAt: 'desc' },
@@ -230,7 +243,20 @@ export default async function AdminUserPage({
     });
   }
 
+  for (const m of emailEvents) {
+    const label = EMAIL_LABELS[m.type] ?? `Email : ${m.type}`;
+    items.push({
+      at: m.createdAt,
+      label: m.status === 'sent' ? label : `${label} — échec`,
+      detail: [m.subject, m.error].filter(Boolean).join(' · '),
+      tone: m.status === 'sent' ? 'neutral' : 'bad'
+    });
+  }
+
+  // Legacy reminder log only fills the gap before email tracking existed
+  const emailTrackingStart = firstEmailLogged._min.createdAt;
   for (const m of emailLogs) {
+    if (emailTrackingStart && m.sentAt >= emailTrackingStart) continue;
     items.push({
       at: m.sentAt,
       label: EMAIL_LABELS[m.type] ?? `Email envoyé : ${m.type}`,
@@ -330,6 +356,67 @@ export default async function AdminUserPage({
           </ul>
         </div>
       )}
+
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="font-semibold text-gray-900 mb-3">
+          Journal d&apos;authentification
+          {failures > 0 && (
+            <span className="ml-2 text-xs font-normal text-red-600">
+              {failures} échec{failures > 1 ? 's' : ''}
+            </span>
+          )}
+        </h2>
+        {authEvents.length === 0 ? (
+          <p className="text-sm text-gray-400">Aucun événement enregistré.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {authEvents.slice(0, 30).map((e) => (
+                  <tr key={e.id}>
+                    <td className="py-2 pr-4 whitespace-nowrap text-gray-500">{fmt(e.createdAt)}</td>
+                    <td className="py-2 pr-4">{AUTH_LABELS[e.type] ?? e.type}</td>
+                    <td className={`py-2 pr-4 ${e.success ? 'text-green-700' : 'text-red-600'}`}>
+                      {e.success ? 'OK' : e.detail || 'échec'}
+                    </td>
+                    <td className="py-2 text-gray-500">
+                      {[device(e.userAgent), e.ipAddress, e.origin?.replace('https://', '')]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="font-semibold text-gray-900 mb-3">Emails envoyés</h2>
+        {emailEvents.length === 0 ? (
+          <p className="text-sm text-gray-400">
+            Aucun email suivi pour l&apos;instant (le suivi commence à sa mise en service).
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-gray-100">
+                {emailEvents.slice(0, 30).map((m) => (
+                  <tr key={m.id}>
+                    <td className="py-2 pr-4 whitespace-nowrap text-gray-500">{fmt(m.createdAt)}</td>
+                    <td className="py-2 pr-4">{EMAIL_LABELS[m.type] ?? m.type}</td>
+                    <td className={`py-2 pr-4 ${m.status === 'sent' ? 'text-green-700' : 'text-red-600'}`}>
+                      {m.status === 'sent' ? 'Envoyé' : `Échec${m.error ? ` : ${m.error}` : ''}`}
+                    </td>
+                    <td className="py-2 text-gray-500">{m.subject}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Activité</h2>
