@@ -1,0 +1,108 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import prisma from '@/utils/prisma/client';
+import { requireAdmin } from '../requireAdmin';
+
+export const dynamic = 'force-dynamic';
+
+const fmt = (d: Date) =>
+  d.toLocaleString('fr-FR', {
+    dateStyle: 'short',
+    timeStyle: 'medium',
+    timeZone: 'Europe/Paris'
+  });
+
+export default async function AuthEventsPage({
+  searchParams
+}: {
+  searchParams: { failures?: string };
+}) {
+  await requireAdmin('/admin/auth-events');
+  const onlyFailures = searchParams.failures === '1';
+
+  const events = await prisma.auth_event.findMany({
+    where: onlyFailures ? { success: false } : undefined,
+    orderBy: { createdAt: 'desc' },
+    take: 300
+  });
+
+  return (
+    <div className="max-w-6xl mx-auto px-16 py-32">
+      <Link
+        href="/admin"
+        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline mb-6"
+      >
+        <ArrowLeft size={16} /> Retour au dashboard
+      </Link>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Journal d&apos;authentification
+        </h1>
+        <Link
+          href={
+            onlyFailures ? '/admin/auth-events' : '/admin/auth-events?failures=1'
+          }
+          className="text-sm text-blue-600 hover:underline"
+        >
+          {onlyFailures ? 'Tout afficher' : 'Échecs uniquement'}
+        </Link>
+      </div>
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left">Type</th>
+              <th className="px-4 py-3 text-left">Email</th>
+              <th className="px-4 py-3 text-left">Résultat</th>
+              <th className="px-4 py-3 text-left">Origine / IP</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {events.map((e) => (
+              <tr key={e.id}>
+                <td className="px-4 py-2 whitespace-nowrap text-gray-500">
+                  {fmt(e.createdAt)}
+                </td>
+                <td className="px-4 py-2">{e.type}</td>
+                <td className="px-4 py-2">
+                  {e.userId ? (
+                    <Link
+                      href={`/admin/users/${e.userId}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {e.email}
+                    </Link>
+                  ) : (
+                    <span title="Aucun compte pour cet email">
+                      {e.email ?? '—'}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-2">
+                  <span
+                    className={e.success ? 'text-green-700' : 'text-red-600'}
+                  >
+                    {e.success ? 'OK' : e.detail || 'échec'}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-gray-500">
+                  {[e.origin?.replace('https://', ''), e.ipAddress]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </td>
+              </tr>
+            ))}
+            {events.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
+                  Aucun événement pour l&apos;instant.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

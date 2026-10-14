@@ -45,7 +45,7 @@ export default function PasswordSignIn({
       const captchaValidation = await fetch('/api/auth/validate-captcha', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token, email })
       });
 
       if (!captchaValidation.ok) {

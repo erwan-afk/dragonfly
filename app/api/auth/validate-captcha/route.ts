@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateRecaptcha } from '@/utils/recaptcha';
+import { logAuthEvent } from '@/utils/auth-events';
 
 export async function POST(request: NextRequest) {
   try {
-    const { token } = await request.json();
+    const { token, email } = await request.json();
 
     if (!token) {
       return NextResponse.json(
@@ -15,6 +16,13 @@ export async function POST(request: NextRequest) {
     const isValid = await validateRecaptcha(token);
 
     if (!isValid) {
+      await logAuthEvent({
+        type: 'captcha',
+        success: false,
+        email: typeof email === 'string' ? email : null,
+        detail: 'reCAPTCHA verification failed',
+        request
+      });
       return NextResponse.json(
         { error: 'reCAPTCHA verification failed' },
         { status: 400 }

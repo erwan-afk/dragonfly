@@ -314,3 +314,24 @@ enum PricingInterval {
   month
   year
 }
+
+// Audit trail of authentication activity (sign-in/up attempts incl. failures,
+// password resets, OAuth, captcha, rate limits). No FK on purpose: failed
+// attempts have no user, and entries must survive user deletion.
+model auth_event {
+  id        String   @id @default(cuid())
+  type      String   // "signin" | "signup" | "reset_requested" | "reset_completed" | "oauth_start" | "oauth_callback" | "captcha" | "rate_limited"
+  success   Boolean
+  userId    String?  @map("user_id")
+  email     String?
+  detail    String?  // error code / reason, never credentials
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  origin    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+  @@index([createdAt])
+  @@map("auth_events")
+}

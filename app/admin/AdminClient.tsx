@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -669,7 +670,13 @@ export default function AdminClient({
           <span className="font-semibold">
             {currentUserRole === 'superAdmin' ? 'Super Admin' : 'Admin'}
           </span>
-          .
+          .{' '}
+          <Link
+            href="/admin/auth-events"
+            className="text-blue-600 hover:underline"
+          >
+            Journal d&apos;authentification
+          </Link>
         </p>
       </div>
 
@@ -822,11 +829,16 @@ export default function AdminClient({
                           </button>
                         </div>
                       ) : (
-                        <div className="font-medium text-gray-900">
-                          {user.name}
-                        </div>
+                        <Link
+                          href={`/admin/users/${user.id}`}
+                          className="block group"
+                        >
+                          <div className="font-medium text-gray-900 group-hover:text-blue-600 group-hover:underline">
+                            {user.name}
+                          </div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                        </Link>
                       )}
-                      <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
