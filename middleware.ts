@@ -7,8 +7,34 @@ const PROTECTED_ROUTES = ['/account', '/list-boat', '/edit-listing', '/upgrade',
 // Routes that require admin role (checked server-side in the page)
 const ADMIN_ROUTES = ['/admin'];
 
+// Auth only works on the canonical domain: the Better Auth client and the
+// OAuth callbacks are pinned to it, and a cross-origin call from the legacy
+// domain is blocked by CORS (sign-up / sign-in / reset fail silently).
+const CANONICAL_HOST = '3hulls.com';
+const LEGACY_HOSTS = ['dragonfly-trimarans.org', 'www.dragonfly-trimarans.org'];
+const AUTH_PAGES = ['/signin', '/reset-password', '/auth'];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const host = (
+    request.headers.get('x-forwarded-host') ||
+    request.headers.get('host') ||
+    ''
+  )
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+
+  if (
+    LEGACY_HOSTS.includes(host) &&
+    AUTH_PAGES.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  ) {
+    return NextResponse.redirect(
+      `https://${CANONICAL_HOST}${pathname}${request.nextUrl.search}`,
+      308
+    );
+  }
 
   // Check if the route requires authentication
   const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
