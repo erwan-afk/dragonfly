@@ -262,7 +262,7 @@ export default async function AdminUserPage({
   const failures = authEvents.filter((e) => !e.success).length;
 
   return (
-    <div className="max-w-4xl mx-auto px-16 py-32">
+    <div className="max-w-4xl mx-auto px-16 py-32 text-gray-900">
       <Link
         href="/admin"
         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline mb-6"
@@ -291,19 +291,19 @@ export default async function AdminUserPage({
         <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 text-sm">
           <div>
             <dt className="text-gray-500">Inscrit le</dt>
-            <dd className="font-medium">{fmt(user.createdAt)}</dd>
+            <dd className="font-medium text-gray-900">{fmt(user.createdAt)}</dd>
           </div>
           <div>
             <dt className="text-gray-500">Annonces</dt>
-            <dd className="font-medium">{user._count.boats}</dd>
+            <dd className="font-medium text-gray-900">{user._count.boats}</dd>
           </div>
           <div>
             <dt className="text-gray-500">Favoris</dt>
-            <dd className="font-medium">{user._count.favorites}</dd>
+            <dd className="font-medium text-gray-900">{user._count.favorites}</dd>
           </div>
           <div>
             <dt className="text-gray-500">Échecs d&apos;auth</dt>
-            <dd className={`font-medium ${failures ? 'text-red-600' : ''}`}>
+            <dd className={`font-medium ${failures ? 'text-red-600' : 'text-gray-900'}`}>
               {failures}
             </dd>
           </div>

@@ -27,7 +27,7 @@ export default async function AuthEventsPage({
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-16 py-32">
+    <div className="max-w-6xl mx-auto px-16 py-32 text-gray-900">
       <Link
         href="/admin"
         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline mb-6"
