@@ -7,9 +7,9 @@ name: Send Renewal Reminders
 # Needs the repository secret CRON_SECRET_TOKEN (same value as the
 # CRON_SECRET_TOKEN environment variable of the deployed app).
 #
-# DRY RUN: while the "?dryRun=1" query string below is present, nothing is
-# sent and no listing is modified; the response lists what would happen.
-# Remove it (see "Activate" step) once the preview has been reviewed.
+# Preview without sending: POST the same URL with "?dryRun=1" appended; the
+# response lists what would be sent (masked recipients) and nothing is sent or
+# modified.
 
 on:
   schedule:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send renewal reminders (dry run)
+      - name: Send renewal reminders
         env:
           CRON_SECRET_TOKEN: ${{ secrets.CRON_SECRET_TOKEN }}
         run: |
@@ -30,9 +30,8 @@ jobs:
             echo "::error::Repository secret CRON_SECRET_TOKEN is not set"
             exit 1
           fi
-          # Activate: drop "?dryRun=1" from the URL below.
           curl --fail-with-body --silent --show-error --max-time 300 \
             -X POST \
             -H "Authorization: Bearer ${CRON_SECRET_TOKEN}" \
-            "https://3hulls.com/api/send-renewal-reminders?dryRun=1" | tee response.json
+            "https://3hulls.com/api/send-renewal-reminders" | tee response.json
           echo
