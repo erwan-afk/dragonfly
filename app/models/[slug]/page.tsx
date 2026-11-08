@@ -10,6 +10,7 @@ import { getFavoritedBoatIds } from '@/utils/database/favorites';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import { getURL } from '@/utils/helpers';
+import { modelSlug } from '@/utils/forsale-models';
 import { getModelGuides } from '@/utils/blog-data';
 import { buildBreadcrumbJsonLd } from '@/utils/json-ld';
 
@@ -82,7 +83,7 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
             <Button
               text="View listings"
               icon="view"
-              href={`/forsale?model=${model.key}`}
+              href={`/forsale/${modelSlug(model.key)}`}
               bgColor="bg-articblue"
             />
           </div>

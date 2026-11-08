@@ -15,6 +15,7 @@ import FeatureSection from '@/components/FeatureSection';
 import Button from '@/components/ui/Button/Button';
 import { Skeleton } from '@heroui/skeleton';
 import { getURL } from '@/utils/helpers';
+import ModelsForSaleLinks from '@/components/ui/ModelsForSaleLinks/ModelsForSaleLinks';
 
 // Désactiver le rendu statique - cette page doit être rendue dynamiquement
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,8 @@ export default async function HomePage() {
         >
           <BoatGrid boats={boats} favoritedBoatIds={favoritedBoatIds} isAuthenticated={!!viewerUserId} />
         </Suspense>
+
+        <ModelsForSaleLinks />
 
         <FeatureSection />
 

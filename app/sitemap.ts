@@ -3,6 +3,8 @@ import prisma from '@/utils/prisma/client';
 import { getURL } from '@/utils/helpers';
 import { modelsData } from '@/utils/models-data';
 import { getPublishedPosts } from '@/utils/blog-data';
+import { getActiveModelCounts } from '@/utils/database/model-counts';
+import { modelSlug } from '@/utils/forsale-models';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Regenerate at most once per hour
@@ -55,6 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Active boat listings
   let boatEntries: MetadataRoute.Sitemap = [];
   let latestBoatUpdate: Date | undefined;
+  let forSaleModelEntries: MetadataRoute.Sitemap = [];
   try {
     const boats = await prisma.boat.findMany({
       where: {
@@ -71,6 +74,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     latestBoatUpdate = boats[0]?.updatedAt ?? undefined;
+
+    // "<model> for sale" pages are only listed while the model has a live listing.
+    const counts = await getActiveModelCounts();
+    forSaleModelEntries = Object.keys(modelsData)
+      .filter((key) => (counts[key] ?? 0) > 0)
+      .map((key) => ({
+        url: `${baseUrl}/forsale/${modelSlug(key)}`,
+        changeFrequency: 'daily' as const,
+        priority: 0.8
+      }));
 
     boatEntries = boats.map((b) => {
       const boosted =
@@ -97,5 +110,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: r.priority
   }));
 
-  return [...staticEntries, ...modelEntries, ...blogEntries, ...boatEntries];
+  return [
+    ...staticEntries,
+    ...modelEntries,
+    ...forSaleModelEntries,
+    ...blogEntries,
+    ...boatEntries
+  ];
 }

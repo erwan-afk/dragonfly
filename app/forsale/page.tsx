@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ForSaleData } from './forsale-data';
 import { getURL } from '@/utils/helpers';
+import ModelsForSaleLinks from '@/components/ui/ModelsForSaleLinks/ModelsForSaleLinks';
 
 // Désactiver le rendu statique - cette page doit être rendue dynamiquement
 export const dynamic = 'force-dynamic';
@@ -43,5 +44,10 @@ export async function generateMetadata({
 }
 
 export default async function ForSalePage({ searchParams }: ForSalePageProps) {
-  return <ForSaleData searchParams={searchParams} />;
+  return (
+    <>
+      <ForSaleData searchParams={searchParams} />
+      <ModelsForSaleLinks />
+    </>
+  );
 }
