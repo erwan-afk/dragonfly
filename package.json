@@ -20,6 +20,7 @@
     "stripe:fixtures": "stripe fixtures fixtures/stripe-fixtures.json",
     "stripe:sync": "tsx scripts/sync-stripe-products.ts",
     "stripe:clean": "tsx scripts/clean-stale-products.ts",
+    "blog:check": "tsx scripts/check-blog.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",

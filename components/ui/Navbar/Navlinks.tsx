@@ -98,6 +98,7 @@ export default function Navlinks({
     { href: '/forsale', label: 'For Sale' },
     { href: '/forum', label: 'Forum' },
     { href: '/models', label: 'Models' },
+    { href: '/blog', label: 'Blog' },
     { href: '/useful-links', label: 'Useful Links' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/contact', label: 'Contact' }

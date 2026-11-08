@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import prisma from '@/utils/prisma/client';
 import { getURL } from '@/utils/helpers';
 import { modelsData } from '@/utils/models-data';
+import { getPublishedPosts } from '@/utils/blog-data';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Regenerate at most once per hour
@@ -10,6 +11,7 @@ const STATIC_ROUTES: { path: string; changeFrequency: MetadataRoute.Sitemap[numb
   { path: '/', changeFrequency: 'daily', priority: 1.0 },
   { path: '/forsale', changeFrequency: 'hourly', priority: 0.9 },
   { path: '/models', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/blog', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/pricing', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/contact', changeFrequency: 'yearly', priority: 0.5 },
   { path: '/useful-links', changeFrequency: 'monthly', priority: 0.4 },
@@ -42,6 +44,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
+  const blogEntries: MetadataRoute.Sitemap = getPublishedPosts().map((p) => ({
+    url: `${baseUrl}/blog/${p.slug}`,
+    lastModified: new Date(p.publishedAt),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7
+  }));
+
   // Active boat listings
   let boatEntries: MetadataRoute.Sitemap = [];
   try {
@@ -73,5 +82,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] failed to load boats:', error);
   }
 
-  return [...staticEntries, ...modelEntries, ...boatEntries];
+  return [...staticEntries, ...modelEntries, ...blogEntries, ...boatEntries];
 }

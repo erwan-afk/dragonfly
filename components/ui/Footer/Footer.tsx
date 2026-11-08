@@ -127,6 +127,12 @@ export default function Footer() {
             >
               Useful links
             </Link>
+            <Link
+              href="/blog"
+              className="w-fit font-light text-white hover:underline"
+            >
+              Blog
+            </Link>
           </div>
           <div className="flex flex-col gap-16 sm:gap-24">
             <div className="font-medium">Actions</div>
