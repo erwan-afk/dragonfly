@@ -27,24 +27,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getURL().replace(/\/$/, '');
   const now = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
-    url: `${baseUrl}${r.path}`,
-    lastModified: now,
-    changeFrequency: r.changeFrequency,
-    priority: r.priority
-  }));
+  // lastModified is only declared when it is known. Stamping every page with
+  // "now" teaches Google to ignore the field, so pages without a real date
+  // simply omit it.
+  const publishedPosts = getPublishedPosts();
+  const latestPost = publishedPosts.reduce<Date | undefined>((acc, p) => {
+    const d = new Date(p.publishedAt);
+    return !acc || d > acc ? d : acc;
+  }, undefined);
 
   // Model detail pages
   const modelEntries: MetadataRoute.Sitemap = Object.keys(modelsData).map(
     (slug) => ({
       url: `${baseUrl}/models/${slug}`,
-      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.7
     })
   );
 
-  const blogEntries: MetadataRoute.Sitemap = getPublishedPosts().map((p) => ({
+  const blogEntries: MetadataRoute.Sitemap = publishedPosts.map((p) => ({
     url: `${baseUrl}/blog/${p.slug}`,
     lastModified: new Date(p.publishedAt),
     changeFrequency: 'monthly' as const,
@@ -53,6 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Active boat listings
   let boatEntries: MetadataRoute.Sitemap = [];
+  let latestBoatUpdate: Date | undefined;
   try {
     const boats = await prisma.boat.findMany({
       where: {
@@ -68,6 +70,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 10000
     });
 
+    latestBoatUpdate = boats[0]?.updatedAt ?? undefined;
+
     boatEntries = boats.map((b) => {
       const boosted =
         b.boostExpiresAt && b.boostExpiresAt.getTime() > now.getTime();
@@ -81,6 +85,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error) {
     console.error('[sitemap] failed to load boats:', error);
   }
+
+  const staticDates: Record<string, Date | undefined> = {
+    '/forsale': latestBoatUpdate,
+    '/blog': latestPost
+  };
+  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
+    url: `${baseUrl}${r.path}`,
+    ...(staticDates[r.path] ? { lastModified: staticDates[r.path] } : {}),
+    changeFrequency: r.changeFrequency,
+    priority: r.priority
+  }));
 
   return [...staticEntries, ...modelEntries, ...blogEntries, ...boatEntries];
 }

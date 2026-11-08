@@ -26,6 +26,14 @@ export async function middleware(request: NextRequest) {
     .trim()
     .toLowerCase();
 
+  // One host per page for search engines: www is folded into the apex domain.
+  if (host === `www.${CANONICAL_HOST}`) {
+    return NextResponse.redirect(
+      `https://${CANONICAL_HOST}${pathname}${request.nextUrl.search}`,
+      308
+    );
+  }
+
   if (
     LEGACY_HOSTS.includes(host) &&
     AUTH_PAGES.some((p) => pathname === p || pathname.startsWith(p + '/'))

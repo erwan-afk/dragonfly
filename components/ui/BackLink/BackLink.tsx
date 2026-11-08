@@ -1,6 +1,8 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { readBackTarget } from './back-target';
 
 interface BackLinkProps {
   fallbackHref: string;
@@ -8,10 +10,10 @@ interface BackLinkProps {
   className?: string;
 }
 
-// `from` is passed explicitly as a query param by the page linking here
-// (e.g. the boat listing's "View model page" link) rather than read from
-// document.referrer — Next.js client-side navigation never updates the
-// browser referrer, so that approach silently never worked.
+// The page linking here records where the visitor came from (see
+// RememberedLink) instead of adding a ?from= query string: query variants
+// create duplicate URLs that search engines index separately. A legacy
+// ?from= in an old link is still honoured.
 function labelFor(from: string): string {
   if (from.startsWith('/boat/')) return 'Back to listing';
   if (from.startsWith('/forsale')) return 'Back to results';
@@ -24,11 +26,19 @@ export default function BackLink({
   className
 }: BackLinkProps) {
   const searchParams = useSearchParams();
-  const from = searchParams.get('from');
-  const isSafeFrom = !!from && from.startsWith('/');
+  const pathname = usePathname();
+  const [remembered, setRemembered] = useState<string | null>(null);
 
-  const href = isSafeFrom ? from : fallbackHref;
-  const label = isSafeFrom ? labelFor(from) : fallbackLabel;
+  useEffect(() => {
+    setRemembered(readBackTarget(pathname));
+  }, [pathname]);
+
+  const legacy = searchParams.get('from');
+  const from =
+    remembered ?? (legacy && legacy.startsWith('/') ? legacy : null);
+
+  const href = from ?? fallbackHref;
+  const label = from ? labelFor(from) : fallbackLabel;
 
   return (
     <a href={href} className={className}>

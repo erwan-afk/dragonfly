@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import RememberedLink from '@/components/ui/BackLink/RememberedLink';
 import { ArrowRight } from 'lucide-react';
 import { dragonflyModels, currencies, countries, boatConditions } from '@/utils/constants';
 import { formatPriceNumber } from '@/utils/format-price';
@@ -169,12 +170,13 @@ export function BoatDetails(props: BoatDetailsProps) {
                 </div>
               )}
             </div>
-            <Link
-              href={`/models/${model.key}?from=${encodeURIComponent(`/boat/${boat.id}`)}`}
+            <RememberedLink
+              href={`/models/${model.key}`}
+              backTo={`/boat/${boat.id}`}
               className="inline-flex items-center gap-[4px] mt-[14px] text-[13px] font-semibold text-[#2c8a82] hover:underline"
             >
               View model page <ArrowRight size={13} />
-            </Link>
+            </RememberedLink>
           </div>
 
           <div className="w-full h-[1px] bg-[#eef1f5]" />

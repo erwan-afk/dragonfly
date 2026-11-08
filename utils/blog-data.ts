@@ -62,3 +62,25 @@ export function getRelatedPosts(post: BlogPost, now: Date = new Date()): BlogPos
     .slice(0, 3);
   return pillar ? [pillar, ...siblings] : siblings;
 }
+
+/** Blog guides worth linking from each Dragonfly model page (published ones only are shown). */
+const MODEL_GUIDES: Record<string, string[]> = {
+  df25: ['dragonfly-25-price', 'dragonfly-25-vs-28', 'trailer-a-folding-trimaran'],
+  df28: ['dragonfly-28-price', 'dragonfly-25-vs-28', 'dragonfly-28-vs-32', 'dragonfly-28-touring-sport-performance'],
+  df32: ['dragonfly-32-price', 'dragonfly-28-vs-32', 'dragonfly-32-vs-35'],
+  df35: ['dragonfly-35-price', 'dragonfly-32-vs-35'],
+  df40: ['dragonfly-40-price'],
+  df800: ['classic-dragonfly-800-920-1000-price', 'cheap-trimaran-guide'],
+  df920: ['classic-dragonfly-800-920-1000-price', 'cheap-trimaran-guide'],
+  df1000: ['classic-dragonfly-800-920-1000-price', 'cheap-trimaran-guide'],
+  df1200: []
+};
+const COMMON_MODEL_GUIDES = ['dragonfly-trimaran-price-guide', 'used-trimaran-inspection-checklist'];
+
+export function getModelGuides(modelKey: string, now: Date = new Date()): BlogPost[] {
+  const slugs = [...(MODEL_GUIDES[modelKey] ?? []), ...COMMON_MODEL_GUIDES];
+  const published = getPublishedPosts(now);
+  return slugs
+    .map((s) => published.find((p) => p.slug === s))
+    .filter((p): p is BlogPost => !!p);
+}

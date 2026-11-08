@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getURL } from '@/utils/helpers';
 
 export const metadata: Metadata = {
-  title: 'Contact - 3Hulls',
+  title: 'Contact',
   description: 'Get in touch with the 3Hulls team.',
   alternates: { canonical: getURL('/contact') }
 };

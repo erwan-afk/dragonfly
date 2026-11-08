@@ -10,6 +10,7 @@ import { getFavoritedBoatIds } from '@/utils/database/favorites';
 import { auth } from '@/utils/auth/auth';
 import { headers } from 'next/headers';
 import { getURL } from '@/utils/helpers';
+import { getModelGuides } from '@/utils/blog-data';
 import { buildBreadcrumbJsonLd } from '@/utils/json-ld';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function generateMetadata({ params }: ModelPageProps) {
     return { title: 'Model not found', robots: { index: false, follow: true } };
   }
   return {
-    title: `${model.name} | 3Hulls`,
+    title: `${model.name} Trimaran: Specs, History & Listings`,
     description: model.tagline,
     alternates: { canonical: getURL(`/models/${model.key}`) }
   };
@@ -47,6 +48,7 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
     boats.map((b: any) => b.id)
   );
 
+  const guides = getModelGuides(model.key);
   const relatedModels = allModels.filter((m) => m.key !== model.key).slice(0, 3);
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
@@ -123,6 +125,30 @@ export default async function ModelDetailPage({ params }: ModelPageProps) {
           ))}
         </div>
       </section>
+
+      {/* Buying guides */}
+      {guides.length > 0 && (
+        <section className="flex flex-col gap-16">
+          <h2 className="text-oceanblue text-24 lg:text-32 font-medium">
+            Buying guides for the {model.name}
+          </h2>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-16">
+            {guides.map((g) => (
+              <li key={g.slug}>
+                <Link
+                  href={`/blog/${g.slug}`}
+                  className="group flex flex-col gap-4 h-full border border-stonegrey/30 hover:border-articblue/60 rounded-xl p-20 transition-colors"
+                >
+                  <span className="text-oceanblue text-16 font-medium group-hover:text-articblue transition-colors">
+                    {g.title}
+                  </span>
+                  <span className="text-darkgrey text-[13px]">{g.description}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Specs */}
       <section className="flex flex-col gap-24">

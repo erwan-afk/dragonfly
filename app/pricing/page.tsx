@@ -13,7 +13,7 @@ import { getURL } from '@/utils/helpers';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Pricing - 3Hulls',
+  title: 'Pricing: List Your Dragonfly Trimaran',
   description:
     'View our pricing plans for advertising your trimaran. Choose the best package that suits your needs and budget.',
   alternates: { canonical: getURL('/pricing') }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getURL } from '@/utils/helpers';
 
 export const metadata: Metadata = {
-  title: 'Useful Links - 3Hulls',
+  title: 'Useful Links for Dragonfly Owners',
   description: 'Useful resources and links for Dragonfly trimaran owners.',
   alternates: { canonical: getURL('/useful-links') }
 };
