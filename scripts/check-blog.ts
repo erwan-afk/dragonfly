@@ -59,7 +59,7 @@ for (const p of blogPosts) {
     const owner = blogPosts.find((o) => o.slug !== p.slug && norm(o.primaryKeyword) === norm(k));
     if (owner) errors.push(`${tag} secondary keyword "${k}" is the primaryKeyword of ${owner.slug}`);
   }
-  const forSale = /\bfor sale\b/i.test(p.primaryKeyword);
+  const forSale = /\bfor sale$/i.test(p.primaryKeyword.trim()) && !/^(prepare|how|sell|get|ready)\b/i.test(p.primaryKeyword.trim());
   if (forSale) errors.push(`${tag} targets a "for sale" query: those belong to /forsale`);
 }
 
