@@ -3,7 +3,13 @@ import { notFound } from 'next/navigation';
 import BackLink from '@/components/ui/BackLink/BackLink';
 import BlogText from '@/components/ui/BlogText/BlogText';
 import Button from '@/components/ui/Button/Button';
-import { getBlogPost, getPublishedPosts } from '@/utils/blog-data';
+import {
+  CLUSTER_LABELS,
+  CLUSTER_PILLARS,
+  getBlogPost,
+  getPublishedPosts,
+  getRelatedPosts
+} from '@/utils/blog-data';
 import { getURL } from '@/utils/helpers';
 import { buildBreadcrumbJsonLd } from '@/utils/json-ld';
 
@@ -62,7 +68,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     { name: 'Blog', url: getURL('/blog') },
     { name: post.title, url }
   ]);
-  const related = getPublishedPosts().filter((p) => p.slug !== post.slug).slice(0, 3);
+  const related = getRelatedPosts(post);
+  const isPillar = CLUSTER_PILLARS[post.cluster] === post.slug;
 
   return (
     <div className="max-w-screen-xl mx-auto px-16 xl:px-0 py-[40px] lg:py-[60px]">
@@ -118,9 +125,16 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </div>
       </article>
 
-      <section className="mt-64 flex flex-col gap-16">
-        <h2 className="text-oceanblue text-24 font-medium">More articles</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-24">
+      <section
+        aria-label="Related articles"
+        className={related.length > 0 ? 'mt-64 flex flex-col gap-16' : 'hidden'}
+      >
+        <h2 className="text-oceanblue text-24 font-medium">
+          {isPillar
+            ? `All guides in this topic: ${CLUSTER_LABELS[post.cluster]}`
+            : `More in ${CLUSTER_LABELS[post.cluster]}`}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-24">
           {related.map((p) => (
             <Link
               key={p.slug}

@@ -71,6 +71,29 @@ for (let i = 0; i < blogPosts.length; i++)
     if (t > 0.6 || k > 0.75) errors.push(`[${a.slug}] vs [${b.slug}] too similar (title ${t.toFixed(2)}, keyword ${k.toFixed(2)})`);
   }
 
+// Editorial inbound links: links written in article text only. The automatic
+// "same topic" block on each page is NOT counted, so this still flags weak spots.
+const inbound = new Map<string, Set<string>>();
+for (const p of blogPosts) {
+  const text = [p.intro, ...p.sections.flatMap((s) => [...s.paragraphs, ...(s.bullets ?? [])])].join(' ');
+  for (const m of text.matchAll(/\]\(\/blog\/([a-z0-9-]+)\)/g)) {
+    if (!inbound.has(m[1])) inbound.set(m[1], new Set());
+    inbound.get(m[1])!.add(p.slug);
+  }
+}
+const PILLARS = ['dragonfly-trimaran-price-guide', 'what-is-a-dragonfly-trimaran', 'how-to-buy-a-boat', 'how-to-sell-your-boat', 'types-of-boats', 'sailboat-transport-guide'];
+for (const p of blogPosts) {
+  const n = inbound.get(p.slug)?.size ?? 0;
+  if (n === 0) warns.push(`[${p.slug}] no editorial link from another article (only the automatic block)`);
+}
+for (const slug of PILLARS) {
+  const pillar = blogPosts.find((p) => p.slug === slug);
+  if (!pillar) { errors.push(`pillar ${slug} missing`); continue; }
+  const satellites = blogPosts.filter((p) => p.cluster === pillar.cluster && p.slug !== slug).length;
+  const n = inbound.get(slug)?.size ?? 0;
+  if (n < satellites) warns.push(`[${slug}] pillar has ${n} editorial inbound links for ${satellites} satellites (aim: at least as many)`);
+}
+
 console.log(`${blogPosts.length} posts checked`);
 warns.forEach((w) => console.warn('WARN ', w));
 errors.forEach((e) => console.error('ERROR', e));
